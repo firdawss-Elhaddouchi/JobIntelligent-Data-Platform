@@ -1,11 +1,16 @@
 from fastapi import FastAPI
+import os
 
-app = FastAPI(title="JobIntelligent Data Platform API")
+app = FastAPI(title="Job Intelligent API")
 
 @app.get("/")
-def read_root():
-    return {"message": "JobIntelligent Data Platform API"}
+def root():
+    return {
+        "message": "FastAPI is running successfully",
+        "database_url": os.getenv("DATABASE_URL"),
+        "minio_endpoint": os.getenv("MINIO_ENDPOINT")
+    }
 
 @app.get("/health")
-def health_check():
-    return {"status": "healthy"}
+def health():
+    return {"status": "ok"}
