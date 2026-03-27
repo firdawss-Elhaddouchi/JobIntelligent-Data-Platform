@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Common configurations for Airflow services
 x-airflow-common: &airflow-common
   image: apache/airflow:2.8.1
