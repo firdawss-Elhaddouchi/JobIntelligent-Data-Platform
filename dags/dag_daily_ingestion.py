@@ -1,7 +1,7 @@
 # dags/dag_daily_ingestion.py
 
-from airflow import DAG # type: ignore
-from airflow.operators.python import PythonOperator # type: ignore
+from airflow import DAG
+from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 
 # استيراد من scripts (Airflow يضيف /opt/airflow للـ PYTHONPATH)
