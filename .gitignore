@@ -204,58 +204,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
 test/
 *.pdf
-
-# Docker volumes and data
-/data/
-/logs/
-/config/
-/plugins/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-
-# Virtual Environment
-venv/
-env/
-ENV/
-.venv
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb~
-
-# Environment variables
-.env.local
-.env.*.local
-
-# MinIO data
-/minio_data/
-
-# PostgreSQL data
-/postgres_data/
-
-# MySQL data
-/mysql_data/
-
-# Airflow
-airflow.cfg
-webserver_config.py
-
-/data
+data/
