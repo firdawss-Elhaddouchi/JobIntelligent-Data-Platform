@@ -135,7 +135,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .envrc
 .venv
 env/
@@ -258,3 +257,5 @@ ENV/
 # Airflow
 airflow.cfg
 webserver_config.py
+
+/data
