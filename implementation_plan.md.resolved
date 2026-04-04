@@ -1,0 +1,331 @@
+# 📊 Job Intelligent — Analyse & Restructuration Architecture Médaillon
+
+---
+
+## 1. Résumé du PDF « PROJET JOB INTELLIGENT »
+
+### Contexte
+Le marché de l'emploi data (data science, data engineering…) est saturé d'offres dispersées sur plusieurs plateformes (Indeed, LinkedIn, France-Travail, Adzuna, Reed, Arbeitnow…). Les intitulés de postes et les compétences requises manquent de standardisation, ce qui rend la recherche d'emploi chronophage et frustrante.
+
+### Problématique
+> *La dispersion des offres et l'hétérogénéité des formats complexifient l'identification rapide des opportunités adaptées aux compétences des candidats dans le domaine Data.*
+
+### Objectifs principaux
+| # | Objectif | Description |
+|---|---------|-------------|
+| 1 | **Centraliser** | Rassembler les offres de différents job boards dans une base unique |
+| 2 | **Personnaliser** | Système de recommandation basé sur l'analyse sémantique / NLP |
+| 3 | **Scalabilité** | Architecture robuste pour un volume croissant de données |
+| 4 | **Dashboard** | Visualisation Power BI des tendances du marché |
+
+---
+
+## 2. Diagnostic de la structure actuelle
+
+### Arborescence existante
+```
+JobIntelligent-Data-Platform/
+├── .env                          # ✅ Variables d'environnement
+├── .gitignore                    # ✅ OK (inclut .env)
+├── README.md                     # ⚠️  Très minimal (3 lignes)
+├── docker-compose.yml            # ✅ 7 services Docker
+├── adzuna_bronze_jobs.json       # ❌ 1.8 MB de données brutes à la racine
+├── tst.py                        # ❌ Script test avec API keys en dur (corrigé)
+├── tempCodeRunnerFile.py         # ❌ Fichier temporaire traînant
+│
+├── dags/                         # 📁 VIDE — pas de DAG Airflow
+├── scripts/
+│   ├── ingestion/                # 📁 VIDE
+│   └── processing/               # 📁 VIDE
+├── plugins/                      # 📁 VIDE
+├── notebooks/                    # 📁 VIDE
+├── notebook/
+│   └── notebook1.ipynb           # ⚠️  API key Reed en dur, code incomplet
+│
+├── data/
+│   ├── bronze/                   # 📁 VIDE
+│   ├── silver/                   # 📁 VIDE
+│   ├── gold/                     # 📁 VIDE
+│   ├── minio_data/               # Docker volume MinIO
+│   └── postgres_data/            # Docker volume PostgreSQL
+│
+├── fastapi/
+│   ├── Dockerfile
+│   ├── requirements.txt 
+│   └── app/
+│       └── main.py               # ⚠️  Endpoint basique (/ et /health)
+│
+├── docs/
+│   ├── Job Intelligent- Medallion Data Pipeline.png
+│   ├── Use Case Diagram.png
+│   └── data-pipeline-architecture.png
+│
+└── logs/                         # Logs Airflow
+```
+
+### Problèmes identifiés
+
+> [!WARNING]
+> **Problèmes critiques à corriger :**
+> - `adzuna_bronze_jobs.json` (1.8 MB) est à la racine au lieu d'être dans `data/bronze/`
+> - `notebook/notebook1.ipynb` contient une clé API Reed **en dur** (`5f08f697-...`)
+> - Duplication de dossiers : `notebook/` ET `notebooks/` (les deux quasi-vides)
+> - `tempCodeRunnerFile.py` traîne à la racine
+> - Aucun DAG Airflow : l'orchestration n'existe pas encore
+> - Aucun script d'ingestion ou de traitement
+> - Architecture FastAPI minimale sans routes utiles
+
+> [!NOTE]
+> **Points positifs :**
+> - Le `.env` est déjà en place et listé dans `.gitignore`
+> - Le `docker-compose.yml` est bien structuré avec 7 services (Postgres, MinIO, PgAdmin, Airflow ×3, Jupyter, FastAPI)
+> - Les diagrammes d'architecture dans `docs/` montrent une vision claire de l'architecture Médaillon souhaitée
+
+---
+
+## 3. Nouvelle structure proposée — Architecture Médaillon simplifiée
+
+```
+JobIntelligent-Data-Platform/
+│
+├── .env                              # Toutes les variables sensibles
+├── .env.example                      # Template .env SANS secrets (pour Git)
+├── .gitignore
+├── README.md                         # Documentation complète du projet
+├── docker-compose.yml                # Orchestration des services
+├── requirements.txt                  # Dépendances Python globales
+│
+├── docs/                             # Documentation & diagrammes
+│   ├── architecture.md
+│   ├── medallion-pipeline.png
+│   ├── use-case-diagram.png
+│   └── data-pipeline-architecture.png
+│
+├── dags/                              # DAGs Apache Airflow
+│   ├── dag_ingestion_adzuna.py        # DAG: ingestion Adzuna → Bronze
+│   ├── dag_ingestion_reed.py          # DAG: ingestion Reed → Bronze
+│   ├── dag_ingestion_arbeitnow.py     # DAG: ingestion Arbeitnow → Bronze
+│   └── dag_pipeline_medallion.py      # DAG: Bronze → Silver → Gold
+│
+├── scripts/                           # Scripts Python du pipeline
+│   ├── __init__.py
+│   ├── config.py                      # Chargement centralisé des env vars
+│   │
+│   ├── ingestion/                     # 🥉 BRONZE — Collecte brute
+│   │   ├── __init__.py
+│   │   ├── adzuna_client.py           # API Adzuna → JSON brut
+│   │   ├── reed_client.py             # API Reed → JSON brut
+│   │   ├── arbeitnow_client.py        # API Arbeitnow → JSON brut
+│   │   └── minio_upload.py            # Upload des fichiers bruts vers MinIO
+│   │
+│   ├── processing/                    # 🥈 SILVER — Nettoyage & Standardisation
+│   │   ├── __init__.py
+│   │   ├── cleaner.py                 # Nettoyage, déduplication, normalisation
+│   │   ├── standardizer.py            # Standardisation titres de postes
+│   │   └── transformer.py             # Transformation JSON → Parquet
+│   │
+│   └── analytics/                     # 🥇 GOLD — Agrégation & NLP
+│       ├── __init__.py
+│       ├── aggregator.py              # Agrégation pour Power BI
+│       ├── nlp_processor.py           # Extraction de compétences / NLP
+│       └── db_loader.py               # Chargement dans PostgreSQL
+│
+├── data/                              # Stockage local (dev uniquement)
+│   ├── bronze/                        # Données brutes (JSON)
+│   ├── silver/                        # Données nettoyées (Parquet)
+│   └── gold/                          # Données agrégées (CSV/Parquet)
+│
+├── fastapi/                           # API Backend
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── app/
+│       ├── __init__.py
+│       ├── main.py                    # App FastAPI principale
+│       ├── config.py                  # Configuration depuis .env
+│       ├── models.py                  # Modèles SQLAlchemy
+│       ├── schemas.py                 # Schémas Pydantic
+│       └── routes/
+│           ├── __init__.py
+│           ├── jobs.py                # CRUD offres d'emploi
+│           └── health.py              # Health check
+│
+├── notebooks/                         # Jupyter Notebooks (exploration)
+│   └── exploration_adzuna.ipynb
+│
+├── plugins/                           # Plugins Airflow (si besoin)
+│
+└── logs/                              # Logs Airflow (auto-généré)
+```
+
+### Correspondance avec l'architecture Médaillon
+
+```mermaid
+flowchart LR
+    subgraph Sources["🌐 Sources Externes"]
+        A1[Adzuna API]
+        A2[Reed API]
+        A3[Arbeitnow API]
+    end
+
+    subgraph Bronze["🥉 Bronze Layer<br/>scripts/ingestion/"]
+        B1[adzuna_client.py]
+        B2[reed_client.py]
+        B5[arbeitnow_client.py]
+        B3[minio_upload.py]
+        B4[(data/bronze/<br/>JSON brut)]
+    end
+
+    subgraph Silver["🥈 Silver Layer<br/>scripts/processing/"]
+        S1[cleaner.py]
+        S2[standardizer.py]
+        S3[transformer.py]
+        S4[(data/silver/<br/>Parquet nettoyé)]
+    end
+
+    subgraph Gold["🥇 Gold Layer<br/>scripts/analytics/"]
+        G1[aggregator.py]
+        G2[nlp_processor.py]
+        G3[db_loader.py]
+        G4[(PostgreSQL<br/>+ data/gold/)]
+    end
+
+    subgraph Consume["📊 Consommation"]
+        C1[Power BI Dashboard]
+        C2[FastAPI]
+    end
+
+    A1 --> B1 --> B3 --> B4
+    A2 --> B2 --> B3
+    A3 --> B5 --> B3
+    B4 --> S1 --> S2 --> S3 --> S4
+    S4 --> G1 --> G3 --> G4
+    S4 --> G2 --> G3
+    G4 --> C1
+    G4 --> C2
+```
+
+---
+
+## 4. Liste de tâches détaillées
+
+### Phase 0 — Nettoyage & Préparation
+- [ ] Supprimer `tempCodeRunnerFile.py` de la racine
+- [ ] Déplacer `adzuna_bronze_jobs.json` dans `data/bronze/`
+- [ ] Supprimer le dossier `notebook/` (doublon de `notebooks/`)
+- [ ] Créer le fichier `.env.example` (template sans secrets)
+- [ ] Ajouter `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `REED_API_KEY` dans `.env`
+- [ ] Créer `requirements.txt` global (requests, python-dotenv, pandas, boto3, pyarrow…)
+
+---
+
+### Phase 1 — 🥉 Bronze (Ingestion brute)
+- [ ] Créer `scripts/config.py` — chargement centralisé des variables `.env`
+- [ ] Créer `scripts/ingestion/adzuna_client.py` :
+  - Reprendre la logique de `tst.py` (pagination, collecte multi-pages)
+  - Clés API lues depuis `os.getenv()`
+  - Sauvegarde en JSON brut dans `data/bronze/adzuna_YYYYMMDD.json`
+- [ ] Créer `scripts/ingestion/reed_client.py` :
+  - Intégration API Reed (authentication Basic)
+  - Clé API lue depuis `os.getenv()`
+  - Sauvegarde en JSON brut dans `data/bronze/reed_YYYYMMDD.json`
+- [ ] Créer `scripts/ingestion/arbeitnow_client.py` :
+  - Intégration API Arbeitnow (API ouverte)
+  - Pagination et collecte des offres
+  - Sauvegarde en JSON brut dans `data/bronze/arbeitnow_YYYYMMDD.json`
+- [ ] Créer `scripts/ingestion/minio_upload.py` :
+  - Upload des fichiers `data/bronze/*.json` vers le bucket MinIO `bronze`
+- [ ] Supprimer `tst.py` (remplacé par `adzuna_client.py`)
+
+---
+
+### Phase 2 — 🥈 Silver (Nettoyage & Transformation)
+- [ ] Créer `scripts/processing/cleaner.py` :
+  - Lire les fichiers JSON Bronze
+  - Supprimer les doublons (par `id` ou `url` de l'offre)
+  - Gérer les valeurs nulles / manquantes
+  - Normaliser les champs (dates, salaires, localisations)
+- [ ] Créer `scripts/processing/standardizer.py` :
+  - Mapper les titres de postes vers des catégories standard  
+    (ex: "Sr. Data Eng." → "Senior Data Engineer")
+  - Extraire les compétences clés depuis la description
+- [ ] Créer `scripts/processing/transformer.py` :
+  - Convertir les données nettoyées en format **Parquet**
+  - Sauvegarder dans `data/silver/`
+  - Upload vers MinIO bucket `silver`
+
+---
+
+### Phase 3 — 🥇 Gold (Agrégation & NLP)
+- [ ] Créer `scripts/analytics/aggregator.py` :
+  - Créer les vues agrégées pour Power BI :
+    - Nombre d'offres par compétence
+    - Nombre d'offres par localisation
+    - Fourchettes de salaires par poste
+    - Tendances temporelles
+- [ ] Créer `scripts/analytics/nlp_processor.py` :
+  - Extraction de compétences (NLP / regex / spaCy)
+  - Optionnel : génération d'embeddings pour le matching sémantique
+- [ ] Créer `scripts/analytics/db_loader.py` :
+  - Charger les données Gold dans PostgreSQL
+  - Créer les tables : `jobs`, `skills`, `job_skills`, `locations`
+  - Exporter en CSV/Parquet pour Power BI
+
+---
+
+### Phase 4 — Orchestration Airflow
+- [ ] Créer `dags/dag_ingestion_adzuna.py` :
+  - Exécute `adzuna_client.py` + `minio_upload.py`
+  - Planifié en cron quotidien
+- [ ] Créer `dags/dag_ingestion_reed.py` :
+  - Exécute `reed_client.py` + `minio_upload.py`
+- [ ] Créer `dags/dag_ingestion_arbeitnow.py` :
+  - Exécute `arbeitnow_client.py` + `minio_upload.py`
+- [ ] Créer `dags/dag_pipeline_medallion.py` :
+  - Pipeline complet : Bronze → Silver → Gold
+  - Déclenché après les DAGs d'ingestion
+
+---
+
+### Phase 5 — API FastAPI
+- [ ] Créer `fastapi/app/config.py` — configuration centralisée
+- [ ] Créer `fastapi/app/models.py` — modèles SQLAlchemy (Job, Skill…)
+- [ ] Créer `fastapi/app/schemas.py` — schémas Pydantic
+- [ ] Créer `fastapi/app/routes/jobs.py` :
+  - `GET /jobs` — lister les offres avec filtres
+  - `GET /jobs/{id}` — détail d'une offre
+  - `GET /jobs/search?q=...` — recherche par mot-clé
+- [ ] Créer `fastapi/app/routes/health.py` — health check
+
+---
+
+### Phase 6 — Documentation & Finalisation
+- [ ] Mettre à jour `README.md` avec :
+  - Description du projet
+  - Architecture Médaillon
+  - Instructions d'installation (`docker-compose up`)
+  - Variables d'environnement requises
+- [ ] Créer `docs/architecture.md` — documentation technique
+
+---
+
+## 5. Améliorations clés par rapport à l'existant
+
+| Aspect | Avant (actuel) | Après (proposé) |
+|--------|----------------|-----------------|
+| **Structure** | Fichiers éparpillés, dossiers vides | Organisation claire Bronze/Silver/Gold |
+| **API Keys** | En dur dans le code | Centralisées dans `.env` |
+| **Scripts** | 1 script test (`tst.py`) | Modules Python organisés par couche |
+| **Orchestration** | Aucun DAG | 3 DAGs Airflow fonctionnels |
+| **API** | 2 endpoints basiques | CRUD complet avec filtres |
+| **Données** | JSON 1.8 MB à la racine | Pipeline Bronze → Silver → Gold |
+| **Documentation** | 3 lignes dans README | README complet + docs techniques |
+
+---
+
+## Questions ouvertes
+
+> [!IMPORTANT]
+> 1. **Sources de données** : Voulez-vous d'autres sources en plus d'Adzuna, Reed et Arbeitnow (France-Travail, LinkedIn…) ?
+> 2. **NLP** : Quel niveau de NLP souhaitez-vous ? Simple extraction de mots-clés ou embeddings avancés (spaCy, sentence-transformers) ?
+> 3. **Power BI** : La connexion Power BI se fera directement à PostgreSQL ou via des fichiers exportés ?
+> 4. **Priorité** : Voulez-vous que je commence l'implémentation par une phase spécifique ?
