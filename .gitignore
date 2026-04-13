@@ -209,3 +209,5 @@ __marimo__/
 test/
 *.pdf
 data/
+data/
+logs/
