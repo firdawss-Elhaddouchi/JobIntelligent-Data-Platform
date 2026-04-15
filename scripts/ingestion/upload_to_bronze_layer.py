@@ -7,12 +7,12 @@ from dotenv import load_dotenv
 import boto3
 from io import BytesIO
 from botocore.exceptions import ClientError
-import reed_client
 import os
+from scripts.ingestion import reed_client
+from scripts.common import logging_config
+logger = logging_config.setup_logger("reed_client")
+# to run use this : python -m scripts.ingestion.upload_to_bronze_layer
 
-from logging_config import setup_logger
-
-logger = setup_logger("reed_client")
 # =========================
 # 2️⃣ LOAD ENV
 # =========================
@@ -178,7 +178,7 @@ def collect_reed(last_run):
 # 8️⃣ MAIN PIPELINE
 # =========================
 def run_pipeline():
-    logger.info("🚀 Pipeline started")
+    logger.info("Pipeline started")
 
     s3 = get_minio_client()
     timestamp = int(time.time())
@@ -217,7 +217,7 @@ def run_pipeline():
     # ✅ Save last_run AFTER success
     save_last_run(s3, now)
 
-    logger.info("✅ Pipeline finished")
+    logger.info("Pipeline finished")
 
 
 # =========================

@@ -2,7 +2,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from datetime import datetime
-from logging_config import setup_logger
+from ..common.logging_config import setup_logger
 
 logger = setup_logger("reed_client")
 
