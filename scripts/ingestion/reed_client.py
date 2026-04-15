@@ -1,9 +1,10 @@
 import requests
 import os
 from dotenv import load_dotenv
-from dateutil import parser
 from datetime import datetime
+from logging_config import setup_logger
 
+logger = setup_logger("reed_client")
 
 # =========================
 # ENV VARIABLES
@@ -11,67 +12,105 @@ from datetime import datetime
 load_dotenv()
 REED_API_KEY = os.getenv("REED_API_KEY")
 
+
+# =========================
+# SAFE DATE PARSER
+# =========================
 def safe_parse_date(date_str):
     try:
         return datetime.fromisoformat(date_str)
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to parse date: {date_str} | error: {e}")
         return None
-    
-def collect_reed():
-    print("🚀 Reed ingestion")
 
-    REED_API_KEY = os.getenv("REED_API_KEY")
-    print(REED_API_KEY)
+
+# =========================
+# COLLECT REED DATA
+# =========================
+def collect_reed():
+    logger.info("🚀 Starting Reed ingestion")
+
+    if not REED_API_KEY:
+        logger.error("REED_API_KEY is missing in environment variables")
+        raise ValueError("Missing REED_API_KEY")
+
     url = "https://www.reed.co.uk/api/1.0/search"
     all_jobs = []
 
     for page in range(1, 6):
-        params = {
-            "resultsToTake": 50,
-            "resultsToSkip": (page - 1) * 50
-        }
+        try:
+            params = {
+                "resultsToTake": 50,
+                "resultsToSkip": (page - 1) * 50
+            }
 
-        response = requests.get(
-            url,
-            params=params,
-            auth=(REED_API_KEY, "")  # 👈 THIS is the key part
-        )
+            response = requests.get(
+                url,
+                params=params,
+                auth=(REED_API_KEY, ""),
+                timeout=10  # 🔥 important
+            )
 
-        if response.status_code != 200:
-            print("❌ Reed error:", response.text)
+            response.raise_for_status()  # raises HTTPError automatically
+
+            try:
+                data = response.json().get("results", [])
+            except Exception as e:
+                logger.error(f"Invalid JSON response on page {page}: {e}")
+                break
+
+            if not data:
+                logger.info(f"No data on page {page}, stopping pagination")
+                break
+
+            all_jobs.extend(data)
+            logger.info(f"Page {page} collected: {len(data)} jobs")
+
+        except requests.exceptions.Timeout:
+            logger.warning(f"Timeout on page {page}, retry later")
+            continue
+
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error on page {page}: {e}")
             break
 
-        data = response.json().get("results", [])
-        if not data:
-            print('not data')
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request error on page {page}: {e}")
             break
 
-        all_jobs.extend(data)
+        except Exception as e:
+            logger.exception(f"Unexpected error on page {page}: {e}")
+            break
 
+    logger.info(f"Total jobs collected: {len(all_jobs)}")
     return all_jobs
 
+
+# =========================
+# FILTER NEW JOBS
+# =========================
 def filter_new_jobs(jobs, last_run):
 
     if not last_run:
         return jobs
 
-    last_run_dt = last_run
-
     new_jobs = []
 
     for job in jobs:
-        job_date = job.get("datePosted") or job.get("date")
+        try:
+            job_date = job.get("datePosted") or job.get("date")
 
-        if not job_date:
+            if not job_date:
+                continue
+
+            job_dt = safe_parse_date(job_date)
+
+            if job_dt and job_dt > last_run:
+                new_jobs.append(job)
+
+        except Exception as e:
+            logger.warning(f"Skipping job due to error: {e}")
             continue
 
-        job_dt = safe_parse_date(job_date)
-
-        if job_dt and job_dt > last_run_dt:
-            new_jobs.append(job)
-
+    logger.info(f"Filtered new jobs: {len(new_jobs)} / {len(jobs)}")
     return new_jobs
-# jobs = collect_reed()
-# last_run = "2026-04-15T10:00:00"
-# new_jobs = filter_new_jobs(jobs, last_run)
-# print(jobs)
