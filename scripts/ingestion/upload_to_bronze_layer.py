@@ -2,8 +2,6 @@ import requests
 import json
 import time
 import os
-import logging
-import sys
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 import boto3
@@ -11,17 +9,11 @@ from io import BytesIO
 from botocore.exceptions import ClientError
 import reed_client
 import adzuna_client
+import os
 
-# =========================
-# 1️⃣ LOGGER CONFIG
-# =========================
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
-logger = logging.getLogger("pipeline")
+from logging_config import setup_logger
 
+logger = setup_logger("reed_client")
 # =========================
 # 2️⃣ LOAD ENV
 # =========================
