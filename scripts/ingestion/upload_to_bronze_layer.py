@@ -9,7 +9,7 @@ from io import BytesIO
 from botocore.exceptions import ClientError
 import reed_client
 import os
-
+from arbeitnow_client import collect_arbeitnow
 from logging_config import setup_logger
 
 logger = setup_logger("reed_client")
@@ -137,34 +137,6 @@ def collect_adzuna():
     logger.info(f"Adzuna collected {len(all_jobs)} jobs")
     return all_jobs
 
-
-def collect_arbeitnow():
-    logger.info("Arbeitnow ingestion started")
-
-    url = "https://www.arbeitnow.com/api/job-board-api"
-    all_jobs = []
-    page = 1
-
-    while True:
-        logger.info(f"Fetching Arbeitnow page {page}")
-
-        r = requests.get(url, params={"page": page})
-
-        if r.status_code != 200:
-            logger.error("Arbeitnow API error")
-            break
-
-        data = r.json().get("data", [])
-        if not data:
-            break
-
-        all_jobs.extend(data)
-        page += 1
-
-    logger.info(f"Arbeitnow collected {len(all_jobs)} jobs")
-    return all_jobs
-
-
 def collect_reed(last_run):
     logger.info("Reed ingestion started")
 
@@ -188,7 +160,7 @@ def run_pipeline():
     print(last_run)
     sources = {
         # "adzuna": collect_adzuna,
-        # "arbeitnow": collect_arbeitnow,
+        "arbeitnow": lambda: collect_arbeitnow(last_run),
         "reed": lambda: collect_reed(last_run)
     }
 
