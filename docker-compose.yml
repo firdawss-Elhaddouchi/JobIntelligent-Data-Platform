@@ -36,19 +36,19 @@ services:
       - "9001:9001"
     command: server /data --console-address ":9001"
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: pgadmin
-    restart: always
-    env_file: .env
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-    ports:
-      - "5050:80"
-    depends_on:
-      postgres:
-        condition: service_healthy
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: pgadmin
+  #   restart: always
+  #   env_file: .env
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
 
   airflow-init:
     image: apache/airflow:2.8.1
@@ -138,18 +138,18 @@ services:
         condition: service_completed_successfully
     command: scheduler
 
-  jupyter:
-    image: jupyter/datascience-notebook:latest
-    container_name: jupyter_notebook
-    restart: always
-    environment:
-      JUPYTER_TOKEN: ${JUPYTER_TOKEN}
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./notebooks:/home/jovyan/work
-      - ./scripts:/home/jovyan/scripts
-      - ./data:/home/jovyan/data
+  # jupyter:
+  #   image: jupyter/datascience-notebook:latest
+  #   container_name: jupyter_notebook
+  #   restart: always
+  #   environment:
+  #     JUPYTER_TOKEN: ${JUPYTER_TOKEN}
+  #   ports:
+  #     - "8888:8888"
+  #   volumes:
+  #     - ./notebooks:/home/jovyan/work
+  #     - ./scripts:/home/jovyan/scripts
+  #     - ./data:/home/jovyan/data
 
   fastapi:
     build:

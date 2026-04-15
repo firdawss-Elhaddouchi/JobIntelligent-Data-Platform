@@ -1,116 +1,30 @@
-# import requests
-# import json
-# import time
-# import os
-# from datetime import datetime
-# from dotenv import load_dotenv
-
-# # Charger les variables d'environnement
-# load_dotenv()
-
-# APP_ID = os.getenv("ADZUNA_APP_ID")
-# APP_KEY = os.getenv("ADZUNA_APP_KEY")
-
-# COUNTRY = "gb"
-# SEARCH_KEYWORD = "data engineer"
-# RESULTS_PER_PAGE = 50
-# MAX_PAGES = 5
-
-# def collect_adzuna_jobs():
-#     if not APP_ID or not APP_KEY:
-#         print("Erreur: ADZUNA_APP_ID ou ADZUNA_APP_KEY non défini dans .env")
-#         return
-
-#     # Chemin de sauvegarde dans data/bronze/
-#     date_str = datetime.now().strftime("%Y%m%d")
-#     output_dir = os.path.join(os.path.dirname(__file__), "..", "..", "data", "bronze")
-#     os.makedirs(output_dir, exist_ok=True)
-#     output_file = os.path.join(output_dir, f"adzuna_{date_str}.json")
-
-#     base_url = f"https://api.adzuna.com/v1/api/jobs/{COUNTRY}/search"
-    
-#     all_jobs = []
-#     page = 1
-    
-#     print("=== Début de la collecte Adzuna ===")
-    
-#     while page <= MAX_PAGES:
-#         print(f"Lecture de la page {page}...")
-        
-#         url = f"{base_url}/{page}"
-#         headers = {
-#             "Content-Type": "application/json"
-#         }
-#         params = {
-#             "app_id": APP_ID,
-#             "app_key": APP_KEY,
-#             "what": SEARCH_KEYWORD,
-#             "results_per_page": RESULTS_PER_PAGE
-#         }
-        
-#         try:
-#             response = requests.get(url, headers=headers, params=params, timeout=20)
-#             print("Code HTTP :", response.status_code)
-            
-#             if response.status_code != 200:
-#                 print("Erreur API :", response.text)
-#                 break
-                
-#             data = response.json()
-#             jobs = data.get("results", [])
-            
-#             if len(jobs) == 0:
-#                 print("Plus de résultats.")
-#                 break
-                
-#             all_jobs.extend(jobs)
-#             print(f"Offres ajoutées : {len(jobs)} | Total : {len(all_jobs)}")
-            
-#             page += 1
-#             time.sleep(1)
-            
-#         except Exception as e:
-#             print("Erreur :", e)
-#             break
-            
-#     bronze_data = {
-#         "source": "Adzuna API",
-#         "country": COUNTRY,
-#         "search_keyword": SEARCH_KEYWORD,
-#         "collected_at": datetime.now().isoformat(),
-#         "total_jobs": len(all_jobs),
-#         "jobs": all_jobs
-#     }
-    
-#     if all_jobs:
-#         with open(output_file, "w", encoding="utf-8") as f:
-#             json.dump(bronze_data, f, ensure_ascii=False, indent=4)
-            
-#         print(f"Fichier JSON créé avec succès : {output_file}")
-#     else:
-#         print("Aucune offre récupérée, aucun fichier créé.")
-
-# if __name__ == "__main__":
-#     collect_adzuna_jobs()
-
-
-# scripts/ingestion/adzuna_client.py
-
+import os
+import json
 import requests
-from scripts.config import ADZUNA_APP_ID, ADZUNA_APP_KEY
+from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
+
+APP_ID = os.getenv("ADZUNA_APP_ID")
+APP_KEY = os.getenv("ADZUNA_APP_KEY")
 
 def fetch_jobs(max_pages: int = 5):
-    """ Fetching functions from The Adzuna API"""
-    print("🚀 Fetching Adzuna jobs...")
+    """ Fetching data jobs from the Adzuna API and saving to data/bronze """
+    print("🚀 Fetching Adzuna data jobs...")
     
+    if not APP_ID or not APP_KEY:
+        print("❌ Error: ADZUNA_APP_ID or ADZUNA_APP_KEY is missing from the environment. Please check your .env file.")
+        return []
+
     all_jobs = []
     
     for page in range(1, max_pages + 1):
         url = f"https://api.adzuna.com/v1/api/jobs/fr/search/{page}"
         params = {
-            'app_id': ADZUNA_APP_ID,
-            'app_key': ADZUNA_APP_KEY,
-            'what': 'data engineer OR data scientist OR data analyst',
+            'app_id': APP_ID,
+            'app_key': APP_KEY,
+            'what': 'data',
             'where': 'France',
             'results_per_page': 50
         }
@@ -128,8 +42,27 @@ def fetch_jobs(max_pages: int = 5):
             print(f"  Page {page}: {len(jobs)} jobs")
             
         except Exception as e:
-            print(f"  ❌ Error page {page}: {e}")
+            print(f"  ❌ Error on page {page}: {e}")
             break
     
-    print(f"✅ Total Adzuna: {len(all_jobs)} jobs")
+    print(f"✅ Total Adzuna data jobs fetched: {len(all_jobs)}")
+    
+    if all_jobs:
+        # Save path in data/bronze/
+        output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "bronze")
+        os.makedirs(output_dir, exist_ok=True)
+        
+        date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_file = os.path.join(output_dir, f"adzuna_jobs_{date_str}.json")
+        
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(all_jobs, f, ensure_ascii=False, indent=4)
+            
+        print(f"💾 Data successfully saved to: {output_file}")
+    else:
+        print("⚠️ No data to save.")
+        
     return all_jobs
+
+if __name__ == "__main__":
+    fetch_jobs()
