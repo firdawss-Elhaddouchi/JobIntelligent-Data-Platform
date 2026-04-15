@@ -7,11 +7,15 @@ from dotenv import load_dotenv
 import boto3
 from io import BytesIO
 from botocore.exceptions import ClientError
+from scripts.ingestion import adzuna_client
+import os
+from scripts.ingestion.arbeitnow_client import collect_arbeitnow
 import os
 from scripts.ingestion import reed_client
 from scripts.common import logging_config
 logger = logging_config.setup_logger("reed_client")
 # to run use this : python -m scripts.ingestion.upload_to_bronze_layer
+
 
 # =========================
 # 2️⃣ LOAD ENV
@@ -104,66 +108,14 @@ def save_last_run(s3, timestamp):
 # =========================
 # 7️⃣ DATA SOURCES
 # =========================
-def collect_adzuna():
+def collect_adzuna(last_run):
     logger.info("Adzuna ingestion started")
 
-    COUNTRY = "gb"
-    MAX_PAGES = 5
-    all_jobs = []
+    all_jobs = adzuna_client.collect_adzuna()
+    all_new_jobs = adzuna_client.filter_new_jobs(all_jobs, last_run)
 
-    for page in range(1, MAX_PAGES + 1):
-        url = f"https://api.adzuna.com/v1/api/jobs/{COUNTRY}/search/{page}"
-        params = {
-            "app_id": ADZUNA_APP_ID,
-            "app_key": ADZUNA_APP_KEY,
-            "results_per_page": 50
-        }
-
-        logger.info(f"Fetching Adzuna page {page}")
-
-        r = requests.get(url, params=params)
-
-        if r.status_code != 200:
-            logger.error("Adzuna API error")
-            continue
-
-        data = r.json().get("results", [])
-        if not data:
-            break
-
-        all_jobs.extend(data)
-        time.sleep(1)
-
-    logger.info(f"Adzuna collected {len(all_jobs)} jobs")
-    return all_jobs
-
-
-def collect_arbeitnow():
-    logger.info("Arbeitnow ingestion started")
-
-    url = "https://www.arbeitnow.com/api/job-board-api"
-    all_jobs = []
-    page = 1
-
-    while True:
-        logger.info(f"Fetching Arbeitnow page {page}")
-
-        r = requests.get(url, params={"page": page})
-
-        if r.status_code != 200:
-            logger.error("Arbeitnow API error")
-            break
-
-        data = r.json().get("data", [])
-        if not data:
-            break
-
-        all_jobs.extend(data)
-        page += 1
-
-    logger.info(f"Arbeitnow collected {len(all_jobs)} jobs")
-    return all_jobs
-
+    logger.info(f"Adzuna filtered {len(all_new_jobs)} new jobs")
+    return all_new_jobs
 
 def collect_reed(last_run):
     logger.info("Reed ingestion started")
@@ -187,9 +139,10 @@ def run_pipeline():
     now = datetime.now(timezone.utc)
     print(last_run)
     sources = {
-        # "adzuna": collect_adzuna,
-        # "arbeitnow": collect_arbeitnow,
-        "reed": lambda: collect_reed(last_run)
+        # "adzuna": lambda: collect_adzuna(last_run.isoformat()),
+        "arbeitnow": lambda: collect_arbeitnow(last_run)
+        # "reed": lambda: collect_reed(last_run)
+        
     }
 
     for source_name, func in sources.items():
