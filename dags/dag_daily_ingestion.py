@@ -11,7 +11,7 @@ sys.path.insert(0, '/opt/airflow')
 from scripts.ingestion.adzuna_client import fetch_jobs as fetch_adzuna
 from scripts.ingestion.reed_client import fetch_jobs as fetch_reed
 from scripts.ingestion.arbeitnow_client import fetch_jobs as fetch_arbeitnow
-from scripts.ingestion.minio_upload import upload_jobs
+from scripts.ingestion.upload_to_bronze_layer import upload_jobs
 
 default_args = {
     'owner': 'airflow',

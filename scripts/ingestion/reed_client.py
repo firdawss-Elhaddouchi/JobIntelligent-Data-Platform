@@ -2,6 +2,8 @@ import requests
 import os
 from dotenv import load_dotenv
 from dateutil import parser
+from datetime import datetime
+
 
 # =========================
 # ENV VARIABLES
@@ -11,7 +13,7 @@ REED_API_KEY = os.getenv("REED_API_KEY")
 
 def safe_parse_date(date_str):
     try:
-        return parser.parse(date_str)
+        return datetime.fromisoformat(date_str)
     except Exception:
         return None
     
@@ -53,7 +55,7 @@ def filter_new_jobs(jobs, last_run):
     if not last_run:
         return jobs
 
-    last_run_dt = parser.parse(last_run)
+    last_run_dt = last_run
 
     new_jobs = []
 
