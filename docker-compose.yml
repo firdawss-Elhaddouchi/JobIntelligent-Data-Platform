@@ -50,95 +50,6 @@ services:
   #     postgres:
   #       condition: service_healthy
 
-<<<<<<< HEAD
-  # airflow-init:
-  #   image: apache/airflow:2.8.1
-  #   container_name: airflow_init
-  #   restart: "no"
-  #   env_file: .env
-  #   environment:
-  #     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-  #     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-  #     AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
-  #     _PIP_ADDITIONAL_REQUIREMENTS: "requests boto3 pandas psycopg2-binary pyspark"
-  #   volumes:
-  #     - ./dags:/opt/airflow/dags
-  #     - ./scripts:/opt/airflow/scripts
-  #     - ./data:/opt/airflow/data
-  #     - ./logs:/opt/airflow/logs
-  #     - ./plugins:/opt/airflow/plugins
-  #   user: "0:0"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   entrypoint: /bin/bash
-  #   command:
-  #     - -c
-  #     - |
-  #       mkdir -p /opt/airflow/dags /opt/airflow/scripts /opt/airflow/data /opt/airflow/logs /opt/airflow/plugins
-  #       chown -R 50000:0 /opt/airflow
-  #       su airflow -c "airflow db migrate"
-  #       su airflow -c "airflow users create \
-  #         --username ${AIRFLOW_ADMIN_USERNAME} \
-  #         --password ${AIRFLOW_ADMIN_PASSWORD} \
-  #         --firstname Admin \
-  #         --lastname User \
-  #         --role Admin \
-  #         --email ${AIRFLOW_ADMIN_EMAIL}" || true
-
-  # airflow-webserver:
-  #   image: apache/airflow:2.8.1
-  #   container_name: airflow_webserver
-  #   restart: always
-  #   env_file: .env
-  #   environment:
-  #     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-  #     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-  #     AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
-  #     _PIP_ADDITIONAL_REQUIREMENTS: "requests boto3 pandas psycopg2-binary pyspark"
-  #   volumes:
-  #     - ./dags:/opt/airflow/dags
-  #     - ./scripts:/opt/airflow/scripts
-  #     - ./data:/opt/airflow/data
-  #     - ./logs:/opt/airflow/logs
-  #     - ./plugins:/opt/airflow/plugins
-  #   user: "${AIRFLOW_UID:-50000}:0"
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     airflow-init:
-  #       condition: service_completed_successfully
-  #   command: webserver
-
-  # airflow-scheduler:
-  #   image: apache/airflow:2.8.1
-  #   container_name: airflow_scheduler
-  #   restart: always
-  #   env_file: .env
-  #   environment:
-  #     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-  #     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-  #     AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
-  #     _PIP_ADDITIONAL_REQUIREMENTS: "requests boto3 pandas psycopg2-binary pyspark"
-  #   volumes:
-  #     - ./dags:/opt/airflow/dags
-  #     - ./scripts:/opt/airflow/scripts
-  #     - ./data:/opt/airflow/data
-  #     - ./logs:/opt/airflow/logs
-  #     - ./plugins:/opt/airflow/plugins
-  #   user: "${AIRFLOW_UID:-50000}:0"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     airflow-init:
-  #       condition: service_completed_successfully
-  #   command: scheduler
-=======
   airflow-init:
     image: apache/airflow:2.8.1
     container_name: airflow_init
@@ -226,7 +137,6 @@ services:
       airflow-init:
         condition: service_completed_successfully
     command: scheduler
->>>>>>> c5235c4c8e04afd1060a845e12515ebbf3ba49aa
 
   # jupyter:
   #   image: jupyter/datascience-notebook:latest
@@ -241,27 +151,6 @@ services:
   #     - ./scripts:/home/jovyan/scripts
   #     - ./data:/home/jovyan/data
 
-<<<<<<< HEAD
-  # fastapi:
-  #   build:
-  #     context: ./fastapi
-  #     dockerfile: Dockerfile
-  #   container_name: fastapi_backend
-  #   restart: always
-  #   env_file: .env
-  #   environment:
-  #     DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-  #     MINIO_ENDPOINT: minio:9000
-  #     MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
-  #     MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     minio:
-  #       condition: service_started
-=======
   fastapi:
     build:
       context: ./fastapi
@@ -284,4 +173,3 @@ services:
 
 volumes:
   postgres_data:
->>>>>>> c5235c4c8e04afd1060a845e12515ebbf3ba49aa
