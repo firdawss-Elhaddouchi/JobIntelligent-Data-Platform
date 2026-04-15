@@ -8,6 +8,7 @@ import boto3
 from io import BytesIO
 from botocore.exceptions import ClientError
 import reed_client
+import adzuna_client
 import os
 from arbeitnow_client import collect_arbeitnow
 from logging_config import setup_logger
@@ -104,38 +105,14 @@ def save_last_run(s3, timestamp):
 # =========================
 # 7️⃣ DATA SOURCES
 # =========================
-def collect_adzuna():
+def collect_adzuna(last_run):
     logger.info("Adzuna ingestion started")
 
-    COUNTRY = "gb"
-    MAX_PAGES = 5
-    all_jobs = []
+    all_jobs = adzuna_client.collect_adzuna()
+    all_new_jobs = adzuna_client.filter_new_jobs(all_jobs, last_run)
 
-    for page in range(1, MAX_PAGES + 1):
-        url = f"https://api.adzuna.com/v1/api/jobs/{COUNTRY}/search/{page}"
-        params = {
-            "app_id": ADZUNA_APP_ID,
-            "app_key": ADZUNA_APP_KEY,
-            "results_per_page": 50
-        }
-
-        logger.info(f"Fetching Adzuna page {page}")
-
-        r = requests.get(url, params=params)
-
-        if r.status_code != 200:
-            logger.error("Adzuna API error")
-            continue
-
-        data = r.json().get("results", [])
-        if not data:
-            break
-
-        all_jobs.extend(data)
-        time.sleep(1)
-
-    logger.info(f"Adzuna collected {len(all_jobs)} jobs")
-    return all_jobs
+    logger.info(f"Adzuna filtered {len(all_new_jobs)} new jobs")
+    return all_new_jobs
 
 def collect_reed(last_run):
     logger.info("Reed ingestion started")
@@ -159,9 +136,10 @@ def run_pipeline():
     now = datetime.now(timezone.utc)
     print(last_run)
     sources = {
-        # "adzuna": collect_adzuna,
-        "arbeitnow": lambda: collect_arbeitnow(last_run),
-        "reed": lambda: collect_reed(last_run)
+        # "adzuna": lambda: collect_adzuna(last_run.isoformat()),
+        "arbeitnow": lambda: collect_arbeitnow(last_run)
+        # "reed": lambda: collect_reed(last_run)
+        
     }
 
     for source_name, func in sources.items():
