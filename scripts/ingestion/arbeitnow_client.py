@@ -29,3 +29,4 @@ def fetch_jobs(max_pages: int = 5):
     
     print(f"✅ Total Arbeitnow: {len(all_jobs)} jobs")
     return all_jobs
+
