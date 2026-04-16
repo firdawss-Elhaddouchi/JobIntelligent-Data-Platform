@@ -16,6 +16,11 @@ def clean_adzuna_data(jobs_data):
         with open(jobs_data, 'r', encoding='utf-8') as f:
             jobs_data = json.load(f)
             
+    # If the data comes from our MinIO Bronze layer, it's wrapped in an envelope:
+    # {"source": "adzuna", "data": [...]}
+    if isinstance(jobs_data, dict) and "data" in jobs_data:
+        jobs_data = jobs_data["data"]
+            
     # Use pd.json_normalize to flatten nested JSON objects
     # (e.g., "company": {"display_name": "Company"} becomes "company.display_name")
     df = pd.json_normalize(jobs_data)
@@ -54,11 +59,15 @@ def clean_adzuna_data(jobs_data):
         'job_title',
         'company_name',
         'job_description',
+        'tags',
         'location',
         'salary_min',
         'salary_max',
         'posted_date',
+        'expires_date',
         'contract_type',
+        'currency',
+        'remote',
         'job_url',
         'source_site'
     ]
@@ -70,6 +79,12 @@ def clean_adzuna_data(jobs_data):
             
     # Reorder and filter the columns
     df_cleaned = df[final_columns]
+    
+    # Suppression des doublons (extrêmement utile quand on aspire historiquement plusieurs jours sans filtre)
+    df_cleaned = df_cleaned.drop_duplicates(subset=['job_id'], keep='first')
+    
+    # Réinitialisation propre de l'index
+    df_cleaned = df_cleaned.reset_index(drop=True)
     
     return df_cleaned
 

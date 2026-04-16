@@ -36,7 +36,8 @@ def collect_adzuna(max_days_old=None):
     url = "https://api.adzuna.com/v1/api/jobs/fr/search/"
     all_jobs = []
 
-    for page in range(1, 6):
+    # MAX POUR L'ENTRAINEMENT (10 000+ jobs potentiels si disponibles)
+    for page in range(1, 201):
         params = {
             'app_id': ADZUNA_APP_ID,
             'app_key': ADZUNA_APP_KEY,
@@ -63,7 +64,32 @@ def collect_adzuna(max_days_old=None):
                 logger.info("No data found, stopping pagination")
                 break
 
-            all_jobs.extend(data)
+            for job in data:
+                company = job.get("company", {})
+                company_name = company.get("display_name") if isinstance(company, dict) else None
+                
+                location = job.get("location", {})
+                location_name = location.get("display_name") if isinstance(location, dict) else job.get("location")
+
+                formatted_job = {
+                    "job_id": job.get("id"),
+                    "job_title": job.get("title"),
+                    "company_name": company_name,
+                    "job_description": job.get("description"),
+                    "tags": job.get("category", {}).get("label") if isinstance(job.get("category"), dict) else None,
+                    "location": location_name,
+                    "salary_min": job.get("salary_min"),
+                    "salary_max": job.get("salary_max"),
+                    "posted_date": job.get("created"),
+                    "expires_date": job.get("expires_date"),
+                    "contract_type": job.get("contract_time") or job.get("contract_type"),
+                    "currency": job.get("currency"),
+                    "remote": job.get("remote"),
+                    "job_url": job.get("redirect_url") or job.get("URL"),
+                    "source_site": "Adzuna"
+                }
+                all_jobs.append(formatted_job)
+
             time.sleep(1) # Simple pacing
 
         except Exception as e:
@@ -81,8 +107,8 @@ def filter_new_jobs(jobs, last_run):
     new_jobs = []
 
     for job in jobs:
-        # In Adzuna, the date is stored in the 'created' field
-        job_date = job.get("created")
+        # The date is now stored in the 'posted_date' field after mapping
+        job_date = job.get("posted_date")
 
         if not job_date:
             continue
@@ -94,27 +120,3 @@ def filter_new_jobs(jobs, last_run):
 
     logger.info(f"Adzuna filtered {len(new_jobs)} new jobs")
     return new_jobs
-
-# if __name__ == "__main__":
-#     logger.info("--- Testing Adzuna Client ---")
-    
-#     # Test 1: Collect jobs from the last day
-#     logger.info("1. Collecting jobs (API parameter: max_days_old=1)...")
-#     jobs = collect_adzuna(max_days_old=1)
-#     logger.info(f"Total jobs collected: {len(jobs)}")
-    
-#     # Test 2: Apply the filter logic
-#     # Set a date from a few days ago just to test the filter
-#     from datetime import datetime, timedelta
-#     last_run_date = (datetime.now() - timedelta(days=2)).isoformat() + "Z"
-    
-#     logger.info(f"2. Filtering jobs created strictly after: {last_run_date}...")
-#     new_jobs = filter_new_jobs(jobs, last_run=last_run_date)
-#     logger.info(f"New jobs after filtering: {len(new_jobs)}")
-    
-#     if new_jobs:
-#         logger.info("Sample of the first job found:")
-#         first_job = new_jobs[0]
-#         logger.info(f" - Title: {first_job.get('title')}")
-#         logger.info(f" - Company: {first_job.get('company', {}).get('display_name')}")
-#         logger.info(f" - Date: {first_job.get('created')}")

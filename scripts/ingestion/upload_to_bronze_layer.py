@@ -59,7 +59,8 @@ def create_bucket_if_not_exists(s3, bucket_name):
 # 5️⃣ UPLOAD TO MINIO
 # =========================
 def upload_to_minio(s3, key, data):
-    json_bytes = json.dumps(data).encode("utf-8")
+    # json_bytes = json.dumps(data).encode("utf-8")
+    json_bytes = json.dumps(data, indent=4).encode("utf-8")
 
     create_bucket_if_not_exists(s3, BUCKET)
 
