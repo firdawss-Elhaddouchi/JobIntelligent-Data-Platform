@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 import reed_client
 import adzuna_client
 import os
-from arbeitnow_client import collect_arbeitnow
+import arbeitnow_client  
 from logging_config import setup_logger
 
 logger = setup_logger("reed_client")
@@ -105,6 +105,15 @@ def save_last_run(s3, timestamp):
 # =========================
 # 7️⃣ DATA SOURCES
 # =========================
+def collect_arbeitnow(last_run):
+    logger.info("Arbeitnow ingestion started")
+
+    all_jobs = arbeitnow_client.collect_arbeitnow()
+    all_new_jobs = arbeitnow_client.filter_new_jobs(all_jobs, last_run)
+
+    logger.info(f"Arbeitnow filtered {len(all_new_jobs)} new jobs")
+    return all_new_jobs
+
 def collect_adzuna(last_run):
     logger.info("Adzuna ingestion started")
 
