@@ -5,7 +5,10 @@ import sys
 import time
 from dotenv import load_dotenv
 from dateutil import parser
-from ..common.logging_config import setup_logger
+# from ..common.logging_config import setup_logger
+import sys , os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from scripts.common.logging_config import setup_logger
 
 # =========================
 # 1️⃣ LOGGER CONFIG
