@@ -4,7 +4,7 @@ import numpy as np
 import emoji
 import re
 from bs4 import BeautifulSoup
-from logging_config import setup_logger
+from ..common.logging_config import setup_logger
 import json
 
 logger = setup_logger("data_cleaner")
