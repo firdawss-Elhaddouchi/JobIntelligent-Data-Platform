@@ -1,11 +1,33 @@
 import time
 import requests
+import json
 from datetime import datetime, timezone
-from ..common.logging_config import setup_logger
+import sys , os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from scripts.common.logging_config import setup_logger
 
 
 logger = setup_logger("arbeitnow_client")
 
+# =========================
+# 0️⃣ Keywords for the Specialization
+# =========================
+DATA_KEYWORDS = [
+"data", "données", "analyst", "engineer", "science",
+"machine learning", "ai", "intelligence artificialielle",
+"bi", "business intelligence", "big data", "etl", "python"
+]
+
+def is_data_job(job):
+    """
+        Check if the job is data-related based on the title or tags.
+    """
+    title = job.get("title", "").lower()
+    # Merge tags into a single text for searching within it
+    tags = " ".join(job.get("tags", [])).lower()
+    
+    # If you find any keyword in the title or tags, we consider it a data function
+    return any(keyword in title or keyword in tags for keyword in DATA_KEYWORDS)
 # =========================
 # 1️⃣ COLLECT DATA (RAW)
 # =========================
@@ -32,7 +54,9 @@ def collect_arbeitnow(max_pages=5):
                 logger.info("No more data found, stopping pagination")
                 break
 
-            all_jobs.extend(data)
+            data_jobs = [job for job in data if is_data_job(job)]
+            all_jobs.extend(data_jobs)
+            logger.info(f" Page {page}: Found {len(data_jobs)} data-related jobs out of {len(data)}")
             time.sleep(0.5) # Avoid API pressure
 
         except Exception as e:
@@ -70,3 +94,32 @@ def filter_new_jobs(jobs, last_run):
 
     logger.info(f"Arbeitnow filtered {len(new_jobs)} new jobs out of {len(jobs)}")
     return new_jobs
+
+
+# =========================
+# 3️⃣ TEST BLOCK (Main Execution)
+# =========================
+if __name__ == "__main__":
+    # Quick test to save results in the test folder
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+
+    test_dir = os.path.join(project_root, "test")
+
+    if not os.path.exists(test_dir): os.makedirs(test_dir)
+
+    try:
+
+        # Pull down the first 3 pages to see how many data functions we find
+
+        data_results = collect_arbeitnow(max_pages=200)
+
+        file_path = os.path.join(test_dir, f"arbeitnow_data_only_{int(time.time())}.json")
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+
+            json.dump(data_results, f, ensure_ascii=False, indent=4) 
+
+
+        logger.info(f"💾 Saved {len(data_results)} filtered jobs to {file_path}") 
+    except Exception as e: 
+        logger.error(f"💥 Test failed: {e}")
