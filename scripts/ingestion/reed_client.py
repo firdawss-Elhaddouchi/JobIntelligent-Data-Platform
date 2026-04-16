@@ -28,7 +28,7 @@ def safe_parse_date(date_str):
 # COLLECT REED DATA
 # =========================
 def collect_reed():
-    logger.info("🚀 Starting Reed ingestion")
+    logger.info(" Starting Reed ingestion")
 
     if not REED_API_KEY:
         logger.error("REED_API_KEY is missing in environment variables")
@@ -106,7 +106,19 @@ def filter_new_jobs(jobs, last_run):
             job_dt = safe_parse_date(job_date)
 
             if job_dt and job_dt > last_run:
-                new_jobs.append(job)
+                new_jobs.append({
+                    "jobId":job["jobId"],
+                    "employerName":job["employerName"],
+                    "jobTitle":job["jobTitle"],
+                    "jobDescription":job["jobDescription"],
+                    "locationName":job["locationName"],
+                    "minimumSalary":job["minimumSalary"],
+                    "maximumSalary":job["maximumSalary"],
+                    "date":job["date"],
+                    "expirationDate":job["expirationDate"],
+                    "jobUrl":job["jobUrl"],
+                    "currency":job["currency"],
+                })
 
         except Exception as e:
             logger.warning(f"Skipping job due to error: {e}")
