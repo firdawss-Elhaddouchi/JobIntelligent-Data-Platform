@@ -5,16 +5,12 @@ import sys
 import time
 from dotenv import load_dotenv
 from dateutil import parser
+from ..common.logging_config import setup_logger
 
 # =========================
 # 1️⃣ LOGGER CONFIG
 # =========================
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
-logger = logging.getLogger("adzuna_client")
+logger = setup_logger("adzuna_client")
 
 # =========================
 # 2️⃣ ENV VARIABLES
