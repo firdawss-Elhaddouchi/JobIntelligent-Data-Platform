@@ -7,13 +7,17 @@ from dotenv import load_dotenv
 import boto3
 from io import BytesIO
 from botocore.exceptions import ClientError
-import reed_client
-import adzuna_client
+from scripts.ingestion import adzuna_client
 import os
 import arbeitnow_client  
-from logging_config import setup_logger
+from scripts.ingestion.arbeitnow_client import collect_arbeitnow
+import os
+from scripts.ingestion import reed_client
+from scripts.common import logging_config
+logger = logging_config.setup_logger("reed_client")
+# to run use this : python -m scripts.ingestion.upload_to_bronze_layer
 
-logger = setup_logger("reed_client")
+
 # =========================
 # 2️⃣ LOAD ENV
 # =========================
@@ -56,7 +60,8 @@ def create_bucket_if_not_exists(s3, bucket_name):
 # 5️⃣ UPLOAD TO MINIO
 # =========================
 def upload_to_minio(s3, key, data):
-    json_bytes = json.dumps(data).encode("utf-8")
+    # json_bytes = json.dumps(data).encode("utf-8")
+    json_bytes = json.dumps(data, indent=4).encode("utf-8")
 
     create_bucket_if_not_exists(s3, BUCKET)
 
@@ -136,7 +141,7 @@ def collect_reed(last_run):
 # 8️⃣ MAIN PIPELINE
 # =========================
 def run_pipeline():
-    logger.info("🚀 Pipeline started")
+    logger.info("Pipeline started")
 
     s3 = get_minio_client()
     timestamp = int(time.time())
@@ -176,7 +181,7 @@ def run_pipeline():
     # ✅ Save last_run AFTER success
     save_last_run(s3, now)
 
-    logger.info("✅ Pipeline finished")
+    logger.info("Pipeline finished")
 
 
 # =========================
