@@ -4,7 +4,10 @@ import numpy as np
 import emoji
 import re
 from bs4 import BeautifulSoup
-from ..common.logging_config import setup_logger
+import sys , os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from scripts.common.logging_config import setup_logger
+import os
 import json
 
 logger = setup_logger("data_cleaner")
@@ -262,6 +265,25 @@ def  clean_arbeitnow_data(raw_jobs):
     return final_df
 
 if __name__ == "__main__":
-    # Simple test
-    print("Testing Adzuna cleaner with an empty DataFrame:")
-    print(clean_adzuna_data([]))
+    
+    # ============================================================
+    # Simple exemple -> cleaning arbeitnow
+    # ============================================================
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    TEST_DIR = os.path.join(BASE_DIR, "test")
+    os.makedirs(TEST_DIR, exist_ok=True)
+
+    # Example file (you can change this)
+    input_file = os.path.join(TEST_DIR, "arbeitnow_data_only_1776341238.json")
+    print("Loading file:", input_file)
+
+    with open(input_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    jobs = data if isinstance(data, list) else data.get("data", [])
+
+    df = clean_arbeitnow_data(jobs)
+    print("Cleaned shape:", df.shape)
+
+    output_file = os.path.join(TEST_DIR, "arbeitnow_cleaned.json")
+    df.to_json(output_file, orient="records", force_ascii=False, indent=2)
+    print("Saved cleaned file to:", output_file)
