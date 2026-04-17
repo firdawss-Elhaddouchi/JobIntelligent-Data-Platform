@@ -1,5 +1,4 @@
 import pandas as pd
-import pandas as pd
 import numpy as np
 import emoji
 import re
@@ -31,95 +30,6 @@ CANONICAL_COLUMNS = [
     "remote",
     "job_url"
 ]
-
-
-def clean_adzuna_data(jobs_data):
-    """
-    Cleans and standardizes raw data from the Adzuna API.
-    
-    Args:
-        jobs_data (list or str): List of dictionaries (JSON data) or a path to the raw JSON file.
-        
-    Returns:
-        pd.DataFrame: Cleaned DataFrame with standardized columns.
-    """
-    # Load the data if a file path is provided
-    if isinstance(jobs_data, str):
-        with open(jobs_data, 'r', encoding='utf-8') as f:
-            jobs_data = json.load(f)
-            
-    # If the data comes from our MinIO Bronze layer, it's wrapped in an envelope:
-    # {"source": "adzuna", "data": [...]}
-    if isinstance(jobs_data, dict) and "data" in jobs_data:
-        jobs_data = jobs_data["data"]
-            
-    # Use pd.json_normalize to flatten nested JSON objects
-    # (e.g., "company": {"display_name": "Company"} becomes "company.display_name")
-    df = pd.json_normalize(jobs_data)
-    
-    # Column mapping dictionary: Original -> New Standard Name
-    column_mapping = {
-        'id': 'job_id',
-        'title': 'job_title',
-        'company.display_name': 'company_name',
-        'description': 'job_description',
-        'location.display_name': 'location', # Or just 'location' depending on how the API returns it
-        'salary_min': 'salary_min',
-        'salary_max': 'salary_max',
-        'created': 'posted_date',
-        'contract_type': 'contract_type',
-        'redirect_url': 'job_url' # The URL in Adzuna is often called 'redirect_url'
-    }
-    
-    # Handle the specific case for 'location' and 'URL' in case the API keys differ slightly
-    if 'location' in df.columns and 'location.display_name' not in df.columns:
-        column_mapping['location'] = 'location'
-        
-    if 'URL' in df.columns:
-        column_mapping['URL'] = 'job_url'
-        
-    # Rename existing columns
-    cols_to_rename = {k: v for k, v in column_mapping.items() if k in df.columns}
-    df = df.rename(columns=cols_to_rename)
-    
-    # Add a fixed column for the data source
-    df['source_site'] = 'Adzuna'
-    
-    # Final list of recommended columns
-    final_columns = [
-        'job_id',
-        'job_title',
-        'company_name',
-        'job_description',
-        'tags',
-        'location',
-        'salary_min',
-        'salary_max',
-        'posted_date',
-        'expires_date',
-        'contract_type',
-        'currency',
-        'remote',
-        'job_url',
-        'source_site'
-    ]
-    
-    # Keep only existing columns and add missing ones filled with None (NaN)
-    for col in final_columns:
-        if col not in df.columns:
-            df[col] = None
-            
-    # Reorder and filter the columns
-    df_cleaned = df[final_columns]
-    
-    # Suppression des doublons (extrêmement utile quand on aspire historiquement plusieurs jours sans filtre)
-    df_cleaned = df_cleaned.drop_duplicates(subset=['job_id'], keep='first')
-    
-    # Réinitialisation propre de l'index
-    df_cleaned = df_cleaned.reset_index(drop=True)
-    
-    return df_cleaned
-
 
 
 # ============================================================
@@ -176,7 +86,7 @@ def normalize_location(loc):
 # Transformer: Arbeitnow → Silver
 # ============================================================
 
-def  clean_arbeitnow_data(raw_jobs):
+def clean_arbeitnow_data(raw_jobs):
 
     if not raw_jobs:
         logger.warning("No raw data provided to cleaner.")
@@ -185,7 +95,9 @@ def  clean_arbeitnow_data(raw_jobs):
     df = pd.DataFrame(raw_jobs).copy(deep=True)
     initial_count = len(df)
 
+    # =========================
     # Column mapping
+    # =========================
     column_mapping = {
         'slug': 'job_id',
         'title': 'job_title',
@@ -201,7 +113,151 @@ def  clean_arbeitnow_data(raw_jobs):
     df = df.rename(columns=column_mapping)
 
     # =========================
-    # Cleaning
+    # SAFE cleaning (important fix 🔥)
+    # =========================
+    def safe_apply(series, func):
+        if series is None:
+            return series
+        return series.apply(lambda x: func(x) if pd.notna(x) else np.nan)
+
+    if 'job_description' in df.columns:
+        df['job_description'] = safe_apply(
+            df['job_description'],
+            lambda x: deep_clean_text(x, preserve_case=True)
+        )
+
+    if 'job_title' in df.columns:
+        df['job_title'] = safe_apply(
+            df['job_title'],
+            lambda x: deep_clean_text(x, preserve_case=True)
+        )
+
+    if 'job_url' in df.columns:
+        df['job_url'] = df['job_url'].apply(clean_url)
+
+    if 'location' in df.columns:
+        df['location'] = df['location'].apply(normalize_location)
+
+    # =========================
+    # Date handling (safe)
+    # =========================
+    if 'posted_date' in df.columns:
+        df['posted_date'] = pd.to_datetime(
+            df['posted_date'],
+            unit='s',
+            utc=True,
+            errors='coerce'
+        ).dt.strftime("%Y-%m-%d")
+
+    # =========================
+    # Tags FIX (important 🔥)
+    # =========================
+    if 'tags' in df.columns:
+        def normalize_tags(x):
+            if isinstance(x, list):
+                return ", ".join([str(i).strip() for i in x if i])
+            if isinstance(x, str):
+                return x.strip()
+            return np.nan
+
+        df['tags'] = df['tags'].apply(normalize_tags)
+
+    # =========================
+    # Remote normalization
+    # =========================
+    if 'remote' in df.columns:
+        df['remote'] = df['remote'].fillna(False).astype(bool)
+
+    # =========================
+    # Schema alignment
+    # =========================
+    for col in CANONICAL_COLUMNS:
+        if col not in df.columns:
+            df[col] = np.nan
+
+    final_df = df[CANONICAL_COLUMNS].copy()
+
+    # =========================
+    # QUALITY FIX (IMPORTANT 🔥)
+    # =========================
+    final_df = final_df.drop_duplicates(subset=['job_id', 'job_url'])
+
+    final_df = final_df[
+        final_df['job_id'].notna() &
+        final_df['job_url'].notna()
+    ]
+
+    # =========================
+    # Logging
+    # =========================
+    logger.info(f"Initial records: {initial_count}")
+    logger.info(f"Final records: {len(final_df)}")
+    logger.info(f"Dropped records: {initial_count - len(final_df)}")
+
+    return final_df
+
+
+# ============================================================
+# Transformer: Adzuna → Silver
+# ============================================================
+
+def clean_adzuna_data(jobs_data):
+    """
+    Cleans and standardizes raw data from the Adzuna API.
+
+    Args:
+        jobs_data (list, dict, or str): Raw job records (list of dicts),
+            a Bronze-layer envelope {"source": "adzuna", "data": [...]},
+            or a path to the raw JSON file.
+
+    Returns:
+        pd.DataFrame: Cleaned DataFrame aligned to CANONICAL_COLUMNS.
+    """
+    # --- Load from file if path is given ---
+    if isinstance(jobs_data, str):
+        with open(jobs_data, 'r', encoding='utf-8') as f:
+            jobs_data = json.load(f)
+
+    # --- Unwrap Bronze envelope ---
+    if isinstance(jobs_data, dict) and "data" in jobs_data:
+        jobs_data = jobs_data["data"]
+
+    if not jobs_data:
+        logger.warning("No raw Adzuna data provided to cleaner.")
+        return pd.DataFrame(columns=CANONICAL_COLUMNS)
+
+    # Flatten nested JSON (company.display_name, location.display_name, …)
+    df = pd.json_normalize(jobs_data).copy(deep=True)
+    initial_count = len(df)
+
+    # =========================
+    # Column mapping
+    # =========================
+    column_mapping = {
+        'id': 'job_id',
+        'title': 'job_title',
+        'company.display_name': 'company_name',
+        'description': 'job_description',
+        'location.display_name': 'location',
+        'salary_min': 'salary_min',
+        'salary_max': 'salary_max',
+        'created': 'posted_date',
+        'contract_type': 'contract_type',
+        'redirect_url': 'job_url',
+        'category.label': 'tags',
+    }
+
+    # Fallbacks for alternative key names
+    if 'location' in df.columns and 'location.display_name' not in df.columns:
+        column_mapping['location'] = 'location'
+    if 'URL' in df.columns:
+        column_mapping['URL'] = 'job_url'
+
+    cols_to_rename = {k: v for k, v in column_mapping.items() if k in df.columns}
+    df = df.rename(columns=cols_to_rename)
+
+    # =========================
+    # Cleaning (same helpers as arbeitnow)
     # =========================
     if 'job_description' in df.columns:
         df['job_description'] = df['job_description'].apply(
@@ -219,18 +275,19 @@ def  clean_arbeitnow_data(raw_jobs):
     if 'location' in df.columns:
         df['location'] = df['location'].apply(normalize_location)
 
+    # Adzuna dates are ISO-8601 strings (e.g. "2026-04-14T12:00:00Z")
     if 'posted_date' in df.columns:
         df['posted_date'] = pd.to_datetime(
             df['posted_date'],
-            unit='s',
             utc=True,
             errors='coerce'
         )
 
+    # Tags: category.label is a single string in Adzuna, keep as-is
     if 'tags' in df.columns:
         df['tags'] = df['tags'].apply(
-            lambda x: ", ".join([str(i).strip() for i in x if i])
-            if isinstance(x, list) and len(x) > 0 else np.nan
+            lambda x: deep_clean_text(x, preserve_case=True)
+            if isinstance(x, str) else np.nan
         )
 
     # =========================
@@ -238,8 +295,6 @@ def  clean_arbeitnow_data(raw_jobs):
     # =========================
     if 'remote' in df.columns:
         df['remote'] = df['remote'].fillna(False).astype(bool)
-
-  
 
     # =========================
     # Schema alignment
@@ -258,32 +313,44 @@ def  clean_arbeitnow_data(raw_jobs):
     final_df = final_df.drop_duplicates(subset=['job_url'])
 
     # Logging
-    logger.info(f"Initial records: {initial_count}")
-    logger.info(f"Final records: {len(final_df)}")
-    logger.info(f"Dropped records: {initial_count - len(final_df)}")
+    logger.info(f"[Adzuna] Initial records: {initial_count}")
+    logger.info(f"[Adzuna] Final records: {len(final_df)}")
+    logger.info(f"[Adzuna] Dropped records: {initial_count - len(final_df)}")
 
     return final_df
 
-if __name__ == "__main__":
+
+# ============================================================
+# Transformer: Reed → Silver
+# ============================================================
+
+def clean_reed_data():
+
+    return
+
+
+
+
+# if __name__ == "__main__":
     
-    # ============================================================
-    # Simple exemple -> cleaning arbeitnow
-    # ============================================================
-    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    TEST_DIR = os.path.join(BASE_DIR, "test")
-    os.makedirs(TEST_DIR, exist_ok=True)
+#     # ============================================================
+#     # Simple exemple -> cleaning arbeitnow
+#     # ============================================================
+#     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+#     TEST_DIR = os.path.join(BASE_DIR, "test")
+#     os.makedirs(TEST_DIR, exist_ok=True)
 
-    # Example file (you can change this)
-    input_file = os.path.join(TEST_DIR, "arbeitnow_data_only_1776341238.json")
-    print("Loading file:", input_file)
+#     # Example file (you can change this)
+#     input_file = os.path.join(TEST_DIR, "arbeitnow_data_only_1776341238.json")
+#     print("Loading file:", input_file)
 
-    with open(input_file, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    jobs = data if isinstance(data, list) else data.get("data", [])
+#     with open(input_file, "r", encoding="utf-8") as f:
+#         data = json.load(f)
+#     jobs = data if isinstance(data, list) else data.get("data", [])
 
-    df = clean_arbeitnow_data(jobs)
-    print("Cleaned shape:", df.shape)
+#     df = clean_arbeitnow_data(jobs)
+#     print("Cleaned shape:", df.shape)
 
-    output_file = os.path.join(TEST_DIR, "arbeitnow_cleaned.json")
-    df.to_json(output_file, orient="records", force_ascii=False, indent=2)
-    print("Saved cleaned file to:", output_file)
+#     output_file = os.path.join(TEST_DIR, "arbeitnow_cleaned.json")
+#     df.to_json(output_file, orient="records", force_ascii=False, indent=2)
+#     print("Saved cleaned file to:", output_file)
