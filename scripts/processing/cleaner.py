@@ -36,7 +36,7 @@ CANONICAL_COLUMNS = [
 # Cleaning Utilities
 # ============================================================
 
-def deep_clean_text(text, preserve_case=False):
+def deep_clean_text(text,preserve_case=False):
     """
     High-quality text cleaning without breaking technical terms (API, SQL, iOS)
     """
@@ -303,12 +303,203 @@ def clean_adzuna_data(jobs_data):
 # ============================================================
 # Transformer: Reed → Silver
 # ============================================================
+def clean_reed_data(jobs_data):
+    """
+    Clean and transform raw job data from the Reed API into the canonical schema.
 
-def clean_reed_data():
+    This function:
+    - Accepts raw data in multiple formats (list, dict, file path)
+    - Normalizes nested JSON structure
+    - Cleans text, salary, currency, and dates
+    - Aligns output to CANONICAL_COLUMNS
+    - Applies data quality checks (null filtering, deduplication)
 
-    return
+    Args:
+        jobs_data (list | dict | str):
+            - List of job dictionaries
+            - Bronze format: {"source": "reed", "data": [...]}
+            - File path to JSON file
 
+    Returns:
+        pd.DataFrame:
+            Cleaned dataset aligned with CANONICAL_COLUMNS
+    """
+    try:
+        logger.info("[Reed] Starting cleaning process")
 
+        # =========================
+        # Load data
+        # =========================
+        if isinstance(jobs_data, str):
+            logger.info("[Reed] Loading data from file path")
+            with open(jobs_data, 'r', encoding='utf-8') as f:
+                jobs_data = json.load(f)
+
+        # Unwrap Bronze layer
+        if isinstance(jobs_data, dict) and "data" in jobs_data:
+            logger.info("[Reed] Detected Bronze format, extracting 'data' field")
+            jobs_data = jobs_data["data"]
+
+        if not jobs_data:
+            logger.warning("[Reed] No raw data provided")
+            return pd.DataFrame(columns=CANONICAL_COLUMNS)
+
+        # =========================
+        # Create DataFrame
+        # =========================
+        df = pd.json_normalize(jobs_data).copy(deep=True)
+        initial_count = len(df)
+
+        logger.info(f"[Reed] Loaded {initial_count} raw records")
+
+        # =========================
+        # Column mapping
+        # =========================
+        column_mapping = {
+            "jobId": "job_id",
+            "jobTitle": "job_title",
+            "employerName": "company_name",
+            "jobDescription": "job_description",
+            "locationName": "location",
+            "minimumSalary": "salary_min",
+            "maximumSalary": "salary_max",
+            "date": "posted_date",
+            "expirationDate": "expires_date",
+            "jobUrl": "job_url",
+            "currency": "currency"
+        }
+
+        df = df.rename(columns={k: v for k, v in column_mapping.items() if k in df.columns})
+
+        logger.info("[Reed] Column mapping applied")
+
+        # =========================
+        # Cleaning
+        # =========================
+        if 'job_description' in df.columns:
+            df['job_description'] = df['job_description'].apply(
+                lambda x: deep_clean_text(x, preserve_case=True)
+            )
+
+        if 'job_title' in df.columns:
+            df['job_title'] = df['job_title'].apply(
+                lambda x: deep_clean_text(x, preserve_case=True)
+            )
+
+        if 'job_url' in df.columns:
+            df['job_url'] = df['job_url'].apply(clean_url)
+
+        if 'location' in df.columns:
+            df['location'] = df['location'].apply(normalize_location)
+
+        logger.info("[Reed] Text, URL, and location cleaned")
+
+        # =========================
+        # Company cleaning
+        # =========================
+        if 'company_name' in df.columns:
+            df['company_name'] = (
+                df['company_name']
+                .fillna("Unknown")
+                .astype(str)
+                .str.encode("latin1", errors="ignore").str.decode("utf-8", errors="ignore")
+                .str.strip()
+                .str.replace(r"\b(Ltd|Limited|PLC|Inc|LLC)\b", "", regex=True)
+                .str.replace(r"[^\w\s]", "", regex=True)
+                .str.title()
+            )
+
+        logger.info("[Reed] Company names normalized")
+
+        # =========================
+        # Salary cleaning
+        # =========================
+        for col in ['salary_min', 'salary_max']:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+                df.loc[df[col] < 0, col] = np.nan
+
+        logger.info("[Reed] Salary fields cleaned")
+
+        # =========================
+        # Currency cleaning
+        # =========================
+        if 'currency' in df.columns:
+            df['currency'] = (
+                df['currency']
+                .fillna("UNKNOWN")
+                .astype(str)
+                .str.strip()
+                .str.upper()
+                .replace({
+                    "£": "GBP",
+                    "$": "USD",
+                    "€": "EUR"
+                })
+            )
+
+        logger.info("[Reed] Currency normalized")
+
+        # =========================
+        # Date parsing
+        # =========================
+        if 'posted_date' in df.columns:
+            df['posted_date'] = pd.to_datetime(
+                df['posted_date'],
+                format="%Y-%m-%d",
+                errors="coerce",
+                utc=True
+            )
+
+        if 'expires_date' in df.columns:
+            df['expires_date'] = pd.to_datetime(
+                df['expires_date'],
+                format="%Y-%m-%d",
+                errors="coerce",
+                utc=True
+            )
+
+        logger.info("[Reed] Dates parsed")
+
+        # =========================
+        # Defaults
+        # =========================
+        df['tags'] = np.nan
+        df['remote'] = False
+
+        # =========================
+        # Schema alignment
+        # =========================
+        for col in CANONICAL_COLUMNS:
+            if col not in df.columns:
+                df[col] = np.nan
+
+        final_df = df[CANONICAL_COLUMNS].copy()
+
+        # =========================
+        # Data quality checks
+        # =========================
+        before_clean = len(final_df)
+
+        final_df = final_df.dropna(subset=['job_id', 'job_title', 'job_url'])
+        final_df = final_df.drop_duplicates(subset=['job_id'])
+        final_df = final_df.drop_duplicates(subset=['job_url'])
+
+        after_clean = len(final_df)
+
+        # =========================
+        # Logging summary
+        # =========================
+        logger.info(f"[Reed] Initial records: {initial_count}")
+        logger.info(f"[Reed] After cleaning: {after_clean}")
+        logger.info(f"[Reed] Dropped records: {initial_count - after_clean}")
+
+        logger.info("[Reed] Cleaning process completed successfully")
+
+        return final_df
+    except Exception as e:
+        logger.error(f"[Reed] Error during cleaning: {str(e)}")
+        raise
 
 
 # if __name__ == "__main__":
