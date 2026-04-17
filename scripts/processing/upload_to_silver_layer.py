@@ -8,7 +8,7 @@ import boto3
 from io import BytesIO
 from botocore.exceptions import ClientError
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from scripts.common.logging_config import setup_logger
 
 # Processing pipeline
@@ -72,21 +72,51 @@ def read_from_bronze(s3, key):
 # =========================
 # 5️⃣ UPLOAD TO SILVER
 # =========================
+from io import BytesIO
+
 def upload_to_silver(s3, df, source_name, timestamp):
-    """Upload a transformed DataFrame to the silver bucket as JSON."""
-    silver_key = f"{source_name}/cleaning_timestamp={timestamp}/data.json"
+    """
+    Upload a transformed DataFrame to the Silver layer in Parquet format.
 
-    silver_data = df.to_json(orient="records", force_ascii=False, indent=2)
+    Args:
+        s3: boto3 client
+        df (pd.DataFrame): cleaned dataframe
+        source_name (str): data source (reed, adzuna, etc.)
+        timestamp (str|int): ingestion/cleaning timestamp
+    """
 
+    if df.empty:
+        logger.warning(f"[Silver] Empty DataFrame for {source_name}, skipping upload")
+        return
+
+    # =========================
+    # Define key (partitioned)
+    # =========================
+    silver_key = f"{source_name}/cleaning_timestamp={timestamp}/data.parquet"
+
+    logger.info(f"[Silver] Preparing Parquet upload → {silver_key}")
+
+    # =========================
+    # Convert DataFrame → Parquet in memory
+    # =========================
+    buffer = BytesIO()
+    df.to_parquet(buffer, index=False, engine="pyarrow")
+    buffer.seek(0)
+
+    # =========================
+    # Upload to MinIO
+    # =========================
     s3.put_object(
         Bucket=SILVER_BUCKET,
         Key=silver_key,
-        Body=BytesIO(silver_data.encode("utf-8")),
-        ContentType="application/json",
+        Body=buffer,
+        ContentType="application/octet-stream"
     )
 
-    logger.info(f"📤 Uploaded to silver: {SILVER_BUCKET}/{silver_key} ({len(df)} records)")
-
+    logger.info(
+        f"[Silver] Uploaded Parquet: {SILVER_BUCKET}/{silver_key} "
+        f"({len(df)} records, {buffer.getbuffer().nbytes} bytes)"
+    )
 
 # =========================
 # 6️⃣ PROCESSING PIPELINES (per source)
@@ -124,8 +154,22 @@ def process_adzuna(s3, bronze_key, timestamp):
 
 
 def process_reed(s3, bronze_key, timestamp):
+    """Full pipeline: Bronze → Clean → Standardize → Transform → Silver"""
+    logger.info("=" * 50)
+    logger.info("🔄 Processing Adzuna")
 
-    return
+    # Read from Bronze
+    raw_data = read_from_bronze(s3, bronze_key)
+    print('1111111')
+    # Clean
+    df = clean_reed_data(raw_data)
+    print(df)
+    logger.info(f"   Cleaned: {len(df)} records")
+
+    # Upload to Silver
+    upload_to_silver(s3, df, "reed", timestamp)
+
+    return df
 
 
 # =========================
@@ -142,20 +186,19 @@ def run_pipeline():
     # Add or comment out sources as needed
 
     sources = {
-        "adzuna": {
-            "bronze_key": "adzuna/ingestion_timestamp=1776337261/data.json",
-            "process_fn": process_adzuna,
-        },
+        # "adzuna": {
+        #     "bronze_key": "adzuna/ingestion_timestamp=1776337261/data.json",
+        #     "process_fn": process_adzuna,
+        # },
         # "arbeitnow": {
         #     "bronze_key": "arbeitnow/ingestion_timestamp=XXXXXXXXXX/data.json",
         #     "process_fn": process_arbeitnow,
         # },
-        # "reed": {
-        #     "bronze_key": "reed/ingestion_timestamp=XXXXXXXXXX/data.json",
-        #     "process_fn": process_reed,
-        # },
+        "reed": {
+            "bronze_key": "reed/ingestion_timestamp=1776414536/data.json",
+            "process_fn": process_reed,
+        },
     }
-
     for source_name, config in sources.items():
         try:
             config["process_fn"](s3, config["bronze_key"], timestamp)
