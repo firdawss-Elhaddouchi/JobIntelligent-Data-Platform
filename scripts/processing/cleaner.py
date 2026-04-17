@@ -299,103 +299,38 @@ def clean_adzuna_data(jobs_data):
 
     return final_df
 
-if __name__ == "__main__":
+
+# ============================================================
+# Transformer: Reed → Silver
+# ============================================================
+
+def clean_reed_data():
+
+    return
+
+
+
+
+# if __name__ == "__main__":
     
-    # ============================================================
-    # Simple exemple -> cleaning arbeitnow
-    # ============================================================
-    # BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    # TEST_DIR = os.path.join(BASE_DIR, "test")
-    # os.makedirs(TEST_DIR, exist_ok=True)
+#     # ============================================================
+#     # Simple exemple -> cleaning arbeitnow
+#     # ============================================================
+#     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+#     TEST_DIR = os.path.join(BASE_DIR, "test")
+#     os.makedirs(TEST_DIR, exist_ok=True)
 
-    # # Example file (you can change this)
-    # input_file = os.path.join(TEST_DIR, "arbeitnow_data_only_1776341238.json")
-    # print("Loading file:", input_file)
+#     # Example file (you can change this)
+#     input_file = os.path.join(TEST_DIR, "arbeitnow_data_only_1776341238.json")
+#     print("Loading file:", input_file)
 
-    # with open(input_file, "r", encoding="utf-8") as f:
-    #     data = json.load(f)
-    # jobs = data if isinstance(data, list) else data.get("data", [])
+#     with open(input_file, "r", encoding="utf-8") as f:
+#         data = json.load(f)
+#     jobs = data if isinstance(data, list) else data.get("data", [])
 
-    # df = clean_arbeitnow_data(jobs)
-    # print("Cleaned shape:", df.shape)
+#     df = clean_arbeitnow_data(jobs)
+#     print("Cleaned shape:", df.shape)
 
-    # output_file = os.path.join(TEST_DIR, "arbeitnow_cleaned.json")
-    # df.to_json(output_file, orient="records", force_ascii=False, indent=2)
-    # print("Saved cleaned file to:", output_file)
-
-    
-    # ============================================================
-    # 🔧 Common imports & MinIO configuration (shared by all sources)
-    # ============================================================
-    from dotenv import load_dotenv
-    import boto3
-    from io import BytesIO
-    import time
-
-    load_dotenv()
-
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=os.getenv("MINIO_ENDPOINT", "http://localhost:9000"),
-        aws_access_key_id=os.getenv("MINIO_ROOT_USER", "minioadmin"),
-        aws_secret_access_key=os.getenv("MINIO_ROOT_PASSWORD", "minioadmin"),
-    )
-
-    BRONZE_BUCKET = "bronze"
-    SILVER_BUCKET = "silver"
-    timestamp = int(time.time())
-
-    # Create silver bucket if it doesn't exist
-    try:
-        s3.head_bucket(Bucket=SILVER_BUCKET)
-    except Exception:
-        s3.create_bucket(Bucket=SILVER_BUCKET)
-        print(f"🪣 Created bucket: {SILVER_BUCKET}")
-
-    def upload_to_silver(df, source_name):
-        """Upload a cleaned DataFrame to the silver bucket in MinIO."""
-        silver_key = f"{source_name}/cleaning_timestamp={timestamp}/data.json"
-        silver_data = df.to_json(orient="records", force_ascii=False, indent=2)
-        s3.put_object(
-            Bucket=SILVER_BUCKET,
-            Key=silver_key,
-            Body=BytesIO(silver_data.encode("utf-8")),
-            ContentType="application/json",
-        )
-        print(f"📤 Uploaded to MinIO: {SILVER_BUCKET}/{silver_key}")
-
-    # ============================================================
-    # 1️⃣ Cleaning Arbeitnow  (Bronze → Silver)
-    # ============================================================
-    # ARBEITNOW_KEY = "arbeitnow/ingestion_timestamp=XXXXXXXXXX/data.json"
-    # print(f"\n📥 Downloading: {BRONZE_BUCKET}/{ARBEITNOW_KEY}")
-    # response = s3.get_object(Bucket=BRONZE_BUCKET, Key=ARBEITNOW_KEY)
-    # arbeitnow_raw = json.loads(response["Body"].read().decode("utf-8"))
-    # jobs = arbeitnow_raw if isinstance(arbeitnow_raw, list) else arbeitnow_raw.get("data", [])
-    # df_arbeitnow = clean_arbeitnow_data(jobs)
-    # print("✅ Cleaned Arbeitnow shape:", df_arbeitnow.shape)
-    # upload_to_silver(df_arbeitnow, "arbeitnow")
-
-    # ============================================================
-    # 2️⃣ Cleaning Adzuna  (Bronze → Silver)
-    # ============================================================
-    ADZUNA_KEY = "adzuna/ingestion_timestamp=1776337261/data.json"
-
-    print(f"\n📥 Downloading: {BRONZE_BUCKET}/{ADZUNA_KEY}")
-    response = s3.get_object(Bucket=BRONZE_BUCKET, Key=ADZUNA_KEY)
-    adzuna_raw = json.loads(response["Body"].read().decode("utf-8"))
-
-    df_adzuna = clean_adzuna_data(adzuna_raw)
-    print("✅ Cleaned Adzuna shape:", df_adzuna.shape)
-    upload_to_silver(df_adzuna, "adzuna")
-
-    # ============================================================
-    # 3️⃣ Cleaning Reed  (Bronze → Silver)
-    # ============================================================
-    # REED_KEY = "reed/ingestion_timestamp=XXXXXXXXXX/data.json"
-    # print(f"\n📥 Downloading: {BRONZE_BUCKET}/{REED_KEY}")
-    # response = s3.get_object(Bucket=BRONZE_BUCKET, Key=REED_KEY)
-    # reed_raw = json.loads(response["Body"].read().decode("utf-8"))
-    # df_reed = clean_reed_data(reed_raw)
-    # print("✅ Cleaned Reed shape:", df_reed.shape)
-    # upload_to_silver(df_reed, "reed")
+#     output_file = os.path.join(TEST_DIR, "arbeitnow_cleaned.json")
+#     df.to_json(output_file, orient="records", force_ascii=False, indent=2)
+#     print("Saved cleaned file to:", output_file)
