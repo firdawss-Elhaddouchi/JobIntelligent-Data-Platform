@@ -10,8 +10,8 @@ from botocore.exceptions import ClientError
 from scripts.ingestion import reed_client
 from scripts.ingestion import adzuna_client
 import os
-# import arbeitnow_client  
 from scripts.ingestion.arbeitnow_client import collect_arbeitnow
+from scripts.ingestion import arbeitnow_client
 import os
 from scripts.ingestion import arbeitnow_client
 from scripts.common import logging_config
@@ -35,6 +35,11 @@ MINIO_ROOT_PASSWORD = os.getenv("MINIO_ROOT_PASSWORD")
 BUCKET = "bronze"
 METADATA_KEY = "metadata/last_run.json"
 
+DATA_KEYWORDS = [
+"data", "données", "analyst", "engineer", "science",
+"machine learning", "ai", "intelligence artificialielle",
+"bi", "business intelligence", "big data", "etl", "python"
+]
 # =========================
 # 3️⃣ MINIO CLIENT
 # =========================
@@ -108,6 +113,9 @@ def save_last_run(s3, timestamp):
 
     logger.info(f"Saved last_run: {timestamp.isoformat()}")
 
+
+
+
 # =========================
 # 7️⃣ DATA SOURCES
 # =========================
@@ -133,10 +141,10 @@ def collect_reed(last_run):
     logger.info("Reed ingestion started")
 
     all_jobs = reed_client.collect_reed()
-    all_new_jobs = reed_client.filter_new_jobs(all_jobs, last_run)
+    # all_new_jobs = reed_client.filter_new_jobs(all_jobs, last_run)
 
-    logger.info(f"Reed filtered {len(all_new_jobs)} new jobs")
-    return all_new_jobs
+    logger.info(f"Reed filtered {len(all_jobs)} new jobs")
+    return all_jobs
 
 # =========================
 # 8️⃣ MAIN PIPELINE

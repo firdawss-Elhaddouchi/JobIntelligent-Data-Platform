@@ -1,8 +1,16 @@
 # dags/dag_daily_ingestion.py
 
+import sys
+import os
 from airflow import DAG
-from airflow.operators.python import PythonOperator
-from datetime import datetime, timedelta
+from datetime import datetime
+
+# Add the project root to sys.path so Airflow can see the 'scripts' folder
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from scripts.ingestion.upload_to_bronze_layer import run_pipeline
+
+
 
 # استيراد من scripts (Airflow يضيف /opt/airflow للـ PYTHONPATH)
 import sys
