@@ -7,14 +7,15 @@ from dotenv import load_dotenv
 import boto3
 from io import BytesIO
 from botocore.exceptions import ClientError
+from scripts.ingestion import reed_client
 from scripts.ingestion import adzuna_client
 import os
 from scripts.ingestion.arbeitnow_client import collect_arbeitnow
 from scripts.ingestion import arbeitnow_client
 import os
-from scripts.ingestion import reed_client
+from scripts.ingestion import arbeitnow_client
 from scripts.common import logging_config
-logger = logging_config.setup_logger("reed_client")
+logger = logging_config.setup_logger("upload to bronze layer")
 # to run use this : python -m scripts.ingestion.upload_to_bronze_layer
 
 
@@ -70,7 +71,7 @@ def upload_to_minio(s3, key, data):
 
     create_bucket_if_not_exists(s3, BUCKET)
 
-    logger.info(f"Uploading → {key}")
+    logger.info(f"Uploading ->{key}")
 
     s3.put_object(
         Bucket=BUCKET,
@@ -97,7 +98,7 @@ def get_last_run(s3):
 
     except Exception:
         fallback = datetime.now(timezone.utc) - timedelta(hours=24)
-        logger.warning(f"No last_run found → fallback: {fallback.isoformat()}")
+        logger.warning(f"No last_run found -> fallback: {fallback.isoformat()}")
         return fallback
 
 def save_last_run(s3, timestamp):
@@ -158,8 +159,8 @@ def run_pipeline():
     now = datetime.now(timezone.utc)
     print(last_run)
     sources = {
-        # "adzuna": lambda: collect_adzuna(last_run.isoformat()),
-        # "arbeitnow": lambda: collect_arbeitnow(last_run)
+        "adzuna": lambda: collect_adzuna(last_run),
+        "arbeitnow": lambda: collect_arbeitnow(last_run),
         "reed": lambda: collect_reed(last_run)
         
     }

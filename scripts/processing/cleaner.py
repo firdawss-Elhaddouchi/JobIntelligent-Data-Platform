@@ -86,7 +86,7 @@ def normalize_location(loc):
 # Transformer: Arbeitnow → Silver
 # ============================================================
 
-def  clean_arbeitnow_data(raw_jobs):
+def clean_arbeitnow_data(raw_jobs):
 
     if not raw_jobs:
         logger.warning("No raw data provided to cleaner.")
@@ -95,7 +95,9 @@ def  clean_arbeitnow_data(raw_jobs):
     df = pd.DataFrame(raw_jobs).copy(deep=True)
     initial_count = len(df)
 
+    # =========================
     # Column mapping
+    # =========================
     column_mapping = {
         'slug': 'job_id',
         'title': 'job_title',
@@ -111,15 +113,22 @@ def  clean_arbeitnow_data(raw_jobs):
     df = df.rename(columns=column_mapping)
 
     # =========================
-    # Cleaning
+    # SAFE cleaning (important fix 🔥)
     # =========================
+    def safe_apply(series, func):
+        if series is None:
+            return series
+        return series.apply(lambda x: func(x) if pd.notna(x) else np.nan)
+
     if 'job_description' in df.columns:
-        df['job_description'] = df['job_description'].apply(
+        df['job_description'] = safe_apply(
+            df['job_description'],
             lambda x: deep_clean_text(x, preserve_case=True)
         )
 
     if 'job_title' in df.columns:
-        df['job_title'] = df['job_title'].apply(
+        df['job_title'] = safe_apply(
+            df['job_title'],
             lambda x: deep_clean_text(x, preserve_case=True)
         )
 
@@ -129,27 +138,35 @@ def  clean_arbeitnow_data(raw_jobs):
     if 'location' in df.columns:
         df['location'] = df['location'].apply(normalize_location)
 
+    # =========================
+    # Date handling (safe)
+    # =========================
     if 'posted_date' in df.columns:
         df['posted_date'] = pd.to_datetime(
             df['posted_date'],
             unit='s',
             utc=True,
             errors='coerce'
-        )
+        ).dt.strftime("%Y-%m-%d")
 
+    # =========================
+    # Tags FIX (important 🔥)
+    # =========================
     if 'tags' in df.columns:
-        df['tags'] = df['tags'].apply(
-            lambda x: ", ".join([str(i).strip() for i in x if i])
-            if isinstance(x, list) and len(x) > 0 else np.nan
-        )
+        def normalize_tags(x):
+            if isinstance(x, list):
+                return ", ".join([str(i).strip() for i in x if i])
+            if isinstance(x, str):
+                return x.strip()
+            return np.nan
+
+        df['tags'] = df['tags'].apply(normalize_tags)
 
     # =========================
     # Remote normalization
     # =========================
     if 'remote' in df.columns:
         df['remote'] = df['remote'].fillna(False).astype(bool)
-
-  
 
     # =========================
     # Schema alignment
@@ -161,20 +178,23 @@ def  clean_arbeitnow_data(raw_jobs):
     final_df = df[CANONICAL_COLUMNS].copy()
 
     # =========================
-    # Data quality checks
+    # QUALITY FIX (IMPORTANT 🔥)
     # =========================
-    final_df = final_df.dropna(subset=['job_id', 'job_title', 'job_url'])
-    final_df = final_df.drop_duplicates(subset=['job_id'])
-    final_df = final_df.drop_duplicates(subset=['job_url'])
+    final_df = final_df.drop_duplicates(subset=['job_id', 'job_url'])
 
+    final_df = final_df[
+        final_df['job_id'].notna() &
+        final_df['job_url'].notna()
+    ]
+
+    # =========================
     # Logging
+    # =========================
     logger.info(f"Initial records: {initial_count}")
     logger.info(f"Final records: {len(final_df)}")
     logger.info(f"Dropped records: {initial_count - len(final_df)}")
 
     return final_df
-
-
 
 
 # ============================================================
