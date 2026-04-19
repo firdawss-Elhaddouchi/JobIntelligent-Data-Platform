@@ -160,10 +160,8 @@ def process_reed(s3, bronze_key, timestamp):
 
     # Read from Bronze
     raw_data = read_from_bronze(s3, bronze_key)
-    print('1111111')
     # Clean
     df = clean_reed_data(raw_data)
-    print(df)
     logger.info(f"   Cleaned: {len(df)} records")
 
     # Upload to Silver
