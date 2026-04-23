@@ -5,9 +5,12 @@ import sys
 import time
 from dotenv import load_dotenv
 from dateutil import parser
+<<<<<<< HEAD
+=======
 from datetime import datetime, timezone
 # from ..common.logging_config import setup_logger
 import sys , os
+>>>>>>> eaa48cfb468b415a288d99e52e55f0fa6db94d35
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from scripts.common.logging_config import setup_logger
 
@@ -65,30 +68,33 @@ def collect_adzuna(max_days_old=None):
                 break
 
             for job in data:
-                company = job.get("company", {})
-                company_name = company.get("display_name") if isinstance(company, dict) else None
+                # 1. On garde UNIQUEMENT les colonnes dont on a besoin
+                # 2. On garde les NOMS ORIGINAUX (id, title, etc) pour le cleaner
+                # 3. On ne crée pas de colonnes de valeurs nulles
                 
-                location = job.get("location", {})
-                location_name = location.get("display_name") if isinstance(location, dict) else job.get("location")
+                keys_to_keep = [
+                    "id", "title", "description", "salary_min", "salary_max",
+                    "created", "contract_time", "contract_type", "redirect_url"
+                    # "URL"    → Adzuna utilise redirect_url, pas URL (jamais retourné)
+                    # "remote" → Non retourné par l'API Adzuna (cleaner gère le défaut False)
+                ]
 
-                formatted_job = {
-                    "job_id": job.get("id"),
-                    "job_title": job.get("title"),
-                    "company_name": company_name,
-                    "job_description": job.get("description"),
-                    "tags": job.get("category", {}).get("label") if isinstance(job.get("category"), dict) else None,
-                    "location": location_name,
-                    "salary_min": job.get("salary_min"),
-                    "salary_max": job.get("salary_max"),
-                    "posted_date": job.get("created"),
-                    "expires_date": job.get("expires_date"),
-                    "contract_type": job.get("contract_time") or job.get("contract_type"),
-                    "currency": job.get("currency"),
-                    "remote": job.get("remote"),
-                    "job_url": job.get("redirect_url") or job.get("URL"),
-                    "source_site": "Adzuna"
-                }
-                all_jobs.append(formatted_job)
+                bronze_job = {}
+                
+                # Récupération des clés simples
+                for key in keys_to_keep:
+                    if key in job:
+                        bronze_job[key] = job[key]
+
+                # Récupération des dictionnaires (que cleaner.py va aplatir)
+                if "company" in job:
+                    bronze_job["company"] = job["company"]
+                if "location" in job:
+                    bronze_job["location"] = job["location"]
+                if "category" in job:
+                    bronze_job["category"] = job["category"]
+
+                all_jobs.append(bronze_job)
 
             time.sleep(1) # Simple pacing
 
@@ -103,6 +109,17 @@ def filter_new_jobs(jobs, last_run):
     if not last_run:
         return jobs
 
+<<<<<<< HEAD
+    import datetime
+    if isinstance(last_run, str):
+        last_run_dt = parser.parse(last_run)
+    else:
+        last_run_dt = last_run
+        
+    if last_run_dt.tzinfo is None:
+        last_run_dt = last_run_dt.replace(tzinfo=datetime.timezone.utc)
+        
+=======
     if isinstance(last_run, str):
         last_run_dt = parser.parse(last_run)
     elif isinstance(last_run, datetime):
@@ -113,19 +130,23 @@ def filter_new_jobs(jobs, last_run):
     if last_run_dt.tzinfo is None:
         last_run_dt = last_run_dt.replace(tzinfo=timezone.utc)
 
+>>>>>>> eaa48cfb468b415a288d99e52e55f0fa6db94d35
     new_jobs = []
 
     for job in jobs:
-        # The date is now stored in the 'posted_date' field after mapping
-        job_date = job.get("posted_date")
+        # In the raw filtered data, the creation date is still 'created'
+        job_date = job.get("created")
 
         if not job_date:
             continue
 
         job_dt = safe_parse_date(job_date)
 
-        if job_dt and job_dt > last_run_dt:
-            new_jobs.append(job)
+        if job_dt:
+            if job_dt.tzinfo is None:
+                job_dt = job_dt.replace(tzinfo=datetime.timezone.utc)
+            if job_dt > last_run_dt:
+                new_jobs.append(job)
 
     logger.info(f"Adzuna filtered {len(new_jobs)} new jobs")
     return new_jobs
