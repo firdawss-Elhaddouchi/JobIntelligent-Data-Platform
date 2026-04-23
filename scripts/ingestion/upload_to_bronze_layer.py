@@ -123,19 +123,19 @@ def collect_arbeitnow(last_run):
     logger.info("Arbeitnow ingestion started")
 
     all_jobs = arbeitnow_client.collect_arbeitnow()
-    all_new_jobs = arbeitnow_client.filter_new_jobs(all_jobs, last_run)
+    # all_new_jobs = arbeitnow_client.filter_new_jobs(all_jobs, last_run)
 
-    logger.info(f"Arbeitnow filtered {len(all_new_jobs)} new jobs")
-    return all_new_jobs
+    logger.info(f"Arbeitnow filtered {len(all_jobs)} new jobs")
+    return all_jobs
 
 def collect_adzuna(last_run):
     logger.info("Adzuna ingestion started")
 
     all_jobs = adzuna_client.collect_adzuna()
-    all_new_jobs = adzuna_client.filter_new_jobs(all_jobs, last_run)
+    # all_new_jobs = adzuna_client.filter_new_jobs(all_jobs, last_run)
 
-    logger.info(f"Adzuna filtered {len(all_new_jobs)} new jobs")
-    return all_new_jobs
+    logger.info(f"Adzuna filtered {len(all_jobs)} new jobs")
+    return all_jobs
 
 def collect_reed(last_run):
     logger.info("Reed ingestion started")

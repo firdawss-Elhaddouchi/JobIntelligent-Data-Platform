@@ -37,7 +37,7 @@ def collect_reed():
     url = "https://www.reed.co.uk/api/1.0/search"
     all_jobs = []
 
-    for page in range(1, 6):
+    for page in range(1, 11):
         try:
             params = {
                 "resultsToTake": 50,

@@ -31,7 +31,7 @@ def is_data_job(job):
 # =========================
 # 1️⃣ COLLECT DATA (RAW)
 # =========================
-def collect_arbeitnow(max_pages=5):
+def collect_arbeitnow(max_pages=10):
     """
     Fetches raw jobs from Arbeitnow without any date filtering.
     """
@@ -120,6 +120,6 @@ if __name__ == "__main__":
             json.dump(data_results, f, ensure_ascii=False, indent=4) 
 
 
-        logger.info(f"💾 Saved {len(data_results)} filtered jobs to {file_path}") 
+        logger.info(f" Saved {len(data_results)} filtered jobs to {file_path}") 
     except Exception as e: 
-        logger.error(f"💥 Test failed: {e}")
+        logger.error(f" Test failed: {e}")

@@ -81,6 +81,13 @@ def normalize_location(loc):
 
     return loc
 
+# ============================================================
+# Cleaning Utilities
+# ============================================================
+
+def safe_rename(df, mapping):
+    available_mapping = {k: v for k, v in mapping.items() if k in df.columns}
+    return df.rename(columns=available_mapping)
 
 # ============================================================
 # Transformer: Arbeitnow → Silver
@@ -110,7 +117,8 @@ def clean_arbeitnow_data(raw_jobs):
         'remote': 'remote'
     }
 
-    df = df.rename(columns=column_mapping)
+    # df = df.rename(columns=column_mapping)
+    df = safe_rename(df, column_mapping)
 
     # =========================
     # SAFE cleaning (important fix 🔥)
@@ -523,6 +531,7 @@ def clean_reed_data(jobs_data):
 
 
 # if __name__ == "__main__":
+
     
 #     # ============================================================
 #     # Simple exemple -> cleaning arbeitnow
@@ -542,6 +551,6 @@ def clean_reed_data(jobs_data):
 #     df = clean_arbeitnow_data(jobs)
 #     print("Cleaned shape:", df.shape)
 
-#     output_file = os.path.join(TEST_DIR, "arbeitnow_cleaned.json")
-#     df.to_json(output_file, orient="records", force_ascii=False, indent=2)
-#     print("Saved cleaned file to:", output_file)
+#     output_file = os.path.join(TEST_DIR, "arbeitnow_cleaned1.json")
+#     df.to_json(output_file, orient="records", escape_forward_slashes=False)
+    # print("Saved cleaned file to:", output_file)
