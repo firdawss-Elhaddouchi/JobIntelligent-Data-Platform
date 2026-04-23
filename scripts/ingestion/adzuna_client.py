@@ -5,12 +5,6 @@ import sys
 import time
 from dotenv import load_dotenv
 from dateutil import parser
-<<<<<<< HEAD
-=======
-from datetime import datetime, timezone
-# from ..common.logging_config import setup_logger
-import sys , os
->>>>>>> eaa48cfb468b415a288d99e52e55f0fa6db94d35
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from scripts.common.logging_config import setup_logger
 
@@ -109,7 +103,6 @@ def filter_new_jobs(jobs, last_run):
     if not last_run:
         return jobs
 
-<<<<<<< HEAD
     import datetime
     if isinstance(last_run, str):
         last_run_dt = parser.parse(last_run)
@@ -119,18 +112,6 @@ def filter_new_jobs(jobs, last_run):
     if last_run_dt.tzinfo is None:
         last_run_dt = last_run_dt.replace(tzinfo=datetime.timezone.utc)
         
-=======
-    if isinstance(last_run, str):
-        last_run_dt = parser.parse(last_run)
-    elif isinstance(last_run, datetime):
-        last_run_dt = last_run
-    else:
-        raise ValueError(f"Invalid type for last_run: {type(last_run)}")
-
-    if last_run_dt.tzinfo is None:
-        last_run_dt = last_run_dt.replace(tzinfo=timezone.utc)
-
->>>>>>> eaa48cfb468b415a288d99e52e55f0fa6db94d35
     new_jobs = []
 
     for job in jobs:
