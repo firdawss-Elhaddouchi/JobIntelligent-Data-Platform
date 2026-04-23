@@ -7,12 +7,12 @@ from dotenv import load_dotenv
 import boto3
 from io import BytesIO
 from botocore.exceptions import ClientError
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from scripts.ingestion import reed_client
 from scripts.ingestion import adzuna_client
-import os
 from scripts.ingestion.arbeitnow_client import collect_arbeitnow
 from scripts.ingestion import arbeitnow_client
-import os
 from scripts.ingestion import arbeitnow_client
 from scripts.common import logging_config
 logger = logging_config.setup_logger("upload to bronze layer")
@@ -160,8 +160,8 @@ def run_pipeline():
     print(last_run)
     sources = {
         "adzuna": lambda: collect_adzuna(last_run),
-        "arbeitnow": lambda: collect_arbeitnow(last_run),
-        "reed": lambda: collect_reed(last_run)
+        # "arbeitnow": lambda: collect_arbeitnow(last_run),
+        # "reed": lambda: collect_reed(last_run)
         
     }
 
