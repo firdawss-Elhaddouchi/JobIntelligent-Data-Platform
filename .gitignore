@@ -211,3 +211,4 @@ test/
 *.pdf
 data/
 logs/
+data/minio_data/

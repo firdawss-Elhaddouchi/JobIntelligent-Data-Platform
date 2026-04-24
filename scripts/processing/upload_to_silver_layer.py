@@ -8,7 +8,7 @@ import boto3
 from io import BytesIO
 from botocore.exceptions import ClientError
 
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from scripts.common.logging_config import setup_logger
 
 # Import Cleaning and Standardization utilities
@@ -91,7 +91,7 @@ def create_bucket_if_not_exists(s3, bucket_name):
 # =========================
 def read_from_bronze(s3, key):
     """Download and parse a JSON file from the bronze bucket."""
-    logger.info(f"📥 Reading from bronze: {key}")
+    logger.info(f"[READ] Reading from bronze: {key}")
     response = s3.get_object(Bucket=BRONZE_BUCKET, Key=key)
     data = json.loads(response["Body"].read().decode("utf-8"))
     return data
@@ -105,7 +105,7 @@ from io import BytesIO
 
 def upload_to_silver(s3, df, source_name, timestamp):
     """
-    Upload a transformed DataFrame to the Silver layer in Parquet format.
+    Upload a transformed DataFrame to the Silver layer in JSON format.
 
     Args:
         s3: boto3 client
@@ -121,16 +121,17 @@ def upload_to_silver(s3, df, source_name, timestamp):
     # =========================
     # Define key (partitioned)
     # =========================
-    silver_key = f"{source_name}/cleaning_timestamp={timestamp}/data.parquet"
+    silver_key = f"{source_name}/cleaning_timestamp={timestamp}/data.json"
 
-    logger.info(f"[Silver] Preparing Parquet upload → {silver_key}")
+    logger.info(f"[Silver] Preparing JSON upload -> {silver_key}")
 
     # =========================
-    # Convert DataFrame → Parquet in memory
+    # Convert DataFrame → JSON in memory
     # =========================
-    buffer = BytesIO()
-    df.to_parquet(buffer, index=False, engine="pyarrow")
-    buffer.seek(0)
+    import pandas as pd
+    records = df.where(pd.notnull(df), None).to_dict(orient="records")
+    json_str = json.dumps(records, ensure_ascii=False, indent=4)
+    buffer = BytesIO(json_str.encode("utf-8"))
 
     # =========================
     # Upload to MinIO
@@ -139,13 +140,57 @@ def upload_to_silver(s3, df, source_name, timestamp):
         Bucket=SILVER_BUCKET,
         Key=silver_key,
         Body=buffer,
-        ContentType="application/octet-stream"
+        ContentType="application/json"
     )
 
     logger.info(
-        f"[Silver] Uploaded Parquet: {SILVER_BUCKET}/{silver_key} "
+        f"[Silver] Uploaded JSON: {SILVER_BUCKET}/{silver_key} "
         f"({len(df)} records, {buffer.getbuffer().nbytes} bytes)"
     )
+
+# def upload_to_silver(s3, df, source_name, timestamp):
+#     """
+#     Upload a transformed DataFrame to the Silver layer in Parquet format.
+
+#     Args:
+#         s3: boto3 client
+#         df (pd.DataFrame): cleaned dataframe
+#         source_name (str): data source (reed, adzuna, etc.)
+#         timestamp (str|int): ingestion/cleaning timestamp
+#     """
+
+#     if df.empty:
+#         logger.warning(f"[Silver] Empty DataFrame for {source_name}, skipping upload")
+#         return
+
+#     # =========================
+#     # Define key (partitioned)
+#     # =========================
+#     silver_key = f"{source_name}/cleaning_timestamp={timestamp}/data.parquet"
+
+#     logger.info(f"[Silver] Preparing Parquet upload -> {silver_key}")
+
+#     # =========================
+#     # Convert DataFrame → Parquet in memory
+#     # =========================
+#     buffer = BytesIO()
+#     df.to_parquet(buffer, index=False, engine="pyarrow")
+#     buffer.seek(0)
+
+#     # =========================
+#     # Upload to MinIO
+#     # =========================
+#     s3.put_object(
+#         Bucket=SILVER_BUCKET,
+#         Key=silver_key,
+#         Body=buffer,
+#         ContentType="application/octet-stream"
+#     )
+
+#     logger.info(
+#         f"[Silver] Uploaded Parquet: {SILVER_BUCKET}/{silver_key} "
+#         f"({len(df)} records, {buffer.getbuffer().nbytes} bytes)"
+#     )
 
 # =========================
 # 7-  PROCESSING PIPELINES (per source)

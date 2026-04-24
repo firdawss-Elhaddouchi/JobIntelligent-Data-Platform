@@ -294,6 +294,8 @@ def clean_adzuna_data(jobs_data):
         column_mapping['location'] = 'location'
     if 'URL' in df.columns:
         column_mapping['URL'] = 'job_url'
+    if 'contract_type' not in df.columns and 'contract_time' in df.columns:
+        column_mapping['contract_time'] = 'contract_type'
 
     cols_to_rename = {k: v for k, v in column_mapping.items() if k in df.columns}
     df = df.rename(columns=cols_to_rename)
@@ -317,6 +319,46 @@ def clean_adzuna_data(jobs_data):
     if 'location' in df.columns:
         df['location'] = df['location'].apply(normalize_location)
 
+    # Company cleaning
+    if 'company_name' in df.columns:
+        df['company_name'] = (
+            df['company_name']
+            .fillna("Unknown")
+            .astype(str)
+            .str.encode("latin1", errors="ignore").str.decode("utf-8", errors="ignore")
+            .str.strip()
+            .str.replace(r"\b(Ltd|Limited|PLC|Inc|LLC)\b", "", regex=True)
+            .str.replace(r"[^\w\s]", "", regex=True)
+            .str.title()
+        )
+
+    # Salary cleaning
+    for col in ['salary_min', 'salary_max']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+            df.loc[df[col] < 0, col] = np.nan
+
+    # Currency cleaning
+    if 'currency' in df.columns:
+        df['currency'] = (
+            df['currency']
+            .fillna("UNKNOWN")
+            .astype(str)
+            .str.strip()
+            .str.upper()
+            .replace({
+                "£": "GBP",
+                "$": "USD",
+                "€": "EUR"
+            })
+        )
+
+    # Contract Type cleaning
+    if 'contract_type' in df.columns:
+        df['contract_type'] = df['contract_type'].apply(
+            lambda x: deep_clean_text(x, preserve_case=True) if pd.notna(x) else np.nan
+        )
+
     # Adzuna dates are ISO-8601 strings (e.g. "2026-04-14T12:00:00Z")
     if 'posted_date' in df.columns:
         df['posted_date'] = pd.to_datetime(
@@ -324,7 +366,14 @@ def clean_adzuna_data(jobs_data):
             dayfirst=True,  # Crucial for UK-based Reed API formats
             utc=True,
             errors='coerce'
-        )
+        ).dt.strftime("%Y-%m-%d")
+
+    if 'expires_date' in df.columns:
+        df['expires_date'] = pd.to_datetime(
+            df['expires_date'],
+            utc=True,
+            errors='coerce'
+        ).dt.strftime("%Y-%m-%d")
 
     # Tags: category.label is a single string in Adzuna, keep as-is
     if 'tags' in df.columns:
