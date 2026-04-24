@@ -211,9 +211,13 @@ test/
 *.pdf
 logs/
 data/
-# git rm -r --cached folder/
-# echo "folder/" >> .gitignore
+# git rm -r --cached data/
+# echo "data/" >> .gitignore
 # git add .gitignore
-# git commit -m "ignore folder"
+# git commit -m "ignore data"
 # git push
+<<<<<<< HEAD
 data/
+=======
+data/
+>>>>>>> 3850999a8383b87d4377e8521a25095561b84108
