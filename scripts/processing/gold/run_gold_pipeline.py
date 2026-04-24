@@ -11,10 +11,11 @@ import pandas as pd
 from io import BytesIO
 import boto3
 from botocore.exceptions import ClientError
-
+from sqlalchemy import create_engine
 
 from scripts.processing.gold.gold_transformations import (
     build_jobs_fact,
+    build_dim_location,
     jobs_per_location,
     jobs_per_company,
     salary_trends,
@@ -32,6 +33,12 @@ SECRET_KEY = "minioadmin"
 SILVER_BUCKET = "silver"
 GOLD_BUCKET = "gold"
 
+# =========================
+# POSTGRES CONFIG
+# =========================
+POSTGRES_URI = "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow"
+# ⚠️ If running inside Docker use:
+# postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
 
 # =========================
 # MINIO CLIENT
@@ -44,6 +51,8 @@ def get_minio_client():
         aws_secret_access_key=SECRET_KEY
     )
 
+def get_postgres_engine():
+    return create_engine(POSTGRES_URI)
 
 # =========================
 # GET LATEST SILVER DATA
@@ -88,38 +97,54 @@ def read_silver_data(s3, key):
 # UPLOAD GOLD
 # =========================
 
-def create_bucket_if_not_exists(s3, bucket_name):
-    """
-    Checks if a bucket exists in MinIO; if not, creates it.
-    Essential for first-time setup and system resilience.
-    """
-    try:
-        s3.head_bucket(Bucket=bucket_name)
-    except ClientError:
-        s3.create_bucket(Bucket=bucket_name)
-        # logger.info(f"Bucket created: {bucket_name}")
+# def create_bucket_if_not_exists(s3, bucket_name):
+#     """
+#     Checks if a bucket exists in MinIO; if not, creates it.
+#     Essential for first-time setup and system resilience.
+#     """
+#     try:
+#         s3.head_bucket(Bucket=bucket_name)
+#     except ClientError:
+#         s3.create_bucket(Bucket=bucket_name)
+#         # logger.info(f"Bucket created: {bucket_name}")
 
-def upload_gold(s3, df, table_name, timestamp):
+# def upload_gold_minio(s3, df, table_name, timestamp):
+
+#     if df.empty:
+#         print(f"[Gold] {table_name} is empty, skipping")
+#         return
+
+#     key = f"{table_name}/timestamp={timestamp}/data.json"
+
+#     json_str = df.to_json(orient="records", force_ascii=False)
+#     buffer = BytesIO(json_str.encode("utf-8"))
+
+#     s3.put_object(
+#         Bucket=GOLD_BUCKET,
+#         Key=key,
+#         Body=buffer,
+#         ContentType="application/json"
+#     )
+
+#     print(f"[Gold] Uploaded {table_name} ({len(df)} rows)")
+
+
+
+def upload_to_postgres(df, table_name, engine):
 
     if df.empty:
-        print(f"[Gold] {table_name} is empty, skipping")
+        print(f"[Postgres] {table_name} empty, skipping")
         return
 
-    key = f"{table_name}/timestamp={timestamp}/data.json"
-
-    json_str = df.to_json(orient="records", force_ascii=False)
-    buffer = BytesIO(json_str.encode("utf-8"))
-
-    s3.put_object(
-        Bucket=GOLD_BUCKET,
-        Key=key,
-        Body=buffer,
-        ContentType="application/json"
+    df.to_sql(
+        table_name,
+        engine,
+        schema="gold",
+        if_exists="append",  # or "append" later
+        index=False
     )
 
-    print(f"[Gold] Uploaded {table_name} ({len(df)} rows)")
-
-
+    print(f"[Postgres] Loaded {table_name} ({len(df)} rows)")
 # =========================
 # MAIN PIPELINE
 # =========================
@@ -159,8 +184,12 @@ def run_gold_pipeline():
     # 3. Remove duplicates
     df_all = df_all.drop_duplicates(subset=["job_id"])
 
-    # 4. Build Gold tables
-    fact = build_jobs_fact(df_all)
+    # 1. Build dimension
+    dim_location = build_dim_location(df_all)
+
+    # 2. Build fact with FK
+    fact = build_jobs_fact(df_all, dim_location)
+
     loc = jobs_per_location(df_all)
     comp = jobs_per_company(df_all)
     sal = salary_trends(df_all)
@@ -168,13 +197,27 @@ def run_gold_pipeline():
     features = job_features(df_all)
 
     # 5. Upload to Gold
-    create_bucket_if_not_exists(s3,GOLD_BUCKET)
-    upload_gold(s3, fact, "jobs_fact", timestamp)
-    upload_gold(s3, loc, "jobs_per_location", timestamp)
-    upload_gold(s3, comp, "jobs_per_company", timestamp)
-    upload_gold(s3, sal, "salary_trends", timestamp)
-    upload_gold(s3, skills, "skills_demand", timestamp)
-    upload_gold(s3, features, "job_features", timestamp)
+    # create_bucket_if_not_exists(s3,GOLD_BUCKET)
+    # upload_gold_minio(s3, fact, "jobs_fact", timestamp)
+    # upload_gold_minio(s3, loc, "jobs_per_location", timestamp)
+    # upload_gold_minio(s3, comp, "jobs_per_company", timestamp)
+    # upload_gold_minio(s3, sal, "salary_trends", timestamp)
+    # upload_gold_minio(s3, skills, "skills_demand", timestamp)
+    # upload_gold_minio(s3, features, "job_features", timestamp)
+
+
+
+    # 👉 PostgreSQL (NEW)
+    engine = get_postgres_engine()
+
+    # upload_to_postgres(fact, "jobs_fact", engine)
+    upload_to_postgres(dim_location, "dim_location",engine)
+    upload_to_postgres(fact, "jobs_fact",engine)
+    upload_to_postgres(loc, "jobs_per_location", engine)
+    upload_to_postgres(comp, "jobs_per_company", engine)
+    upload_to_postgres(sal, "salary_trends", engine)
+    upload_to_postgres(skills, "skills_demand", engine)
+    upload_to_postgres(features, "job_features", engine)
 
     print("✅ Gold pipeline completed")
 

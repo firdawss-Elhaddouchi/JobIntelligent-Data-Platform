@@ -80,6 +80,18 @@ def upload_to_minio(s3, key, data):
         ContentType="application/json"
     )
 
+
+def is_data_job(job):
+    """
+        Check if the job is data-related based on the title or tags.
+    """
+    title = job.get("title", "").lower()
+    # Merge tags into a single text for searching within it
+    tags = " ".join(job.get("tags", [])).lower()
+    
+    # If you find any keyword in the title or tags, we consider it a data function
+    return any(keyword in title or keyword in tags for keyword in DATA_KEYWORDS)
+
 # =========================
 # 6️⃣ LAST RUN MANAGEMENT
 # =========================
@@ -142,9 +154,9 @@ def collect_reed(last_run):
 
     all_jobs = reed_client.collect_reed()
     # all_new_jobs = reed_client.filter_new_jobs(all_jobs, last_run)
-
+    data_jobs = [job for job in all_jobs if is_data_job(job)]
     logger.info(f"Reed filtered {len(all_jobs)} new jobs")
-    return all_jobs
+    return data_jobs
 
 # =========================
 # 8️⃣ MAIN PIPELINE
