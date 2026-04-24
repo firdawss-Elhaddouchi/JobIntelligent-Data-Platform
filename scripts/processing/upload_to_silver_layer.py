@@ -13,9 +13,6 @@ from scripts.common.logging_config import setup_logger
 
 # Processing pipeline
 from scripts.processing.cleaner import clean_adzuna_data, clean_arbeitnow_data, clean_reed_data
-# from scripts.processing.standardizer import standardize_adzuna_data, standardize_arbeitnow_data, standardize_reed_data
-# from scripts.processing.transformer import transform_adzuna_data, transform_arbeitnow_data, transform_reed_data
-
 # to run use this : python -m scripts.processing.upload_to_silver_layer
 
 logger = setup_logger("silver_layer")
@@ -183,14 +180,6 @@ def process_adzuna(s3, bronze_key, timestamp):
     # Clean
     df = clean_adzuna_data(raw_data)
     logger.info(f"   Cleaned: {len(df)} records")
-
-    # # Standardize
-    # df = standardize_adzuna_data(df)
-    # logger.info(f"   Standardized: {len(df)} records")
-
-    # # Transform
-    # df = transform_adzuna_data(df)
-    # logger.info(f"   Transformed: {len(df)} records")
 
     # Upload to Silver
     upload_to_silver(s3, df, "adzuna", timestamp)

@@ -1,30 +1,3 @@
-# # ============================================================
-# # Standardizer: Arbeitnow
-# # ============================================================
-
-# def standardize_arbeitnow_data(df):
-    
-#     return df
-
-
-# # ============================================================
-# # Standardizer: Adzuna
-# # ============================================================
-
-# def standardize_adzuna_data(df):
-    
-#     return df
-
-
-# # ============================================================
-# # Standardizer: Reed
-# # ============================================================
-
-# def standardize_reed_data(df):
-   
-#     return df
-
-
 import pandas as pd
 import numpy as np
 import re
