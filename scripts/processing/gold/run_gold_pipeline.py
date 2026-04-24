@@ -17,8 +17,12 @@ from scripts.processing.gold.gold_transformations import (
     build_jobs_fact,
     jobs_per_location,
     jobs_per_company,
+    jobs_per_contract_type,
+    remote_work_trends,
     salary_trends,
+    seniority_analysis,
     skills_demand,
+    skills_demand_expanded,
     job_features
 )
 
@@ -163,8 +167,12 @@ def run_gold_pipeline():
     fact = build_jobs_fact(df_all)
     loc = jobs_per_location(df_all)
     comp = jobs_per_company(df_all)
+    contract = jobs_per_contract_type(df_all)
+    remote = remote_work_trends(df_all)
     sal = salary_trends(df_all)
+    seniority = seniority_analysis(df_all)
     skills = skills_demand(df_all)
+    skills_expanded = skills_demand_expanded(df_all)
     features = job_features(df_all)
 
     # 5. Upload to Gold
@@ -172,8 +180,12 @@ def run_gold_pipeline():
     upload_gold(s3, fact, "jobs_fact", timestamp)
     upload_gold(s3, loc, "jobs_per_location", timestamp)
     upload_gold(s3, comp, "jobs_per_company", timestamp)
+    upload_gold(s3, contract, "jobs_per_contract_type", timestamp)
+    upload_gold(s3, remote, "remote_work_trends", timestamp)
     upload_gold(s3, sal, "salary_trends", timestamp)
+    upload_gold(s3, seniority, "seniority_analysis", timestamp)
     upload_gold(s3, skills, "skills_demand", timestamp)
+    upload_gold(s3, skills_expanded, "skills_demand_expanded", timestamp)
     upload_gold(s3, features, "job_features", timestamp)
 
     print("✅ Gold pipeline completed")
