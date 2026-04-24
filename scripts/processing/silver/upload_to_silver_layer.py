@@ -88,65 +88,45 @@ def create_bucket_if_not_exists(s3, bucket_name):
 # =========================
 # 5- READ FROM BRONZE
 # =========================
-def read_from_bronze(s3, key):
-    """Download and parse a JSON file from the bronze bucket."""
-    logger.info(f"[READ] Reading from bronze: {key}")
-    response = s3.get_object(Bucket=BRONZE_BUCKET, Key=key)
-    data = json.loads(response["Body"].read().decode("utf-8"))
-    return data
-
-
-
-# =========================
-# 6- UPLOAD TO SILVER
-# =========================
 
 def upload_to_silver(s3, df, source_name, timestamp):
     """
-    Upload a transformed DataFrame to the Silver layer in JSON format.
-    Uses ISO date format to prevent Overflow errors during serialization.
+    Converts the cleaned DataFrame to Parquet format and uploads it to the Silver bucket.
+    Parquet is used here to preserve data types (schema) and provide efficient storage.
     """
 
     if df.empty:
-        logger.warning(f"[Silver] Empty DataFrame for {source_name}, skipping upload")
+        logger.warning(f"[Silver] Empty DataFrame for {source_name}, skipping upload.")
         return
 
-    # =========================
-    # Define key (partitioned)
-    # =========================
-    silver_key = f"{source_name}/cleaning_timestamp={timestamp}/data.json"
+    # 1. Construct the partitioned S3 key with .parquet extension
+    silver_key = f"{source_name}/cleaning_timestamp={timestamp}/data.parquet"
 
-    logger.info(f"[Silver] Preparing JSON upload -> {silver_key}")
+    logger.info(f"[Silver] Preparing Parquet serialization for {source_name} -> {silver_key}")
 
-    # =========================
-    # Convert DataFrame → JSON in memory (Optimized)
-    # =========================
-    # we use to_json with date_format='iso' to handle timestamps safely
     try:
-        json_str = df.to_json(
-            orient="records", 
-            indent=4, 
-            force_ascii=False, 
-            date_format='iso'
-        )
-        buffer = BytesIO(json_str.encode("utf-8"))
+        # 2. Serialize DataFrame to Parquet in-memory using BytesIO
+        # 'pyarrow' engine is used for better performance and stability
+        buffer = BytesIO()
+        df.to_parquet(buffer, index=False, engine='pyarrow')
+        
+        # Reset buffer pointer to the beginning before uploading
+        buffer.seek(0)
 
-        # =========================
-        # Upload to MinIO
-        # =========================
+        # 3. Stream the buffer to MinIO (S3)
         s3.put_object(
             Bucket=SILVER_BUCKET,
             Key=silver_key,
             Body=buffer,
-            ContentType="application/json"
+            ContentType="application/x-parquet"
         )
 
         logger.info(
-            f"[Silver] Uploaded JSON: {SILVER_BUCKET}/{silver_key} "
+            f"[Silver] Successfully uploaded Parquet: {SILVER_BUCKET}/{silver_key} "
             f"({len(df)} records, {buffer.getbuffer().nbytes} bytes)"
         )
     except Exception as e:
-        logger.error(f"[Silver] Failed to upload {source_name} to Silver: {str(e)}")
+        logger.error(f"[Silver] Failed to upload {source_name} to Silver Layer: {str(e)}")
         raise
 
 # =========================
