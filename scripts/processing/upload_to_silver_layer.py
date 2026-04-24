@@ -13,8 +13,6 @@ from scripts.common.logging_config import setup_logger
 
 # Import Cleaning and Standardization utilities
 from scripts.processing.cleaner import clean_adzuna_data, clean_arbeitnow_data, clean_reed_data
-from scripts.processing.standardizer import standardize_data , fetch_rates_to_mad
-
 # to run use this : python -m scripts.processing.upload_to_silver_layer
 
 logger = setup_logger("silver_layer")
@@ -224,12 +222,8 @@ def upload_to_silver(s3, df, source_name, timestamp):
 #         # 4. Upload to Silver Layer in Parquet Format
 #         upload_to_silver(s3, df, "arbeitnow", timestamp)
 
-#         return df
-
-#     except Exception as e:
-#         logger.error(f"❌ Failed to process Arbeitnow from {bronze_key}: {e}")
-#         raise
-
+    # Upload to Silver
+    upload_to_silver(s3, df, "adzuna", timestamp)
 
 # def process_adzuna(s3, bronze_key, timestamp, rates_map):
 #     """Full pipeline: Bronze → Clean → Standardize → Transform → Silver"""
@@ -308,7 +302,7 @@ def process_source(s3, source_name, bronze_key, timestamp, rates_map):
     upload_to_silver(s3, df, source_name, timestamp)
 
 # # =========================
-# # 7️⃣ MAIN PIPELINE
+# # 7 MAIN PIPELINE
 # # =========================
 # def run_pipeline():
 #     logger.info("🚀 Silver layer pipeline started")
