@@ -7,12 +7,12 @@ from dotenv import load_dotenv
 import boto3
 from io import BytesIO
 from botocore.exceptions import ClientError
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from scripts.ingestion import reed_client
 from scripts.ingestion import adzuna_client
-import os
 from scripts.ingestion.arbeitnow_client import collect_arbeitnow
 from scripts.ingestion import arbeitnow_client
-import os
 from scripts.ingestion import arbeitnow_client
 from scripts.common import logging_config
 logger = logging_config.setup_logger("upload to bronze layer")
@@ -123,19 +123,19 @@ def collect_arbeitnow(last_run):
     logger.info("Arbeitnow ingestion started")
 
     all_jobs = arbeitnow_client.collect_arbeitnow()
-    all_new_jobs = arbeitnow_client.filter_new_jobs(all_jobs, last_run)
+    # all_new_jobs = arbeitnow_client.filter_new_jobs(all_jobs, last_run)
 
-    logger.info(f"Arbeitnow filtered {len(all_new_jobs)} new jobs")
-    return all_new_jobs
+    logger.info(f"Arbeitnow filtered {len(all_jobs)} new jobs")
+    return all_jobs
 
 def collect_adzuna(last_run):
     logger.info("Adzuna ingestion started")
 
     all_jobs = adzuna_client.collect_adzuna()
-    all_new_jobs = adzuna_client.filter_new_jobs(all_jobs, last_run)
+    # all_new_jobs = adzuna_client.filter_new_jobs(all_jobs, last_run)
 
-    logger.info(f"Adzuna filtered {len(all_new_jobs)} new jobs")
-    return all_new_jobs
+    logger.info(f"Adzuna filtered {len(all_jobs)} new jobs")
+    return all_jobs
 
 def collect_reed(last_run):
     logger.info("Reed ingestion started")
@@ -160,8 +160,8 @@ def run_pipeline():
     print(last_run)
     sources = {
         "adzuna": lambda: collect_adzuna(last_run),
-        "arbeitnow": lambda: collect_arbeitnow(last_run),
-        "reed": lambda: collect_reed(last_run)
+        # "arbeitnow": lambda: collect_arbeitnow(last_run),
+        # "reed": lambda: collect_reed(last_run)
         
     }
 
