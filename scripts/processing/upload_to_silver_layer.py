@@ -13,8 +13,8 @@ from scripts.common.logging_config import setup_logger
 
 # Processing pipeline
 from scripts.processing.cleaner import clean_adzuna_data, clean_arbeitnow_data, clean_reed_data
-from scripts.processing.standardizer import standardize_adzuna_data, standardize_arbeitnow_data, standardize_reed_data
-from scripts.processing.transformer import transform_adzuna_data, transform_arbeitnow_data, transform_reed_data
+# from scripts.processing.standardizer import standardize_adzuna_data, standardize_arbeitnow_data, standardize_reed_data
+# from scripts.processing.transformer import transform_adzuna_data, transform_arbeitnow_data, transform_reed_data
 
 # to run use this : python -m scripts.processing.upload_to_silver_layer
 
@@ -22,7 +22,7 @@ logger = setup_logger("silver_layer")
 
 
 # =========================
-# 1️⃣ LOAD ENV
+#  LOAD ENV
 # =========================
 load_dotenv()
 
@@ -35,7 +35,7 @@ SILVER_BUCKET = "silver"
 
 
 # =========================
-# 2️⃣ MINIO CLIENT
+#  MINIO CLIENT
 # =========================
 def get_minio_client():
     return boto3.client(
@@ -47,7 +47,7 @@ def get_minio_client():
 
 
 # =========================
-# 3️⃣ BUCKET CHECK
+#  BUCKET CHECK
 # =========================
 def create_bucket_if_not_exists(s3, bucket_name):
     try:
@@ -59,18 +59,18 @@ def create_bucket_if_not_exists(s3, bucket_name):
 
 
 # =========================
-# 4️⃣ READ FROM BRONZE
+#  READ FROM BRONZE
 # =========================
 def read_from_bronze(s3, key):
     """Download and parse a JSON file from the bronze bucket."""
-    logger.info(f"📥 Reading from bronze: {key}")
+    logger.info(f" Reading from bronze: {key}")
     response = s3.get_object(Bucket=BRONZE_BUCKET, Key=key)
     data = json.loads(response["Body"].read().decode("utf-8"))
     return data
 
 
 # =========================
-# 5️⃣ UPLOAD TO SILVER
+# UPLOAD TO SILVER
 # =========================
 from io import BytesIO
 
@@ -119,7 +119,7 @@ def upload_to_silver(s3, df, source_name, timestamp):
     )
 
 # =========================
-# 6️⃣ PROCESSING PIPELINES (per source)
+#  PROCESSING PIPELINES (per source)
 # =========================
 
 def process_arbeitnow(s3, bronze_key, timestamp):
@@ -130,8 +130,8 @@ def process_arbeitnow(s3, bronze_key, timestamp):
 def process_adzuna(s3, bronze_key, timestamp):
     """Full pipeline: Bronze → Clean → Standardize → Transform → Silver"""
     logger.info("=" * 50)
-    logger.info("🔄 Processing Adzuna")
-
+    logger.info(" Processing Adzuna")
+    
     # Read from Bronze
     raw_data = read_from_bronze(s3, bronze_key)
 
@@ -156,9 +156,10 @@ def process_adzuna(s3, bronze_key, timestamp):
 def process_reed(s3, bronze_key, timestamp):
     """Full pipeline: Bronze → Clean → Standardize → Transform → Silver"""
     logger.info("=" * 50)
-    logger.info("🔄 Processing Adzuna")
+    logger.info(" Processing Adzuna")
 
     # Read from Bronze
+    print(f" Key :  {bronze_key}")
     raw_data = read_from_bronze(s3, bronze_key)
     # Clean
     df = clean_reed_data(raw_data)
@@ -174,7 +175,7 @@ def process_reed(s3, bronze_key, timestamp):
 # 7️⃣ MAIN PIPELINE
 # =========================
 def run_pipeline():
-    logger.info("🚀 Silver layer pipeline started")
+    logger.info(" Silver layer pipeline started")
 
     s3 = get_minio_client()
     create_bucket_if_not_exists(s3, SILVER_BUCKET)
@@ -188,12 +189,12 @@ def run_pipeline():
         #     "bronze_key": "adzuna/ingestion_timestamp=1776337261/data.json",
         #     "process_fn": process_adzuna,
         # },
-        # "arbeitnow": {
-        #     "bronze_key": "arbeitnow/ingestion_timestamp=XXXXXXXXXX/data.json",
-        #     "process_fn": process_arbeitnow,
-        # },
+        "arbeitnow": {
+            "bronze_key": "arbeitnow/ingestion_timestamp=1776958683/data.json",
+            "process_fn": process_arbeitnow,
+        },
         "reed": {
-            "bronze_key": "reed/ingestion_timestamp=1776414536/data.json",
+            "bronze_key": "reed/ingestion_timestamp=1776958683/data.json",
             "process_fn": process_reed,
         },
     }
@@ -201,13 +202,13 @@ def run_pipeline():
         try:
             config["process_fn"](s3, config["bronze_key"], timestamp)
         except Exception as e:
-            logger.exception(f"❌ Error processing {source_name}: {e}")
+            logger.exception(f" Error processing {source_name}: {e}")
 
-    logger.info("✅ Silver layer pipeline finished")
+    logger.info(" Silver layer pipeline finished")
 
 
 # =========================
-# 8️⃣ ENTRY POINT
+#  ENTRY POINT
 # =========================
 if __name__ == "__main__":
     run_pipeline()
