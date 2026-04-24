@@ -308,7 +308,7 @@ def process_source(s3, source_name, bronze_key, timestamp, rates_map):
     upload_to_silver(s3, df, source_name, timestamp)
 
 # # =========================
-# # 7️⃣ MAIN PIPELINE
+# # 7 MAIN PIPELINE
 # # =========================
 # def run_pipeline():
 #     logger.info("🚀 Silver layer pipeline started")

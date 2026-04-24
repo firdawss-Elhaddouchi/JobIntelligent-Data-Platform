@@ -480,7 +480,6 @@ def clean_reed_data(jobs_data):
             "jobUrl": "job_url",
             "currency": "currency"
         }
-
         df = df.rename(columns={k: v for k, v in column_mapping.items() if k in df.columns})
 
         logger.info("[Reed] Column mapping applied")
@@ -576,29 +575,32 @@ def clean_reed_data(jobs_data):
         # =========================
         # Defaults
         # =========================
-        df['tags'] = np.nan
-        df['remote'] = False
+        # df['tags'] = np.nan
+        # df['remote'] = False
 
         # =========================
         # Schema alignment
         # =========================
-        for col in CANONICAL_COLUMNS:
-            if col not in df.columns:
-                df[col] = np.nan
-
-        final_df = df[CANONICAL_COLUMNS].copy()
+        final_df = df.reindex(columns=CANONICAL_COLUMNS)
 
         # =========================
         # Data quality checks
         # =========================
-        before_clean = len(final_df)
 
         final_df = final_df.dropna(subset=['job_id', 'job_title', 'job_url'])
         final_df = final_df.drop_duplicates(subset=['job_id'])
         final_df = final_df.drop_duplicates(subset=['job_url'])
 
         after_clean = len(final_df)
-
+        print('###############################################')
+        print('###############################################')
+        print('###############################################')
+        print('###############################################')
+        print(f" columns : {final_df.columns}")
+        print('###############################################')
+        print('###############################################')
+        print('###############################################')
+        print('###############################################')
         # =========================
         # Logging summary
         # =========================

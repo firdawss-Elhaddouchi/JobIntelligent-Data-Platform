@@ -209,6 +209,10 @@ __marimo__/
 
 test/
 *.pdf
-data/
 logs/
-data/minio_data/
+data/
+# git rm -r --cached folder/
+# echo "folder/" >> .gitignore
+# git add .gitignore
+# git commit -m "ignore folder"
+# git push
