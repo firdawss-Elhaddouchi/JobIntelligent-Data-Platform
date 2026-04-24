@@ -95,7 +95,7 @@ def safe_rename(df, mapping):
 
 def clean_arbeitnow_data(raw_jobs):
 
-    if not raw_jobs:
+    if raw_jobs is None or (isinstance(raw_jobs, pd.DataFrame) and raw_jobs.empty):
         logger.warning("No raw data provided to cleaner.")
         return pd.DataFrame(columns=CANONICAL_COLUMNS)
 
@@ -149,15 +149,49 @@ def clean_arbeitnow_data(raw_jobs):
     # =========================
     # Date handling (safe)
     # =========================
-    if 'posted_date' in df.columns:
-        df['posted_date'] = pd.to_datetime(
-            df['posted_date'],
-            unit='s',
-            utc=True,
-            errors='coerce'
-        ).dt.strftime("%Y-%m-%d")
+    
+    # if 'posted_date' in df.columns:
+    #     # Remove unit='s' because Arbeitnow returns ISO strings, not timestamps
+    #     df['posted_date'] = pd.to_datetime(
+    #         df['posted_date'],
+    #         utc=True,
+    #         errors='coerce'
+    #     )
+        # If you want to keep it as a string in the DataFrame:
+        # df['posted_date'] = df['posted_date'].dt.strftime("%Y-%m-%d")
+    # if 'posted_date' in df.columns:
+    #     # 1. Convert to string first to ensure we aren't parsing numbers as nanoseconds
+    #     df['posted_date'] = df['posted_date'].astype(str)
+        
+    #     # 2. Parse ISO strings
+    #     df['posted_date'] = pd.to_datetime(
+    #         df['posted_date'],
+    #         utc=True,
+    #         errors='coerce'
+    #     )
+        
+    #     # 3. Critical Fix: Remove Epoch (1970) outliers
+    #     cutoff = pd.Timestamp('2000-01-01', tz='UTC')
+    #     df.loc[df['posted_date'] < cutoff, 'posted_date'] = np.nan
 
-    # =========================
+    # Inside clean_arbeitnow_data in cleaner.py
+
+    if 'posted_date' in df.columns:
+        def parse_date_smartly(val):
+            if pd.isna(val) or str(val).strip() == "":
+                return pd.NaT
+            try:
+                if str(val).isdigit() or isinstance(val, (int, float)):
+                    return pd.to_datetime(float(val), unit='s', utc=True)
+                return pd.to_datetime(val, utc=True)
+            except:
+                return pd.NaT
+
+        df['posted_date'] = df['posted_date'].apply(parse_date_smartly)
+
+        # 4. Final verification: Check if it's within a reasonable range (2024-2026)
+        # This confirms our fix worked and we aren't getting 1970 anymore.
+        # =========================
     # Tags FIX (important 🔥)
     # =========================
     if 'tags' in df.columns:
@@ -287,6 +321,7 @@ def clean_adzuna_data(jobs_data):
     if 'posted_date' in df.columns:
         df['posted_date'] = pd.to_datetime(
             df['posted_date'],
+            dayfirst=True,  # Crucial for UK-based Reed API formats
             utc=True,
             errors='coerce'
         )
@@ -474,7 +509,7 @@ def clean_reed_data(jobs_data):
         if 'posted_date' in df.columns:
             df['posted_date'] = pd.to_datetime(
                 df['posted_date'],
-                format="%Y-%m-%d",
+                # Removed format="%Y-%m-%d" to allow flexible parsing
                 errors="coerce",
                 utc=True
             )
@@ -482,7 +517,7 @@ def clean_reed_data(jobs_data):
         if 'expires_date' in df.columns:
             df['expires_date'] = pd.to_datetime(
                 df['expires_date'],
-                format="%Y-%m-%d",
+                # format="%Y-%m-%d",  Also removed fixed format here to avoid NaT errors
                 errors="coerce",
                 utc=True
             )

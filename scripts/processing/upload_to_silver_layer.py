@@ -11,10 +11,9 @@ from botocore.exceptions import ClientError
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from scripts.common.logging_config import setup_logger
 
-# Processing pipeline
+# Import Cleaning and Standardization utilities
 from scripts.processing.cleaner import clean_adzuna_data, clean_arbeitnow_data, clean_reed_data
-from scripts.processing.standardizer import standardize_adzuna_data, standardize_arbeitnow_data, standardize_reed_data
-from scripts.processing.transformer import transform_adzuna_data, transform_arbeitnow_data, transform_reed_data
+from scripts.processing.standardizer import standardize_data , fetch_rates_to_mad
 
 # to run use this : python -m scripts.processing.upload_to_silver_layer
 
@@ -22,7 +21,7 @@ logger = setup_logger("silver_layer")
 
 
 # =========================
-# 1️⃣ LOAD ENV
+# 1-  LOAD ENV
 # =========================
 load_dotenv()
 
@@ -35,7 +34,7 @@ SILVER_BUCKET = "silver"
 
 
 # =========================
-# 2️⃣ MINIO CLIENT
+# 2-  MINIO CLIENT
 # =========================
 def get_minio_client():
     return boto3.client(
@@ -45,11 +44,40 @@ def get_minio_client():
         aws_secret_access_key=MINIO_ROOT_PASSWORD,
     )
 
+# ============================================================
+# 3- UTILITY FUNCTIONS
+# ============================================================
+def get_latest_bronze_key(s3, source_name):
+    """
+    Scans the bronze bucket to find the most recent ingestion timestamp folder.
+    Ensures the pipeline always processes the freshest raw data.
+    """
+    prefix = f"{source_name}/"
+    try:
+        # List objects with a delimiter to find 'folders' representing timestamps
+        response = s3.list_objects_v2(Bucket=BRONZE_BUCKET, Prefix=prefix, Delimiter='/')
+        
+        if 'CommonPrefixes' not in response:
+            return None
+        
+        # Extract folder paths and sort them alphabetically (works for timestamps)
+        folders = [p['Prefix'] for p in response['CommonPrefixes']]
+        latest_folder = sorted(folders)[-1] 
+        
+        return f"{latest_folder}data.json"
+    except Exception as e:
+        logger.error(f"Error finding latest bronze key for {source_name}: {e}")
+        return None
+    
 
 # =========================
-# 3️⃣ BUCKET CHECK
+# 4-  BUCKET CHECK
 # =========================
 def create_bucket_if_not_exists(s3, bucket_name):
+    """
+    Checks if a bucket exists in MinIO; if not, creates it.
+    Essential for first-time setup and system resilience.
+    """
     try:
         s3.head_bucket(Bucket=bucket_name)
         logger.info(f"Bucket exists: {bucket_name}")
@@ -59,7 +87,7 @@ def create_bucket_if_not_exists(s3, bucket_name):
 
 
 # =========================
-# 4️⃣ READ FROM BRONZE
+# 5- READ FROM BRONZE
 # =========================
 def read_from_bronze(s3, key):
     """Download and parse a JSON file from the bronze bucket."""
@@ -69,8 +97,9 @@ def read_from_bronze(s3, key):
     return data
 
 
+
 # =========================
-# 5️⃣ UPLOAD TO SILVER
+# 6- UPLOAD TO SILVER
 # =========================
 from io import BytesIO
 
@@ -119,97 +148,195 @@ def upload_to_silver(s3, df, source_name, timestamp):
     )
 
 # =========================
-# 6️⃣ PROCESSING PIPELINES (per source)
+# 7-  PROCESSING PIPELINES (per source)
 # =========================
 
-def process_arbeitnow(s3, bronze_key, timestamp):
+# def process_arbeitnow(s3, bronze_key, timestamp, rates_map):
+#     """Full pipeline for Arbeitnow: Bronze → Clean → Standardize → Silver"""
+#     logger.info("=" * 50)
+#     logger.info("🔄 Processing Arbeitnow")
+
+#     try:
+#         # 1. Read Raw Data from Bronze (MinIO)
+#         # Note: Arbeitnow data is usually a list of jobs or {"data": [...]}
+#         raw_data = read_from_bronze(s3, bronze_key)
+        
+#         # In case the JSON has a 'data' envelope from the API
+#         if isinstance(raw_data, dict) and "data" in raw_data:
+#             raw_data = raw_data["data"]
+
+#         # 2. Step: Clean
+#         # Aligns columns to Canonical Schema and handles basic text cleaning
+#         df = clean_arbeitnow_data(raw_data)
+#         logger.info(f"   [Clean] Initial transformation complete: {len(df)} records")
+
+#         # 3. Step: Standardize (Applying our Core Standardization Logic)
+#         # Note: You need to make sure standardize_arbeitnow_data is imported 
+#         # or call your standardizer script here.
+#         df = standardize_data(df, 'Arbeitnow', rates_map) 
+#         logger.info(f"   [Standardize] Currency, Dates, and IDs unified")
+
+#         # 4. Upload to Silver Layer in Parquet Format
+#         upload_to_silver(s3, df, "arbeitnow", timestamp)
+
+#         return df
+
+#     except Exception as e:
+#         logger.error(f"❌ Failed to process Arbeitnow from {bronze_key}: {e}")
+#         raise
+
+
+# def process_adzuna(s3, bronze_key, timestamp, rates_map):
+#     """Full pipeline: Bronze → Clean → Standardize → Transform → Silver"""
+#     logger.info("=" * 50)
+#     logger.info("🔄 Processing Adzuna")
+
+#     # Read from Bronze
+#     raw_data = read_from_bronze(s3, bronze_key)
+
+#     # Clean
+#     df = clean_adzuna_data(raw_data)
+#     logger.info(f"   Cleaned: {len(df)} records")
+
+#     # # Standardize
+#     df = standardize_data(df, 'Adzuna', rates_map) 
+#     logger.info(f"   Standardized: {len(df)} records")
+
+#     # # Transform
+#     # df = transform_adzuna_data(df)
+#     # logger.info(f"   Transformed: {len(df)} records")
+
+#     # Upload to Silver
+#     upload_to_silver(s3, df, "adzuna", timestamp)
+
+#     return df
+
+
+# def process_reed(s3, bronze_key, timestamp, rates_map):
+#     """Full pipeline: Bronze → Clean → Standardize → Transform → Silver"""
+#     logger.info("=" * 50)
+#     logger.info("🔄 Processing Adzuna")
+
+#     # Read from Bronze
+#     raw_data = read_from_bronze(s3, bronze_key)
+#     # Clean
+#     df = clean_reed_data(raw_data)
+#     logger.info(f"   Cleaned: {len(df)} records")
+
+#     df = standardize_data(df, 'Reed', rates_map) 
+#     logger.info(f"   Standardized: {len(df)} records")
+
+
+#     # Upload to Silver
+#     upload_to_silver(s3, df, "reed", timestamp)
+
+#     return df
+
+def process_source(s3, source_name, bronze_key, timestamp, rates_map):
+    """
+    Full processing logic for a single source:
+    Download (Bronze) -> Clean (Structural) -> Standardize (Values) -> Upload (Silver)
+    """
+    logger.info(f"🔄 Starting Pipeline for {source_name}...")
     
-    return
-
-
-def process_adzuna(s3, bronze_key, timestamp):
-    """Full pipeline: Bronze → Clean → Standardize → Transform → Silver"""
-    logger.info("=" * 50)
-    logger.info("🔄 Processing Adzuna")
-
-    # Read from Bronze
+    # A. Ingestion: Read Raw Data
     raw_data = read_from_bronze(s3, bronze_key)
+    
+    # Unwrap 'data' envelope if present (common in Arbeitnow API)
+    if source_name == "arbeitnow" and isinstance(raw_data, dict):
+        raw_data = raw_data.get("data", [])
 
-    # Clean
-    df = clean_adzuna_data(raw_data)
-    logger.info(f"   Cleaned: {len(df)} records")
-
-    # # Standardize
-    # df = standardize_adzuna_data(df)
-    # logger.info(f"   Standardized: {len(df)} records")
-
-    # # Transform
-    # df = transform_adzuna_data(df)
-    # logger.info(f"   Transformed: {len(df)} records")
-
-    # Upload to Silver
-    upload_to_silver(s3, df, "adzuna", timestamp)
-
-    return df
-
-
-def process_reed(s3, bronze_key, timestamp):
-    """Full pipeline: Bronze → Clean → Standardize → Transform → Silver"""
-    logger.info("=" * 50)
-    logger.info("🔄 Processing Adzuna")
-
-    # Read from Bronze
-    raw_data = read_from_bronze(s3, bronze_key)
-    print('1111111')
-    # Clean
-    df = clean_reed_data(raw_data)
-    print(df)
-    logger.info(f"   Cleaned: {len(df)} records")
-
-    # Upload to Silver
-    upload_to_silver(s3, df, "reed", timestamp)
-
-    return df
-
-
-# =========================
-# 7️⃣ MAIN PIPELINE
-# =========================
-def run_pipeline():
-    logger.info("🚀 Silver layer pipeline started")
-
-    s3 = get_minio_client()
-    create_bucket_if_not_exists(s3, SILVER_BUCKET)
-    timestamp = int(time.time())
-
-    # ---- Sources to process ----
-    # Add or comment out sources as needed
-
-    sources = {
-        # "adzuna": {
-        #     "bronze_key": "adzuna/ingestion_timestamp=1776337261/data.json",
-        #     "process_fn": process_adzuna,
-        # },
-        # "arbeitnow": {
-        #     "bronze_key": "arbeitnow/ingestion_timestamp=XXXXXXXXXX/data.json",
-        #     "process_fn": process_arbeitnow,
-        # },
-        "reed": {
-            "bronze_key": "reed/ingestion_timestamp=1776414536/data.json",
-            "process_fn": process_reed,
-        },
+    # B. Cleaning Step: Map columns and basic text cleanup
+    clean_map = {
+        "adzuna": clean_adzuna_data,
+        "reed": clean_reed_data,
+        "arbeitnow": clean_arbeitnow_data
     }
-    for source_name, config in sources.items():
+    df = clean_map[source_name](raw_data)
+    logger.info(f"   [1/2] Cleaning finished for {source_name}")
+    
+    # C. Standardization Step: MAD conversion, UTC dates, and ID Namespacing
+    df = standardize_data(df, source_name, rates_map)
+    logger.info(f"   [2/2] Standardization finished for {source_name}")
+    
+    # D. Persistence: Upload result as Parquet to Silver Layer
+    upload_to_silver(s3, df, source_name, timestamp)
+
+# # =========================
+# # 7️⃣ MAIN PIPELINE
+# # =========================
+# def run_pipeline():
+#     logger.info("🚀 Silver layer pipeline started")
+
+#     s3 = get_minio_client()
+#     create_bucket_if_not_exists(s3, SILVER_BUCKET)
+#     timestamp = int(time.time())
+
+#     rates_map = fetch_rates_to_mad()
+
+#     # ---- Sources to process ----
+#     # Add or comment out sources as needed
+
+#     sources = {
+#         # "adzuna": {
+#         #     "bronze_key": "adzuna/ingestion_timestamp=1776337261/data.json",
+#         #     "process_fn": process_adzuna,
+#         # },
+#         # "arbeitnow": {
+#         #     "bronze_key": "arbeitnow/ingestion_timestamp=XXXXXXXXXX/data.json",
+#         #     "process_fn": process_arbeitnow,
+#         # },
+#         "reed": {
+#             "bronze_key": "reed/ingestion_timestamp=1776414536/data.json",
+#             "process_fn": process_reed,
+#         },
+#     }
+#     for source_name, config in sources.items():
+#         try:
+#             config["process_fn"](s3, config["bronze_key"], timestamp)
+#         except Exception as e:
+#             logger.exception(f"❌ Error processing {source_name}: {e}")
+
+#     logger.info("✅ Silver layer pipeline finished")
+
+
+# ============================================================
+# 8. MASTER PIPELINE EXECUTION
+# ============================================================
+
+def run_pipeline():
+    """
+    Main entry point for the Silver Layer pipeline.
+    Suitable for execution via Airflow PythonOperator.
+    """
+    logger.info("🚀 Silver Layer Transformation Pipeline Started")
+    s3 = get_minio_client()
+    
+    # --- CRITICAL STEP: Ensure the destination exists before processing ---
+    create_bucket_if_not_exists(s3, SILVER_BUCKET) #
+    
+    # Fetch exchange rates once for the entire batch to optimize performance
+    rates_map = fetch_rates_to_mad() 
+    
+    # Unique timestamp for this processing run
+    current_timestamp = int(time.time())
+
+    # List of sources to be processed in this batch
+    active_sources = ["reed", "arbeitnow", "adzuna"]
+
+    for source in active_sources:
         try:
-            config["process_fn"](s3, config["bronze_key"], timestamp)
+            # Dynamically find the latest data available in Bronze
+            bronze_key = get_latest_bronze_key(s3, source)
+            
+            if bronze_key:
+                process_source(s3, source, bronze_key, current_timestamp, rates_map)
+            else:
+                logger.warning(f"⚠️ No data found in Bronze for source: {source}")
+                
         except Exception as e:
-            logger.exception(f"❌ Error processing {source_name}: {e}")
+            logger.error(f"❌ Critical failure while processing {source}: {str(e)}")
 
-    logger.info("✅ Silver layer pipeline finished")
-
-
-# =========================
-# 8️⃣ ENTRY POINT
-# =========================
+# CLI Entry point
 if __name__ == "__main__":
     run_pipeline()
