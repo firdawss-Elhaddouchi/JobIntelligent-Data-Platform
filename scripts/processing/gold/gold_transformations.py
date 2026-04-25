@@ -1,5 +1,10 @@
 """
 Gold Layer Transformations
+------------------------------------------
+- Fact table (analytics)
+- Dimension tables
+- Aggregations (BI dashboards)
+- ML feature table
 --------------------------
 This module contains ALL business logic to transform Silver data
 into analytics-ready and ML-ready datasets (Gold layer).
@@ -15,65 +20,144 @@ import pandas as pd
 import numpy as np
 
 # ============================================================
-# 1. FACT TABLE (Main dataset for analytics)
+# 0. SAFE HELPERS
 # ============================================================
 
-def build_jobs_fact(df):
-    """
-    Constructs the main fact table containing core job data.
-    This serves as the central dataset for most business intelligence queries.
-    """
+def compute_salary_avg(df):
     df = df.copy()
-
     # Calculate average salary if min and max are present
     if "salary_min" in df.columns and "salary_max" in df.columns:
         df["salary_avg"] = (df["salary_min"] + df["salary_max"]) / 2
     else:
         df["salary_avg"] = None
+    return df
 
-    # Define the core columns to keep for the fact table
-    columns_to_keep = [
+
+def ensure_columns(df, cols):
+    """Guarantee missing columns exist (prevents crashes)"""
+    df = df.copy()
+    for c in cols:
+        if c not in df.columns:
+            df[c] = None
+    return df
+
+
+# ============================================================
+# 1. DIMENSION: LOCATION
+# ============================================================
+
+# def build_dim_location(df):
+#     """
+#     Dimension table: unique locations
+#     """
+
+#     df = ensure_columns(df, ["city", "country", "postcode", "location_type"])
+
+#     df_loc = df[[
+#         "city",
+#         "country",
+#         "postcode",
+#         "location_type"
+#     ]].drop_duplicates()
+
+#     df_loc = df_loc.reset_index(drop=True)
+#     df_loc["location_id"] = df_loc.index + 1
+
+#     return df_loc[[
+#         "location_id",
+#         "city",
+#         "country",
+#         "postcode",
+#         "location_type"
+#     ]]
+
+from scripts.processing.gold.location_normalizer_pro import normalize_location_pro
+
+def build_dim_location(df):
+
+    loc_df = df[["location"]].drop_duplicates().copy()
+
+    norm = normalize_location_pro(loc_df, "location")
+
+    loc_df = pd.concat([loc_df, norm], axis=1)
+
+    loc_df = loc_df.drop_duplicates(subset=["location"])
+
+    loc_df["location_id"] = range(1, len(loc_df) + 1)
+
+    return loc_df[[
+        "location_id",
+        "location",
+        "city",
+        "country",
+        "is_remote"
+    ]]
+
+
+# ============================================================
+# 2. FACT TABLE (MAIN ANALYTICS TABLE)
+# ============================================================
+
+def build_jobs_fact(df, dim_location):
+    """
+    Main fact table for analytics dashboards
+    """
+
+    df = df.copy()
+
+    # Ensure required columns exist
+    df = ensure_columns(df, [
+        "job_id", "job_title", "company_name",
+        "city", "country", "postcode", "location_type",
+        "salary_min", "salary_max", "currency", "posted_date"
+    ])
+
+    # Salary avg
+    df = compute_salary_avg(df)
+
+    # Join with dimension
+    df_fact = df.merge(
+        dim_location,
+        on=["city", "country", "postcode", "location_type"],
+        how="left"
+    )
+
+    return df_fact[[
         "job_id",
         "job_title",
         "company_name",
-        "location",
-        "posted_date",
+        "location_id",
         "salary_min",
         "salary_max",
         "salary_avg",
         "currency",
-        "job_url"
-    ]
-    
-    # Return only the columns that actually exist in the DataFrame
-    return df[[col for col in columns_to_keep if col in df.columns]]
+        "posted_date"
+    ]]
 
 
 # ============================================================
-# 2. GENERAL BUSINESS AGGREGATIONS (Dashboards)
+# 3. DASHBOARD AGGREGATIONS
 # ============================================================
 
 def jobs_per_location(df):
-    """
-    Aggregates the total number of job postings per geographic location.
-    Useful for geographic distribution heatmaps.
-    """
+    df = ensure_columns(df, ["city"])
+
     return (
-        df.groupby("location")
+        df.groupby("city")
         .size()
         .reset_index(name="job_count")
+        .sort_values("job_count", ascending=False)
     )
 
 
 def jobs_per_company(df):
-    """
-    Aggregates the total number of job postings per company.
-    Useful for identifying top hiring organizations.
-    """
+    df = ensure_columns(df, ["company_name"])
+
     return (
         df.groupby("company_name")
         .size()
         .reset_index(name="job_count")
+        .sort_values("job_count", ascending=False)
     )
 
 
@@ -127,12 +211,13 @@ def salary_trends(df):
     # Drop rows without salary data
     df = df.dropna(subset=["salary_min", "salary_max"])
 
-    df["salary_avg"] = (df["salary_min"] + df["salary_max"]) / 2
+    df = compute_salary_avg(df)
 
     return (
         df.groupby("posted_date")["salary_avg"]
         .mean()
         .reset_index()
+        .sort_values("posted_date")
     )
 
 
@@ -187,7 +272,10 @@ def skills_demand(df):
 
     for skill in skills:
         count = df["job_description"].str.lower().str.contains(skill).sum()
-        results.append({"skill": skill, "count": count})
+        results.append({
+            "skill": skill,
+            "count": int(count)
+        })
 
     return pd.DataFrame(results)
 
@@ -236,8 +324,7 @@ def job_features(df):
 
     df["remote"] = df["location"].str.contains("remote", case=False).astype(int)
 
-    # Recompute average salary for feature matrix
-    df["salary_avg"] = (df["salary_min"] + df["salary_max"]) / 2
+    df = compute_salary_avg(df)
 
     return df[[
         "job_id",
