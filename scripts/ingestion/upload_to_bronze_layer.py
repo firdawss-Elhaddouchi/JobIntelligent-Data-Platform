@@ -172,8 +172,8 @@ def run_pipeline():
     print(last_run)
     sources = {
         "adzuna": lambda: collect_adzuna(last_run),
-        # "arbeitnow": lambda: collect_arbeitnow(last_run),
-        # "reed": lambda: collect_reed(last_run)
+        "arbeitnow": lambda: collect_arbeitnow(last_run),
+        "reed": lambda: collect_reed(last_run)
         
     }
 

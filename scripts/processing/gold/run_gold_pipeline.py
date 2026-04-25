@@ -18,8 +18,12 @@ from scripts.processing.gold.gold_transformations import (
     build_dim_location,
     jobs_per_location,
     jobs_per_company,
+    jobs_per_contract_type,
+    remote_work_trends,
     salary_trends,
+    seniority_analysis,
     skills_demand,
+    skills_demand_expanded,
     job_features
 )
 
@@ -192,8 +196,12 @@ def run_gold_pipeline():
 
     loc = jobs_per_location(df_all)
     comp = jobs_per_company(df_all)
+    contract = jobs_per_contract_type(df_all)
+    remote = remote_work_trends(df_all)
     sal = salary_trends(df_all)
+    seniority = seniority_analysis(df_all)
     skills = skills_demand(df_all)
+    skills_expanded = skills_demand_expanded(df_all)
     features = job_features(df_all)
 
     # 5. Upload to Gold

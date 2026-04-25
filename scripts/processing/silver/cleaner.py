@@ -25,8 +25,7 @@ CANONICAL_COLUMNS = [
     "location",
     "city",
     "country",
-    "postcode",
-    "location_type",
+    "is_remote",
     "salary_min",
     "salary_max",
     "posted_date",
@@ -92,102 +91,102 @@ def normalize_location(loc):
 # LOCATION INTELLIGENCE
 # =========================
 
-def is_uk_postcode(text):
-    if not text or pd.isna(text):
-        return False
+# def is_uk_postcode(text):
+#     if not text or pd.isna(text):
+#         return False
     
-    text = str(text).upper().strip()
+#     text = str(text).upper().strip()
     
-    pattern = r"^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$"
-    return bool(re.match(pattern, text))
+#     pattern = r"^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$"
+#     return bool(re.match(pattern, text))
 
 
-def is_remote(text):
-    if not text:
-        return False
-    return "remote" in str(text).lower()
+# def is_remote(text):
+#     if not text:
+#         return False
+#     return "remote" in str(text).lower()
 
 
-def geocode_location(location):
-    """
-    Use Nominatim (FREE) to get city + country
-    ⚠️ slow → use only if needed
-    """
-    try:
-        url = "https://nominatim.openstreetmap.org/search"
-        params = {
-            "q": location,
-            "format": "json",
-            "limit": 1
-        }
+# def geocode_location(location):
+#     """
+#     Use Nominatim (FREE) to get city + country
+#     ⚠️ slow → use only if needed
+#     """
+#     try:
+#         url = "https://nominatim.openstreetmap.org/search"
+#         params = {
+#             "q": location,
+#             "format": "json",
+#             "limit": 1
+#         }
 
-        headers = {
-            "User-Agent": "job-intelligent-app"
-        }
+#         headers = {
+#             "User-Agent": "job-intelligent-app"
+#         }
 
-        response = requests.get(url, params=params, headers=headers)
+#         response = requests.get(url, params=params, headers=headers)
 
-        if response.status_code == 200:
-            data = response.json()
-            if data:
-                return {
-                    "city": data[0].get("display_name", "").split(",")[0],
-                    "country": data[0].get("display_name", "").split(",")[-1].strip()
-                }
+#         if response.status_code == 200:
+#             data = response.json()
+#             if data:
+#                 return {
+#                     "city": data[0].get("display_name", "").split(",")[0],
+#                     "country": data[0].get("display_name", "").split(",")[-1].strip()
+#                 }
 
-    except Exception as e:
-        logger.warning(f"Geocoding failed for {location}: {e}")
+#     except Exception as e:
+#         logger.warning(f"Geocoding failed for {location}: {e}")
 
-    return {"city": None, "country": None}
+#     return {"city": None, "country": None}
 
-location_cache = {}
+# location_cache = {}
 
-def geocode_location_cached(loc):
-    if loc in location_cache:
-        return location_cache[loc]
+# def geocode_location_cached(loc):
+#     if loc in location_cache:
+#         return location_cache[loc]
 
-    result = geocode_location(loc)
-    location_cache[loc] = result
-    return result
+#     result = geocode_location(loc)
+#     location_cache[loc] = result
+#     return result
 
-def enrich_location(df):
-    df = df.copy()
+# def enrich_location(df):
+#     df = df.copy()
 
-    df["city"] = None
-    df["country"] = None
-    df["postcode"] = None
-    df["location_type"] = None
+#     df["city"] = None
+#     df["country"] = None
+#     df["postcode"] = None
+#     df["location_type"] = None
 
-    for idx, row in df.iterrows():
-        loc = row["location"]
+#     for idx, row in df.iterrows():
+#         loc = row["location"]
 
-        if pd.isna(loc):
-            continue
+#         if pd.isna(loc):
+#             continue
 
-        # CASE 1: Remote
-        if is_remote(loc):
-            df.at[idx, "location_type"] = "remote"
-            df.at[idx, "city"] = "Remote"
-            continue
+#         # CASE 1: Remote
+#         if is_remote(loc):
+#             df.at[idx, "location_type"] = "remote"
+#             df.at[idx, "city"] = "Remote"
+#             continue
 
-        # CASE 2: Postcode
-        if is_uk_postcode(loc):
-            df.at[idx, "location_type"] = "postcode"
-            df.at[idx, "postcode"] = loc
+#         # CASE 2: Postcode
+#         if is_uk_postcode(loc):
+#             df.at[idx, "location_type"] = "postcode"
+#             df.at[idx, "postcode"] = loc
 
-            geo = geocode_location_cached(loc)
-            df.at[idx, "city"] = geo["city"]
-            df.at[idx, "country"] = geo["country"]
-            continue
+#             geo = geocode_location_cached(loc)
+#             df.at[idx, "city"] = geo["city"]
+#             df.at[idx, "country"] = geo["country"]
+#             continue
 
-        # CASE 3: City
-        df.at[idx, "location_type"] = "city"
-        df.at[idx, "city"] = loc
+#         # CASE 3: City
+#         df.at[idx, "location_type"] = "city"
+#         df.at[idx, "city"] = loc
 
-        geo = geocode_location(loc)
-        df.at[idx, "country"] = geo["country"]
+#         geo = geocode_location(loc)
+#         df.at[idx, "country"] = geo["country"]
 
-    return df
+    # return df
 # ============================================================
 # Cleaning Utilities
 # ============================================================
@@ -252,7 +251,7 @@ def clean_arbeitnow_data(raw_jobs):
 
     if 'location' in df.columns:
         df['location'] = df['location'].apply(normalize_location)
-        df = enrich_location(df)
+        # df = enrich_location(df)
 
     # =========================
     # Date handling (safe)

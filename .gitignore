@@ -212,7 +212,6 @@ test/
 logs/
 data/
 # git rm -r --cached data/
-# echo "data/" >> .gitignore
 # git add .gitignore
 # git commit -m "ignore data"
 # git push
