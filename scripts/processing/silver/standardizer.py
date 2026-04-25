@@ -119,92 +119,228 @@ def is_uk_postcode(text):
     return bool(re.match(pattern, text))
 
 
+# def is_remote(text):
+#     if not text:
+#         return False
+#     return "remote" in str(text).lower()
+
+
+# def geocode_location(location):
+#     """
+#     Use Nominatim (FREE) to get city + country
+#     ⚠️ slow → use only if needed
+#     """
+#     try:
+#         url = "https://nominatim.openstreetmap.org/search"
+#         params = {
+#             "q": location,
+#             "format": "json",
+#             "limit": 1
+#         }
+
+#         headers = {
+#             "User-Agent": "job-intelligent-app"
+#         }
+
+#         response = requests.get(url, params=params, headers=headers)
+
+#         if response.status_code == 200:
+#             data = response.json()
+#             if data:
+#                 return {
+#                     "city": data[0].get("display_name", "").split(",")[0],
+#                     "country": data[0].get("display_name", "").split(",")[-1].strip()
+#                 }
+
+#     except Exception as e:
+#         logger.warning(f"Geocoding failed for {location}: {e}")
+
+#     return {"city": None, "country": None}
+
+# location_cache = {}
+
+# def geocode_location_cached(loc):
+#     if loc in location_cache:
+#         return location_cache[loc]
+
+#     result = geocode_location(loc)
+#     location_cache[loc] = result
+#     return result
+
+# def enrich_location(df):
+#     df = df.copy()
+
+#     df["city"] = None
+#     df["country"] = None
+#     df["postcode"] = None
+#     df["location_type"] = None
+
+#     for idx, row in df.iterrows():
+#         loc = row["location"]
+
+#         if pd.isna(loc):
+#             continue
+
+#         # CASE 1: Remote
+#         if is_remote(loc):
+#             df.at[idx, "location_type"] = "remote"
+#             df.at[idx, "city"] = "Remote"
+#             continue
+
+#         # CASE 2: Postcode
+#         if is_uk_postcode(loc):
+#             df.at[idx, "location_type"] = "postcode"
+#             df.at[idx, "postcode"] = loc
+
+#             geo = geocode_location_cached(loc)
+#             df.at[idx, "city"] = geo["city"]
+#             df.at[idx, "country"] = geo["country"]
+#             continue
+
+#         # CASE 3: City
+#         df.at[idx, "location_type"] = "city"
+#         df.at[idx, "city"] = loc
+
+#         geo = geocode_location(loc)
+#         df.at[idx, "country"] = geo["country"]
+
+#     return df
+
+
+
+
+#########################################
+########################################
+import pandas as pd
+import numpy as np
+import re
+import pycountry
+from geotext import GeoText
+
+# Optional (for real production enrichment)
+USE_GEOCODER = False
+if USE_GEOCODER:
+    from geopy.geocoders import Nominatim
+    geolocator = Nominatim(user_agent="job_location_normalizer")
+
+
+# =========================
+# REMOTE DETECTION
+# =========================
+REMOTE_PATTERNS = [
+    r"\bremote\b",
+    r"work\s?from\s?home",
+    r"home\s?based",
+    r"anywhere",
+    r"worldwide",
+    r"distributed"
+]
+
+
 def is_remote(text):
-    if not text:
-        return False
-    return "remote" in str(text).lower()
+    return int(any(re.search(p, text) for p in REMOTE_PATTERNS))
 
 
-def geocode_location(location):
-    """
-    Use Nominatim (FREE) to get city + country
-    ⚠️ slow → use only if needed
-    """
+# =========================
+# CLEAN TEXT
+# =========================
+def clean_text(loc):
+    if pd.isna(loc):
+        return ""
+
+    loc = str(loc).lower().strip()
+    loc = re.sub(r"[^\w\s,]", " ", loc)
+    loc = re.sub(r"\s+", " ", loc)
+
+    return loc
+
+
+# =========================
+# COUNTRY DETECTION (ISO)
+# =========================
+def detect_country(text):
+
+    # Direct match from pycountry
+    for country in pycountry.countries:
+        if country.name.lower() in text:
+            return country.name
+
+    # Common aliases
+    aliases = {
+        "uk": "United Kingdom",
+        "usa": "United States",
+        "us": "United States",
+        "uae": "United Arab Emirates"
+    }
+
+    for k, v in aliases.items():
+        if k in text:
+            return v
+
+    return None
+
+
+# =========================
+# CITY DETECTION
+# =========================
+def detect_city(text):
+
+    places = GeoText(text)
+
+    if places.cities:
+        return places.cities[0]
+
+    return None
+
+
+# =========================
+# FALLBACK GEOCODER (OPTIONAL)
+# =========================
+def geocode_location(text):
     try:
-        url = "https://nominatim.openstreetmap.org/search"
-        params = {
-            "q": location,
-            "format": "json",
-            "limit": 1
-        }
+        location = geolocator.geocode(text, timeout=2)
+        if location:
+            address = location.raw.get("display_name", "")
+            return address
+    except:
+        return None
 
-        headers = {
-            "User-Agent": "job-intelligent-app"
-        }
 
-        response = requests.get(url, params=params, headers=headers)
+# =========================
+# MAIN NORMALIZATION
+# =========================
+def normalize_location_pro(df, col="location"):
 
-        if response.status_code == 200:
-            data = response.json()
-            if data:
-                return {
-                    "city": data[0].get("display_name", "").split(",")[0],
-                    "country": data[0].get("display_name", "").split(",")[-1].strip()
-                }
-
-    except Exception as e:
-        logger.warning(f"Geocoding failed for {location}: {e}")
-
-    return {"city": None, "country": None}
-
-location_cache = {}
-
-def geocode_location_cached(loc):
-    if loc in location_cache:
-        return location_cache[loc]
-
-    result = geocode_location(loc)
-    location_cache[loc] = result
-    return result
-
-def enrich_location(df):
     df = df.copy()
 
-    df["city"] = None
-    df["country"] = None
-    df["postcode"] = None
-    df["location_type"] = None
+    df["location_clean"] = df[col].apply(clean_text)
 
-    for idx, row in df.iterrows():
-        loc = row["location"]
+    # Remote detection first
+    df["is_remote"] = df["location_clean"].apply(is_remote)
 
-        if pd.isna(loc):
-            continue
+    # Country detection
+    df["country"] = df["location_clean"].apply(detect_country)
 
-        # CASE 1: Remote
-        if is_remote(loc):
-            df.at[idx, "location_type"] = "remote"
-            df.at[idx, "city"] = "Remote"
-            continue
+    # City detection
+    df["city"] = df["location_clean"].apply(detect_city)
 
-        # CASE 2: Postcode
-        if is_uk_postcode(loc):
-            df.at[idx, "location_type"] = "postcode"
-            df.at[idx, "postcode"] = loc
+    # Optional geocoding enrichment
+    if USE_GEOCODER:
+        missing_mask = df["country"].isna() & df["location_clean"].notna()
 
-            geo = geocode_location_cached(loc)
-            df.at[idx, "city"] = geo["city"]
-            df.at[idx, "country"] = geo["country"]
-            continue
+        df.loc[missing_mask, "geo_full"] = df.loc[missing_mask, "location_clean"].apply(geocode_location)
 
-        # CASE 3: City
-        df.at[idx, "location_type"] = "city"
-        df.at[idx, "city"] = loc
+    # If remote → nullify geo
+    df.loc[df["is_remote"] == 1, ["city", "country"]] = [None, None]
 
-        geo = geocode_location(loc)
-        df.at[idx, "country"] = geo["country"]
+    # Standardize capitalization
+    df["city"] = df["city"].str.title()
+    df["country"] = df["country"].str.title()
 
-    return df
+    return df[["city", "country", "is_remote"]]
+
+############################################################
+#########################################################
 
 # def standardize_locations(df, source_name):
 #     """
@@ -285,7 +421,17 @@ def standardize_data(raw_df, source_name, rates_map):
     df = standardize_salaries(raw_df, source_name, rates_map)
     df = standardize_contract_types(df)
     # df = standardize_locations(df, source_name)
-    df = enrich_location(df)
+    # df = enrich_location(df)
+
+    # Apply production-level location normalization
+    loc_df = normalize_location_pro(df, col="location")
+
+    df["city"] = loc_df["city"]
+    df["country"] = loc_df["country"]
+    df["is_remote"] = loc_df["is_remote"]
+    df["country"] = df["country"].fillna("UNKNOWN")
+    df["city"] = df["city"].fillna("UNKNOWN")
+
     df = standardize_timestamps(df, source_name)
     # df = unify_job_ids(df, source_prefix)
     

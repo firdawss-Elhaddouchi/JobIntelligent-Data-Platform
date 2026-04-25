@@ -59,8 +59,11 @@ def create_gold_schema():
         conn.execute(text("""
         CREATE TABLE gold.dim_location (
             location_id SERIAL PRIMARY KEY,
-            location TEXT UNIQUE
-        )
+            location TEXT,
+            city TEXT,
+            country TEXT,
+            is_remote BOOLEAN
+        );
         """))
 
         # =========================

@@ -46,29 +46,51 @@ def ensure_columns(df, cols):
 # 1. DIMENSION: LOCATION
 # ============================================================
 
+# def build_dim_location(df):
+#     """
+#     Dimension table: unique locations
+#     """
+
+#     df = ensure_columns(df, ["city", "country", "postcode", "location_type"])
+
+#     df_loc = df[[
+#         "city",
+#         "country",
+#         "postcode",
+#         "location_type"
+#     ]].drop_duplicates()
+
+#     df_loc = df_loc.reset_index(drop=True)
+#     df_loc["location_id"] = df_loc.index + 1
+
+#     return df_loc[[
+#         "location_id",
+#         "city",
+#         "country",
+#         "postcode",
+#         "location_type"
+#     ]]
+
+from scripts.processing.gold.location_normalizer_pro import normalize_location_pro
+
 def build_dim_location(df):
-    """
-    Dimension table: unique locations
-    """
 
-    df = ensure_columns(df, ["city", "country", "postcode", "location_type"])
+    loc_df = df[["location"]].drop_duplicates().copy()
 
-    df_loc = df[[
-        "city",
-        "country",
-        "postcode",
-        "location_type"
-    ]].drop_duplicates()
+    norm = normalize_location_pro(loc_df, "location")
 
-    df_loc = df_loc.reset_index(drop=True)
-    df_loc["location_id"] = df_loc.index + 1
+    loc_df = pd.concat([loc_df, norm], axis=1)
 
-    return df_loc[[
+    loc_df = loc_df.drop_duplicates(subset=["location"])
+
+    loc_df["location_id"] = range(1, len(loc_df) + 1)
+
+    return loc_df[[
         "location_id",
+        "location",
         "city",
         "country",
-        "postcode",
-        "location_type"
+        "is_remote"
     ]]
 
 
