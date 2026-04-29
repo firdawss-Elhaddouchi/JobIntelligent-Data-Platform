@@ -71,7 +71,7 @@ def ensure_columns(df, cols):
 #         "location_type"
 #     ]]
 
-from scripts.processing.gold.location_normalizer_pro import normalize_location_pro
+from scripts.processing.silver.standardizer import normalize_location_pro
 
 def build_dim_location(df):
 
@@ -108,7 +108,7 @@ def build_jobs_fact(df, dim_location):
     # Ensure required columns exist
     df = ensure_columns(df, [
         "job_id", "job_title", "company_name",
-        "city", "country", "postcode", "location_type",
+        "city", "country",  "is_remote",
         "salary_min", "salary_max", "currency", "posted_date"
     ])
 
@@ -118,7 +118,7 @@ def build_jobs_fact(df, dim_location):
     # Join with dimension
     df_fact = df.merge(
         dim_location,
-        on=["city", "country", "postcode", "location_type"],
+        on=["city", "country","is_remote"],
         how="left"
     )
 

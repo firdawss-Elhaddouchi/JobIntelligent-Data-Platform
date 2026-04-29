@@ -2,7 +2,6 @@ import json
 import time
 import os
 import sys
-from datetime import datetime, timezone
 from dotenv import load_dotenv
 import boto3
 from io import BytesIO
@@ -89,6 +88,18 @@ def create_bucket_if_not_exists(s3, bucket_name):
 # 5- READ FROM BRONZE
 # =========================
 
+def read_from_bronze(s3, key):
+    """Download and parse a JSON file from the bronze bucket."""
+    logger.info(f"[READ] Reading from bronze: {key}")
+    try:
+        response = s3.get_object(Bucket=BRONZE_BUCKET, Key=key)
+        content = response["Body"].read().decode("utf-8")
+        data = json.loads(content)
+        return data
+    except Exception as e:
+        logger.error(f"❌ Failed to read or parse JSON from Bronze: {str(e)}")
+        raise
+    
 def upload_to_silver(s3, df, source_name, timestamp):
     """
     Converts the cleaned DataFrame to Parquet format and uploads it to the Silver bucket.
