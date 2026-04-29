@@ -83,6 +83,7 @@ def collect_reed():
             break
 
     logger.info(f"Total jobs collected: {len(all_jobs)}")
+    
     return all_jobs
 
 

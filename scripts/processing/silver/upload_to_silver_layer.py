@@ -2,7 +2,6 @@ import json
 import time
 import os
 import sys
-from datetime import datetime, timezone
 from dotenv import load_dotenv
 import boto3
 from io import BytesIO
@@ -100,7 +99,7 @@ def read_from_bronze(s3, key):
     except Exception as e:
         logger.error(f"❌ Failed to read or parse JSON from Bronze: {str(e)}")
         raise
-
+    
 def upload_to_silver(s3, df, source_name, timestamp):
     """
     Converts the cleaned DataFrame to Parquet format and uploads it to the Silver bucket.
