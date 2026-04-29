@@ -2,7 +2,6 @@ import json
 import time
 import os
 import sys
-from datetime import datetime, timezone
 from dotenv import load_dotenv
 import boto3
 from io import BytesIO

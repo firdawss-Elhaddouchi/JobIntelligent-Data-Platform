@@ -3,7 +3,8 @@ import numpy as np
 import requests
 import logging
 import re
-
+import pycountry
+from geotext import GeoText
 # ============================================================
 # 0. LOGGER SETUP
 # ============================================================
@@ -211,17 +212,13 @@ def is_uk_postcode(text):
 
 #########################################
 ########################################
-import pandas as pd
-import numpy as np
-import re
-import pycountry
-from geotext import GeoText
+
 
 # Optional (for real production enrichment)
 USE_GEOCODER = False
-if USE_GEOCODER:
-    from geopy.geocoders import Nominatim
-    geolocator = Nominatim(user_agent="job_location_normalizer")
+# if USE_GEOCODER:
+#     from geopy.geocoders import Nominatim
+#     geolocator = Nominatim(user_agent="job_location_normalizer")
 
 
 # =========================
@@ -296,14 +293,14 @@ def detect_city(text):
 # =========================
 # FALLBACK GEOCODER (OPTIONAL)
 # =========================
-def geocode_location(text):
-    try:
-        location = geolocator.geocode(text, timeout=2)
-        if location:
-            address = location.raw.get("display_name", "")
-            return address
-    except:
-        return None
+# def geocode_location(text):
+#     try:
+#         location = geolocator.geocode(text, timeout=2)
+#         if location:
+#             address = location.raw.get("display_name", "")
+#             return address
+#     except:
+#         return None
 
 
 # =========================
@@ -325,10 +322,10 @@ def normalize_location_pro(df, col="location"):
     df["city"] = df["location_clean"].apply(detect_city)
 
     # Optional geocoding enrichment
-    if USE_GEOCODER:
-        missing_mask = df["country"].isna() & df["location_clean"].notna()
+    # if USE_GEOCODER:
+    #     missing_mask = df["country"].isna() & df["location_clean"].notna()
 
-        df.loc[missing_mask, "geo_full"] = df.loc[missing_mask, "location_clean"].apply(geocode_location)
+        # df.loc[missing_mask, "geo_full"] = df.loc[missing_mask, "location_clean"].apply(geocode_location)
 
     # If remote → nullify geo
     df.loc[df["is_remote"] == 1, ["city", "country"]] = [None, None]

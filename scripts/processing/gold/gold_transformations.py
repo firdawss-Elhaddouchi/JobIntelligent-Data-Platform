@@ -84,7 +84,6 @@ def build_dim_location(df):
     loc_df = loc_df.drop_duplicates(subset=["location"])
 
     loc_df["location_id"] = range(1, len(loc_df) + 1)
-    
 
     return loc_df[[
         "location_id",
