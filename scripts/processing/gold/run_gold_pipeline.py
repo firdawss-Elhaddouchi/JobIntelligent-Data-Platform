@@ -1,238 +1,280 @@
 """
-Gold Layer Pipeline
--------------------
-Reads cleaned data from Silver (MinIO),
-applies transformations,
-and writes results to Gold bucket.
+Gold Layer Pipeline (Hybrid Star Schema)
+========================================
+
+This script builds the Gold layer of the data pipeline.
+
+Responsibilities:
+- Load cleaned Silver data from MinIO
+- Build dimension tables (location, date, company, contract type)
+- Compute aggregations and analytical features
+- Load data into PostgreSQL (dimensions, staging, fact table)
+
+Design:
+- Hybrid Star Schema
+- Fact table is built using SQL joins from a staging table
+- Incremental loading with conflict handling
+
+Author: Data Engineering Pipeline
 """
 
-import time
 import pandas as pd
 from io import BytesIO
 import boto3
-from botocore.exceptions import ClientError
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
+from datetime import datetime
 import os
 
+from scripts.common.logging_config import setup_logger
+from scripts.common.utilies import get_minio_client,get_postgres_engine
+
 from scripts.processing.gold.gold_transformations import (
-    build_jobs_fact,
     build_dim_location,
-    jobs_per_location,
+    build_dim_date,
+    build_dim_company,
+    build_dim_contract_type,
+    jobs_per_country,
     jobs_per_company,
     jobs_per_contract_type,
-    remote_work_trends,
+    safe_append,
+    safe_replace,
+    compute_salary_avg,
     salary_trends,
-    seniority_analysis,
-    skills_demand,
-    skills_demand_expanded,
     job_features
 )
 
 # =========================
-# CONFIG
+# CONFIGURATION
 # =========================
+
+logger = setup_logger("gold_pipeline")
+load_dotenv()
 
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
 ACCESS_KEY = os.getenv("MINIO_ROOT_USER", "minioadmin")
 SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
 
 SILVER_BUCKET = "silver"
-GOLD_BUCKET = "gold"
-
-# =========================
-# POSTGRES CONFIG
-# =========================
 POSTGRES_URI = "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow"
-# ⚠️ If running inside Docker use:
-# postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+
+
 
 # =========================
-# MINIO CLIENT
+# SILVER READER
 # =========================
-def get_minio_client():
-    return boto3.client(
-        "s3",
-        endpoint_url=MINIO_ENDPOINT,
-        aws_access_key_id=ACCESS_KEY,
-        aws_secret_access_key=SECRET_KEY
-    )
 
-def get_postgres_engine():
-    return create_engine(POSTGRES_URI)
+def get_today_silver_key(s3, source_name):
+    """
+    Retrieve today's Silver layer file key for a given source.
 
-# =========================
-# GET LATEST SILVER DATA
-# =========================
-def get_latest_silver_key(s3, source_name):
+    Args:
+        s3 (boto3.client): MinIO S3 client
+        source_name (str): Data source name (e.g., 'adzuna')
 
-    prefix = f"{source_name}/"
+    Returns:
+        str | None: S3 key if exists, otherwise None
+    """
+    today_str = datetime.today().strftime("%Y-%m-%d")
+    key = f"{source_name}/cleaning_date={today_str}/data.parquet"
 
-    response = s3.list_objects_v2(
-        Bucket=SILVER_BUCKET,
-        Prefix=prefix,
-        Delimiter="/"
-    )
+    try:
+        response = s3.list_objects_v2(
+            Bucket=SILVER_BUCKET,
+            Prefix=key
+        )
 
-    if "CommonPrefixes" not in response:
+        if 'Contents' in response and len(response['Contents']) > 0:
+            logger.info(f"Found Silver data for {source_name}: {key}")
+            return key
+
+        logger.warning(f"No Silver data found for {source_name} today")
+        return None
+
+    except Exception as e:
+        logger.error(f"Error retrieving Silver key for {source_name}: {e}")
         return None
 
 
-    folders = [p["Prefix"] for p in response["CommonPrefixes"]]
-    latest_folder = sorted(folders)[-1]
-    print(latest_folder)
-    return f"{latest_folder}data.parquet"
-
-
-# =========================
-# READ SILVER
-# =========================
 def read_silver_data(s3, key):
+    """
+    Read a parquet file from MinIO and return as DataFrame.
 
-    response = s3.get_object(Bucket="silver", Key=key)
+    Args:
+        s3 (boto3.client): MinIO client
+        key (str): S3 object key
 
-    import pandas as pd
-    from io import BytesIO
-
+    Returns:
+        pd.DataFrame: Loaded data
+    """
+    logger.info(f"Reading Silver data: {key}")
+    response = s3.get_object(Bucket=SILVER_BUCKET, Key=key)
     buffer = BytesIO(response["Body"].read())
-
-    df = pd.read_parquet(buffer)
-
-    return df
+    return pd.read_parquet(buffer)
 
 
-# =========================
-# UPLOAD GOLD
-# =========================
-
-# def create_bucket_if_not_exists(s3, bucket_name):
-#     """
-#     Checks if a bucket exists in MinIO; if not, creates it.
-#     Essential for first-time setup and system resilience.
-#     """
-#     try:
-#         s3.head_bucket(Bucket=bucket_name)
-#     except ClientError:
-#         s3.create_bucket(Bucket=bucket_name)
-#         # logger.info(f"Bucket created: {bucket_name}")
-
-# def upload_gold_minio(s3, df, table_name, timestamp):
-
-#     if df.empty:
-#         print(f"[Gold] {table_name} is empty, skipping")
-#         return
-
-#     key = f"{table_name}/timestamp={timestamp}/data.json"
-
-#     json_str = df.to_json(orient="records", force_ascii=False)
-#     buffer = BytesIO(json_str.encode("utf-8"))
-
-#     s3.put_object(
-#         Bucket=GOLD_BUCKET,
-#         Key=key,
-#         Body=buffer,
-#         ContentType="application/json"
-#     )
-
-#     print(f"[Gold] Uploaded {table_name} ({len(df)} rows)")
-
-
-
-def upload_to_postgres(df, table_name, engine):
-
-    if df.empty:
-        print(f"[Postgres] {table_name} empty, skipping")
-        return
-
-    df.to_sql(
-        table_name,
-        engine,
-        schema="gold",
-        if_exists="append",  # or "append" later
-        index=False
-    )
-
-    print(f"[Postgres] Loaded {table_name} ({len(df)} rows)")
 # =========================
 # MAIN PIPELINE
 # =========================
-def run_gold_pipeline():
 
-    print("🚀 Starting Gold pipeline...")
+def run_gold_pipeline():
+    """
+    Execute the full Gold layer pipeline.
+
+    Steps:
+    1. Load Silver data
+    2. Build dimension tables
+    3. Compute aggregations
+    4. Load into PostgreSQL (dimensions, staging, fact)
+    """
+    logger.info("Starting Gold pipeline")
 
     s3 = get_minio_client()
-    timestamp = int(time.time())
+    engine = get_postgres_engine()
 
     sources = ["reed", "adzuna", "arbeitnow"]
-
     all_dfs = []
 
-    # 1. Load all sources from Silver
-    for source in sources:
+    # -------------------------
+    # LOAD SILVER
+    # -------------------------
+    logger.info("Loading Silver data...")
 
-        key = get_latest_silver_key(s3, source)
+    for source in sources:
+        key = get_today_silver_key(s3, source)
 
         if not key:
-            print(f"No data for {source}")
             continue
 
         df = read_silver_data(s3, key)
-
         df["source"] = source
-
         all_dfs.append(df)
+        print(df[['posted_date','expires_date']])
+
 
     if not all_dfs:
-        print("No data found in Silver")
+        logger.warning("No data found in Silver layer. Pipeline stopped.")
         return
 
-    # 2. Merge all sources
     df_all = pd.concat(all_dfs, ignore_index=True)
+    logger.info(f"Loaded {len(df_all)} rows from Silver")
 
-    # 3. Remove duplicates
-    df_all = df_all.drop_duplicates(subset=["job_id"])
+    # -------------------------
+    # DIMENSIONS
+    # -------------------------
+    logger.info("Building dimension tables...")
 
-    # 1. Build dimension
     dim_location = build_dim_location(df_all)
+    dim_date = build_dim_date(df_all)
+    dim_company = build_dim_company(df_all)
+    dim_contract = build_dim_contract_type(df_all)
 
-    # 2. Build fact with FK
-    fact = build_jobs_fact(df_all, dim_location)
+    # -------------------------
+    # AGGREGATIONS
+    # -------------------------
+    logger.info("Computing aggregations...")
 
-    loc = jobs_per_location(df_all)
+    loc = jobs_per_country(df_all)
     comp = jobs_per_company(df_all)
     contract = jobs_per_contract_type(df_all)
-    remote = remote_work_trends(df_all)
     sal = salary_trends(df_all)
-    seniority = seniority_analysis(df_all)
-    skills = skills_demand(df_all)
-    skills_expanded = skills_demand_expanded(df_all)
     features = job_features(df_all)
 
-    # 5. Upload to Gold
-    # create_bucket_if_not_exists(s3,GOLD_BUCKET)
-    # upload_gold_minio(s3, fact, "jobs_fact", timestamp)
-    # upload_gold_minio(s3, loc, "jobs_per_location", timestamp)
-    # upload_gold_minio(s3, comp, "jobs_per_company", timestamp)
-    # upload_gold_minio(s3, sal, "salary_trends", timestamp)
-    # upload_gold_minio(s3, skills, "skills_demand", timestamp)
-    # upload_gold_minio(s3, features, "job_features", timestamp)
+    # -------------------------
+    # LOAD DIMENSIONS
+    # -------------------------
+    logger.info("Loading dimensions into PostgreSQL...")
+
+    safe_append(dim_location, "dim_location", engine, unique_cols=["location"])
+    safe_append(dim_date, "dim_date", engine, unique_cols=["date"])
+    safe_append(dim_company, "dim_company", engine, unique_cols=["company_name"])
+    safe_append(dim_contract, "dim_contract_type", engine, unique_cols=["contract_type"])
+
+    # -------------------------
+    # STAGING
+    # -------------------------
+    logger.info("Preparing staging table...")
+
+    df = compute_salary_avg(df_all)
+
+    df_staging = df[[
+        "job_id", "job_title", "company_name", "location",
+        "posted_date","expires_date", "contract_type",
+        "salary_min", "salary_max", "salary_avg",
+        "currency", "job_url", "source"
+    ]].copy()
+
+    df_staging.to_sql(
+        "jobs_staging",
+        engine,
+        schema="gold",
+        if_exists="append",
+        index=False
+    )
+    print("#########################")
+    print(df_staging['posted_date'])
+    print("#########################")
+    print(dim_date['date'])
+    print("#########################")
+
+    logger.info(f"Inserted {len(df_staging)} rows into staging")
+
+    # -------------------------
+    # FACT TABLE
+    # -------------------------
+    logger.info("Building fact table...")
+
+    sql = """
+    INSERT INTO gold.jobs_fact (
+        job_id, job_title,
+        company_id, location_id, posted_date_id,expires_date_id, contract_type_id,
+        salary_min, salary_max, salary_avg,
+        currency, job_url, source
+    )
+    SELECT
+        s.job_id,
+        s.job_title,
+        c.company_id,
+        l.location_id,
+        d1.date_id,
+        d2.date_id,
+        ct.contract_type_id,
+        s.salary_min,
+        s.salary_max,
+        s.salary_avg,
+        s.currency,
+        s.job_url,
+        s.source
+    FROM gold.jobs_staging s
+    LEFT JOIN gold.dim_company c ON s.company_name = c.company_name
+    LEFT JOIN gold.dim_location l ON s.location = l.location
+    LEFT JOIN gold.dim_date d1 ON s.posted_date::DATE = d1.date::DATE
+    LEFT JOIN gold.dim_date d2 ON TO_TIMESTAMP(s.expires_date::DOUBLE PRECISION)::DATE = d2.date::DATE
+    LEFT JOIN gold.dim_contract_type ct ON s.contract_type = ct.contract_type
+    WHERE s.job_id IS NOT NULL
+    ON CONFLICT (job_id) DO NOTHING;
+    """
+
+    with engine.begin() as conn:
+        conn.execute(text(sql))
+
+    # -------------------------
+    # SAVE AGGREGATIONS
+    # -------------------------
+    logger.info("Saving aggregations...")
+
+    safe_replace(loc, "jobs_per_country", engine)
+    safe_replace(comp, "jobs_per_company", engine)
+    safe_replace(contract, "jobs_per_contract_type", engine)
+    safe_replace(sal, "salary_trends", engine)
+    safe_replace(features, "job_features", engine)
+
+    logger.info(" Gold pipeline completed successfully")
 
 
+# =========================
+# ENTRY POINT
+# =========================
 
-    # 👉 PostgreSQL (NEW)
-    engine = get_postgres_engine()
-
-    # upload_to_postgres(fact, "jobs_fact", engine)
-    upload_to_postgres(dim_location, "dim_location",engine)
-    upload_to_postgres(fact, "jobs_fact",engine)
-    upload_to_postgres(loc, "jobs_per_location", engine)
-    upload_to_postgres(comp, "jobs_per_company", engine)
-    upload_to_postgres(sal, "salary_trends", engine)
-    upload_to_postgres(skills, "skills_demand", engine)
-    upload_to_postgres(features, "job_features", engine)
-
-    print("✅ Gold pipeline completed")
-
-
-# CLI
 if __name__ == "__main__":
     run_gold_pipeline()

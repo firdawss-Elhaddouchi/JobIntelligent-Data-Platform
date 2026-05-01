@@ -7,7 +7,7 @@ from io import BytesIO
 from scripts.processing.gold.gold_transformations import (
     build_jobs_fact,
     build_dim_location,
-    jobs_per_location,
+    jobs_per_country,
     jobs_per_company,
     salary_trends,
     skills_demand,
@@ -98,7 +98,7 @@ def run_gold_pipeline():
     dim_location = build_dim_location(df_all)
     fact = build_jobs_fact(df_all, dim_location)
 
-    loc = jobs_per_location(df_all)
+    loc = jobs_per_country(df_all)
     comp = jobs_per_company(df_all)
     sal = salary_trends(df_all)
     skills = skills_demand(df_all)

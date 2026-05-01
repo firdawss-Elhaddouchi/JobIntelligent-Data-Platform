@@ -120,107 +120,7 @@ def is_uk_postcode(text):
     return bool(re.match(pattern, text))
 
 
-# def is_remote(text):
-#     if not text:
-#         return False
-#     return "remote" in str(text).lower()
-
-
-# def geocode_location(location):
-#     """
-#     Use Nominatim (FREE) to get city + country
-#     ⚠️ slow → use only if needed
-#     """
-#     try:
-#         url = "https://nominatim.openstreetmap.org/search"
-#         params = {
-#             "q": location,
-#             "format": "json",
-#             "limit": 1
-#         }
-
-#         headers = {
-#             "User-Agent": "job-intelligent-app"
-#         }
-
-#         response = requests.get(url, params=params, headers=headers)
-
-#         if response.status_code == 200:
-#             data = response.json()
-#             if data:
-#                 return {
-#                     "city": data[0].get("display_name", "").split(",")[0],
-#                     "country": data[0].get("display_name", "").split(",")[-1].strip()
-#                 }
-
-#     except Exception as e:
-#         logger.warning(f"Geocoding failed for {location}: {e}")
-
-#     return {"city": None, "country": None}
-
-# location_cache = {}
-
-# def geocode_location_cached(loc):
-#     if loc in location_cache:
-#         return location_cache[loc]
-
-#     result = geocode_location(loc)
-#     location_cache[loc] = result
-#     return result
-
-# def enrich_location(df):
-#     df = df.copy()
-
-#     df["city"] = None
-#     df["country"] = None
-#     df["postcode"] = None
-#     df["location_type"] = None
-
-#     for idx, row in df.iterrows():
-#         loc = row["location"]
-
-#         if pd.isna(loc):
-#             continue
-
-#         # CASE 1: Remote
-#         if is_remote(loc):
-#             df.at[idx, "location_type"] = "remote"
-#             df.at[idx, "city"] = "Remote"
-#             continue
-
-#         # CASE 2: Postcode
-#         if is_uk_postcode(loc):
-#             df.at[idx, "location_type"] = "postcode"
-#             df.at[idx, "postcode"] = loc
-
-#             geo = geocode_location_cached(loc)
-#             df.at[idx, "city"] = geo["city"]
-#             df.at[idx, "country"] = geo["country"]
-#             continue
-
-#         # CASE 3: City
-#         df.at[idx, "location_type"] = "city"
-#         df.at[idx, "city"] = loc
-
-#         geo = geocode_location(loc)
-#         df.at[idx, "country"] = geo["country"]
-
-#     return df
-
-
-
-
-#########################################
-########################################
-
-
-# Optional (for real production enrichment)
 USE_GEOCODER = False
-# if USE_GEOCODER:
-#     from geopy.geocoders import Nominatim
-#     geolocator = Nominatim(user_agent="job_location_normalizer")
-
-
 # =========================
 # REMOTE DETECTION
 # =========================
@@ -336,62 +236,58 @@ def normalize_location_pro(df, col="location"):
 
     return df[["city", "country", "is_remote"]]
 
-############################################################
-#########################################################
 
-# def standardize_locations(df, source_name):
+# def standardize_timestamps(df):
 #     """
-#     Standardizes location strings into 'City, Country' format.
+#     Standardizes multiple date columns to UTC datetime at Midnight.
+#     Works for both Unix timestamps and standard date strings.
 #     """
 #     df = df.copy()
-#     def parse_location(loc_str):
-#         clean_loc = str(loc_str).lower().strip()
-#         if pd.isna(loc_str) or clean_loc in ['nan', 'none', 'null', '', 'unknown']:
-#             return "Unknown", "Unknown"
-#         if 'remote' in clean_loc or 'anywhere' in clean_loc:
-#             return "Remote", "Remote"
+    
+#     # Define which columns should be treated as dates
+#     date_columns = ['posted_date', 'expires_date']
+    
+#     for col in date_columns:
+#         if col in df.columns:
+#             # 1. Try handling as Unix Timestamps (common in Arbeitnow)
+#             numeric_dates = pd.to_numeric(df[col], errors='coerce')
             
-#         parts = [p.strip() for p in str(loc_str).split(',')]
-#         city = parts[0]
-#         countries = {'adzuna': 'France', 'reed': 'United Kingdom', 'arbeitnow': 'Germany'}
-#         country = countries.get(source_name.lower(), "Unknown")
-#         return city, country
-
-#     if 'location' in df.columns:
-#         temp_locs = df['location'].apply(parse_location)
-#         df['city_std'] = temp_locs.apply(lambda x: x[0])
-#         df['country_std'] = temp_locs.apply(lambda x: x[1])
-#         df['location_std'] = df['city_std'] + ", " + df['country_std']
+#             # If the column is mostly numeric, treat it as Unix seconds
+#             if numeric_dates.notna().sum() > (len(df) * 0.5): 
+#                 df[f'{col}_std'] = pd.to_datetime(numeric_dates, unit='s', utc=True, errors='coerce')
+#             else:
+#                 # 2. Otherwise, treat as standard date strings
+#                 df[f'{col}_std'] = pd.to_datetime(df[col], dayfirst=True, utc=True, errors='coerce')
+            
+#             # 3. Data Sanitization: Filter unrealistic dates
+#             cutoff = pd.Timestamp('2010-01-01', tz='UTC')
+#             df.loc[df[f'{col}_std'] < cutoff, f'{col}_std'] = pd.NaT
+            
+#             # 4. Transform: Floor to Day (The 00:00:00 logic)
+#             df[f'{col}_std'] = df[f'{col}_std'].dt.floor('D')
+            
 #     return df
 
 def standardize_timestamps(df):
-    """
-    Standardizes multiple date columns to UTC datetime at Midnight.
-    Works for both Unix timestamps and standard date strings.
-    """
     df = df.copy()
-    
-    # Define which columns should be treated as dates
     date_columns = ['posted_date', 'expires_date']
     
     for col in date_columns:
         if col in df.columns:
-            # 1. Try handling as Unix Timestamps (common in Arbeitnow)
+            # 1. Convert to datetime objects first
             numeric_dates = pd.to_numeric(df[col], errors='coerce')
-            
-            # If the column is mostly numeric, treat it as Unix seconds
             if numeric_dates.notna().sum() > (len(df) * 0.5): 
-                df[f'{col}_std'] = pd.to_datetime(numeric_dates, unit='s', utc=True, errors='coerce')
+                temp_date = pd.to_datetime(numeric_dates, unit='s', utc=True, errors='coerce')
             else:
-                # 2. Otherwise, treat as standard date strings
-                df[f'{col}_std'] = pd.to_datetime(df[col], dayfirst=True, utc=True, errors='coerce')
+                temp_date = pd.to_datetime(df[col], dayfirst=True, utc=True, errors='coerce')
             
-            # 3. Data Sanitization: Filter unrealistic dates
+            # 2. Filter bad dates
             cutoff = pd.Timestamp('2010-01-01', tz='UTC')
-            df.loc[df[f'{col}_std'] < cutoff, f'{col}_std'] = pd.NaT
+            temp_date[temp_date < cutoff] = pd.NaT
             
-            # 4. Transform: Floor to Day (The 00:00:00 logic)
-            df[f'{col}_std'] = df[f'{col}_std'].dt.floor('D')
+            # 3. CONVERT TO STRING (The "2026-05-01" logic)
+            # We use .dt.strftime to format it exactly as you requested
+            df[f'{col}_std'] = temp_date.dt.strftime('%Y-%m-%d')
             
     return df
 
@@ -429,7 +325,7 @@ def standardize_data(raw_df, source_name, rates_map):
     df["country"] = df["country"].fillna("UNKNOWN")
     df["city"] = df["city"].fillna("UNKNOWN")
 
-    df = df[["city", "country", "is_remote"]].drop_duplicates()
+    # df = df[["city", "country", "is_remote"]].drop_duplicates()
     df = standardize_timestamps(df)
     # df = unify_job_ids(df, source_prefix)
     
