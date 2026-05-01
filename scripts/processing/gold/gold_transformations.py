@@ -125,6 +125,7 @@ def build_dim_date(df):
     dim["quarter"] = pd.to_datetime(dim["posted_date"]).dt.quarter
     dim["year"] = pd.to_datetime(dim["posted_date"]).dt.year
     dim["day_of_week"] = pd.to_datetime(dim["posted_date"]).dt.day_name()
+    dim = dim.rename(columns={'posted_date': 'date'})
 
     # dim["date_id"] = range(1, len(dim) + 1)
     return dim

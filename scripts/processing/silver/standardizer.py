@@ -237,34 +237,57 @@ def normalize_location_pro(df, col="location"):
     return df[["city", "country", "is_remote"]]
 
 
-def standardize_timestamps(df):
-    """
-    Standardizes multiple date columns to UTC datetime at Midnight.
-    Works for both Unix timestamps and standard date strings.
-    """
-    df = df.copy()
+# def standardize_timestamps(df):
+#     """
+#     Standardizes multiple date columns to UTC datetime at Midnight.
+#     Works for both Unix timestamps and standard date strings.
+#     """
+#     df = df.copy()
     
-    # Define which columns should be treated as dates
+#     # Define which columns should be treated as dates
+#     date_columns = ['posted_date', 'expires_date']
+    
+#     for col in date_columns:
+#         if col in df.columns:
+#             # 1. Try handling as Unix Timestamps (common in Arbeitnow)
+#             numeric_dates = pd.to_numeric(df[col], errors='coerce')
+            
+#             # If the column is mostly numeric, treat it as Unix seconds
+#             if numeric_dates.notna().sum() > (len(df) * 0.5): 
+#                 df[f'{col}_std'] = pd.to_datetime(numeric_dates, unit='s', utc=True, errors='coerce')
+#             else:
+#                 # 2. Otherwise, treat as standard date strings
+#                 df[f'{col}_std'] = pd.to_datetime(df[col], dayfirst=True, utc=True, errors='coerce')
+            
+#             # 3. Data Sanitization: Filter unrealistic dates
+#             cutoff = pd.Timestamp('2010-01-01', tz='UTC')
+#             df.loc[df[f'{col}_std'] < cutoff, f'{col}_std'] = pd.NaT
+            
+#             # 4. Transform: Floor to Day (The 00:00:00 logic)
+#             df[f'{col}_std'] = df[f'{col}_std'].dt.floor('D')
+            
+#     return df
+
+def standardize_timestamps(df):
+    df = df.copy()
     date_columns = ['posted_date', 'expires_date']
     
     for col in date_columns:
         if col in df.columns:
-            # 1. Try handling as Unix Timestamps (common in Arbeitnow)
+            # 1. Convert to datetime objects first
             numeric_dates = pd.to_numeric(df[col], errors='coerce')
-            
-            # If the column is mostly numeric, treat it as Unix seconds
             if numeric_dates.notna().sum() > (len(df) * 0.5): 
-                df[f'{col}_std'] = pd.to_datetime(numeric_dates, unit='s', utc=True, errors='coerce')
+                temp_date = pd.to_datetime(numeric_dates, unit='s', utc=True, errors='coerce')
             else:
-                # 2. Otherwise, treat as standard date strings
-                df[f'{col}_std'] = pd.to_datetime(df[col], dayfirst=True, utc=True, errors='coerce')
+                temp_date = pd.to_datetime(df[col], dayfirst=True, utc=True, errors='coerce')
             
-            # 3. Data Sanitization: Filter unrealistic dates
+            # 2. Filter bad dates
             cutoff = pd.Timestamp('2010-01-01', tz='UTC')
-            df.loc[df[f'{col}_std'] < cutoff, f'{col}_std'] = pd.NaT
+            temp_date[temp_date < cutoff] = pd.NaT
             
-            # 4. Transform: Floor to Day (The 00:00:00 logic)
-            df[f'{col}_std'] = df[f'{col}_std'].dt.floor('D')
+            # 3. CONVERT TO STRING (The "2026-05-01" logic)
+            # We use .dt.strftime to format it exactly as you requested
+            df[f'{col}_std'] = temp_date.dt.strftime('%Y-%m-%d')
             
     return df
 

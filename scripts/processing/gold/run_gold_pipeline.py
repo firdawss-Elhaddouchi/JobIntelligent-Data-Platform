@@ -149,6 +149,8 @@ def run_gold_pipeline():
         df = read_silver_data(s3, key)
         df["source"] = source
         all_dfs.append(df)
+        print(df[['posted_date','expires_date']])
+
 
     if not all_dfs:
         logger.warning("No data found in Silver layer. Pipeline stopped.")
@@ -184,7 +186,7 @@ def run_gold_pipeline():
     logger.info("Loading dimensions into PostgreSQL...")
 
     safe_append(dim_location, "dim_location", engine, unique_cols=["location"])
-    safe_append(dim_date, "dim_date", engine, unique_cols=["posted_date"])
+    safe_append(dim_date, "dim_date", engine, unique_cols=["date"])
     safe_append(dim_company, "dim_company", engine, unique_cols=["company_name"])
     safe_append(dim_contract, "dim_contract_type", engine, unique_cols=["contract_type"])
 
@@ -197,10 +199,10 @@ def run_gold_pipeline():
 
     df_staging = df[[
         "job_id", "job_title", "company_name", "location",
-        "posted_date", "contract_type",
+        "posted_date","expires_date", "contract_type",
         "salary_min", "salary_max", "salary_avg",
         "currency", "job_url", "source"
-    ]]
+    ]].copy()
 
     df_staging.to_sql(
         "jobs_staging",
@@ -212,7 +214,7 @@ def run_gold_pipeline():
     print("#########################")
     print(df_staging['posted_date'])
     print("#########################")
-    print(dim_date['posted_date'])
+    print(dim_date['date'])
     print("#########################")
 
     logger.info(f"Inserted {len(df_staging)} rows into staging")
@@ -225,7 +227,7 @@ def run_gold_pipeline():
     sql = """
     INSERT INTO gold.jobs_fact (
         job_id, job_title,
-        company_id, location_id, date_id, contract_type_id,
+        company_id, location_id, posted_date_id,expires_date_id, contract_type_id,
         salary_min, salary_max, salary_avg,
         currency, job_url, source
     )
@@ -234,7 +236,8 @@ def run_gold_pipeline():
         s.job_title,
         c.company_id,
         l.location_id,
-        d.date_id,
+        d1.date_id,
+        d2.date_id,
         ct.contract_type_id,
         s.salary_min,
         s.salary_max,
@@ -245,7 +248,8 @@ def run_gold_pipeline():
     FROM gold.jobs_staging s
     LEFT JOIN gold.dim_company c ON s.company_name = c.company_name
     LEFT JOIN gold.dim_location l ON s.location = l.location
-    LEFT JOIN gold.dim_date d ON s.posted_date::DATE = d.posted_date
+    LEFT JOIN gold.dim_date d1 ON s.posted_date::DATE = d1.date::DATE
+    LEFT JOIN gold.dim_date d2 ON TO_TIMESTAMP(s.expires_date::DOUBLE PRECISION)::DATE = d2.date::DATE
     LEFT JOIN gold.dim_contract_type ct ON s.contract_type = ct.contract_type
     WHERE s.job_id IS NOT NULL
     ON CONFLICT (job_id) DO NOTHING;

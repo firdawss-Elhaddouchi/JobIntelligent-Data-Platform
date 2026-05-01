@@ -45,7 +45,7 @@ def create_gold_schema():
         conn.execute(text("""
         CREATE TABLE gold.dim_date (
             date_id SERIAL PRIMARY KEY,
-            posted_date DATE UNIQUE,
+            date DATE UNIQUE,
             day INT,
             month INT,
             month_name TEXT,
@@ -90,7 +90,8 @@ def create_gold_schema():
 
             company_id INT REFERENCES gold.dim_company(company_id),
             location_id INT REFERENCES gold.dim_location(location_id),
-            date_id INT REFERENCES gold.dim_date(date_id),
+            posted_date_id INT REFERENCES gold.dim_date(date_id),
+            expires_date_id INT REFERENCES gold.dim_date(date_id),
             contract_type_id INT REFERENCES gold.dim_contract_type(contract_type_id),
             salary_min FLOAT,
             salary_max FLOAT,
@@ -99,9 +100,8 @@ def create_gold_schema():
             currency TEXT,
             is_remote BOOLEAN,
             job_url TEXT,
-            source TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            source TEXT
+           
         );
         """))
 
@@ -109,7 +109,8 @@ def create_gold_schema():
         # INDEXES
         # =========================
         conn.execute(text("CREATE INDEX idx_jobs_location ON gold.jobs_fact(location_id);"))
-        conn.execute(text("CREATE INDEX idx_jobs_date ON gold.jobs_fact(date_id);"))
+        conn.execute(text("CREATE INDEX idx_jobs_posted_date ON gold.jobs_fact(posted_date_id);"))
+        conn.execute(text("CREATE INDEX idx_jobs_expires_date ON gold.jobs_fact(expires_date_id);"))
         conn.execute(text("CREATE INDEX idx_jobs_company ON gold.jobs_fact(company_id);"))
 
         # =========================
