@@ -1,0 +1,36 @@
+relationship e2a382e6-d061-40f5-8ec8-275444e797bb
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Sales.Date
+	toColumn: LocalDateTable_46d4998b-cbc4-46ab-81c7-6f581f99b41d.Date
+
+relationship 38250f14-c037-4c90-b259-505632051efc
+	fromColumn: 'gold fact_jobs'.company_id
+	toColumn: 'gold dim_company'.company_id
+
+	annotation PBI_IsFromSource = FS
+
+relationship 3708e418-0e9c-4b64-b4d4-8acaafa50e7f
+	fromColumn: 'gold fact_jobs'.contract_type_id
+	toColumn: 'gold dim_contract_type'.contract_type_id
+
+	annotation PBI_IsFromSource = FS
+
+relationship 7c6b68ea-573f-4f05-9917-aa7eb16e0ddd
+	fromColumn: 'gold fact_jobs'.expires_date_id
+	toColumn: 'gold dim_date'.date_id
+
+	annotation PBI_IsFromSource = FS
+
+relationship 80925dff-3b0a-4321-acca-d938cbc6f9e7
+	isActive: false
+	fromColumn: 'gold fact_jobs'.posted_date_id
+	toColumn: 'gold dim_date'.date_id
+
+	annotation PBI_IsFromSource = FS
+
+relationship edeed90f-2e89-4539-ae7d-e60463089327
+	fromColumn: 'gold fact_jobs'.location_id
+	toColumn: 'gold dim_location'.location_id
+
+	annotation PBI_IsFromSource = FS
+

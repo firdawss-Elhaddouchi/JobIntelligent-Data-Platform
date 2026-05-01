@@ -1,0 +1,155 @@
+table 'gold fact_jobs'
+	lineageTag: 0b3392bc-b0b1-4ac4-9374-93ee98f66723
+
+	column job_id
+		dataType: string
+		isNullable: false
+		sourceProviderType: nvarchar(max)
+		lineageTag: e0f0e01e-a51e-4f31-a041-3c997c79dbdb
+		summarizeBy: none
+		sourceColumn: job_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column job_title
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: 721721b0-d11f-4d8e-84d7-e3003dc8c919
+		summarizeBy: none
+		sourceColumn: job_title
+
+		annotation SummarizationSetBy = Automatic
+
+	column company_id
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 8b4bf3f6-d200-4672-9b21-adae9f9ebc70
+		summarizeBy: none
+		sourceColumn: company_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column location_id
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: f1a55b3a-6b66-4d87-939d-d5c5b71c801f
+		summarizeBy: none
+		sourceColumn: location_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column posted_date_id
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 7a7efb0d-941c-4ac7-ae0a-294f718edd65
+		summarizeBy: sum
+		sourceColumn: posted_date_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column expires_date_id
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: e18c06e3-c8b5-460c-8f31-283567a46665
+		summarizeBy: none
+		sourceColumn: expires_date_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column contract_type_id
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 67abc707-a246-498b-86b3-8aec3cc6a0fb
+		summarizeBy: none
+		sourceColumn: contract_type_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column salary_min
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 5da6644f-4db2-4175-bd68-5c2604a7df5a
+		summarizeBy: sum
+		sourceColumn: salary_min
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column salary_max
+		dataType: double
+		sourceProviderType: double
+		lineageTag: c3036d04-4c23-4655-b411-d3be957c92e8
+		summarizeBy: sum
+		sourceColumn: salary_max
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column salary_avg
+		dataType: double
+		sourceProviderType: double
+		lineageTag: ac928c37-5d64-4843-aee9-299c4768be04
+		summarizeBy: sum
+		sourceColumn: salary_avg
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column currency
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: ed1fb092-6e93-45d9-a66a-ba7a1c8f6f01
+		summarizeBy: none
+		sourceColumn: currency
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_remote
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 66488bd5-8ade-4192-8399-770b7a203e0e
+		summarizeBy: sum
+		sourceColumn: is_remote
+
+		annotation SummarizationSetBy = Automatic
+
+	column job_url
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: 3a73f085-9ae3-4719-87fe-1bcb57108d54
+		summarizeBy: none
+		sourceColumn: job_url
+
+		annotation SummarizationSetBy = Automatic
+
+	column source
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: f19ce7a0-143c-4889-92c2-152872370786
+		summarizeBy: none
+		sourceColumn: source
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'gold fact_jobs' = m
+		mode: directQuery
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "airflow"),
+				    gold_jobs_fact = Source{[Schema="gold",Item="fact_jobs"]}[Data]
+				in
+				    gold_jobs_fact
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

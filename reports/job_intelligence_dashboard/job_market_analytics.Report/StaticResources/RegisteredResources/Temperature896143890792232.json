@@ -1,0 +1,46 @@
+{
+  "name": "Temperature",
+  "dataColors": [
+    "#CE72F1",
+    "#1DEBE5",
+    "#AB6FF4",
+    "#4491D9",
+    "#FFC1CB",
+    "#EB5559",
+    "#AE3535",
+    "#8E1F20"
+  ],
+  "tableAccent": "#262A76",
+  "maximum": "#262A76",
+  "center": "#8E1F20",
+  "minimum": "#F1F1F1",
+  "textClasses": {
+    "label": {
+      "fontFace": "wf_standard-font, helvetica, arial, sans-serif",
+      "fontSize": 8
+    },
+    "callout": {
+      "fontSize": 23
+    },
+    "header": {
+      "fontFace": "wf_standard-font, helvetica, arial, sans-serif"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "border": [
+          {
+            "color": {
+              "solid": {
+                "color": "#EDEDED"
+              }
+            },
+            "show": true,
+            "radius": 1
+          }
+        ]
+      }
+    }
+  }
+}
