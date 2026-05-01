@@ -11,7 +11,8 @@ Extended Star Schema with multiple dimensions:
 
 from sqlalchemy import create_engine, text
 
-POSTGRES_URI = "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow"
+import os
+POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow")
 engine = create_engine(POSTGRES_URI)
 
 

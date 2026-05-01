@@ -56,7 +56,7 @@ ACCESS_KEY = os.getenv("MINIO_ROOT_USER", "minioadmin")
 SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
 
 SILVER_BUCKET = "silver"
-POSTGRES_URI = "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow"
+POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow")
 
 
 
@@ -208,13 +208,14 @@ def run_gold_pipeline():
     ]].copy()
     print("#########################")
 
-    df_staging.to_sql(
-        "jobs_staging",
-        engine,
-        schema="gold",
-        if_exists="append",
-        index=False
-    )
+    with engine.begin() as conn:
+        df_staging.to_sql(
+            "jobs_staging",
+            conn,
+            schema="gold",
+            if_exists="append",
+            index=False
+        )
 
 
     logger.info(f"Inserted {len(df_staging)} rows into staging")
