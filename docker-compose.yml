@@ -113,6 +113,14 @@ services:
       airflow-init:
         condition: service_completed_successfully
     command: webserver
+    deploy:
+      resources:
+        limits:
+          cpus: '2'      
+          memory: 4G   
+        reservations:
+          cpus: '0.5'    
+          memory: 1G
 
   airflow-scheduler:
     # image: apache/airflow:2.8.1
@@ -125,7 +133,7 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
-      _PIP_ADDITIONAL_REQUIREMENTS: "requests boto3 pandas psycopg2-binary"
+      _PIP_ADDITIONAL_REQUIREMENTS: "requests boto3 pandas psycopg2-binary pycountry pyarrow geotext"
     volumes:
       - ./dags:/opt/airflow/dags
       - ./scripts:/opt/airflow/scripts
@@ -139,6 +147,11 @@ services:
       airflow-init:
         condition: service_completed_successfully
     command: scheduler
+    deploy:
+      resources:
+        limits:
+          cpus: '2'     
+          memory: 4G
 
   jupyter:
     image: jupyter/datascience-notebook:latest

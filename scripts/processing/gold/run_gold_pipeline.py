@@ -12,6 +12,7 @@ from io import BytesIO
 import boto3
 from botocore.exceptions import ClientError
 from sqlalchemy import create_engine
+import os
 
 from scripts.processing.gold.gold_transformations import (
     build_jobs_fact,
@@ -30,9 +31,10 @@ from scripts.processing.gold.gold_transformations import (
 # =========================
 # CONFIG
 # =========================
-MINIO_ENDPOINT = "http://localhost:9000"
-ACCESS_KEY = "minioadmin"
-SECRET_KEY = "minioadmin"
+
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
+ACCESS_KEY = os.getenv("MINIO_ROOT_USER", "minioadmin")
+SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
 
 SILVER_BUCKET = "silver"
 GOLD_BUCKET = "gold"
@@ -73,6 +75,7 @@ def get_latest_silver_key(s3, source_name):
 
     if "CommonPrefixes" not in response:
         return None
+
 
     folders = [p["Prefix"] for p in response["CommonPrefixes"]]
     latest_folder = sorted(folders)[-1]
