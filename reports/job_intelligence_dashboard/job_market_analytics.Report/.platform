@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "job_market_analytics"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "dbbd1f29-9f07-4c49-a371-f7b0986cef9f"
+  }
+}

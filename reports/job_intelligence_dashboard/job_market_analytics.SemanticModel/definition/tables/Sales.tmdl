@@ -1,0 +1,179 @@
+table Sales
+	lineageTag: 1956d61a-1e1a-4bb5-92e7-95ba749c111c
+
+	column Date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: e0e20e4f-b128-47fd-9d89-429ec891e4b3
+		summarizeBy: none
+		sourceColumn: Date
+
+		variation Variation
+			isDefault
+			relationship: e2a382e6-d061-40f5-8ec8-275444e797bb
+			defaultHierarchy: LocalDateTable_46d4998b-cbc4-46ab-81c7-6f581f99b41d.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Product
+		dataType: string
+		lineageTag: 5c7c7e87-d91a-401e-98f9-4e8fd6e2c071
+		summarizeBy: none
+		sourceColumn: Product
+
+		annotation SummarizationSetBy = Automatic
+
+	column Salesperson
+		dataType: string
+		lineageTag: ef39a067-b175-495e-a5c9-098e812d16fe
+		summarizeBy: none
+		sourceColumn: Salesperson
+
+		annotation SummarizationSetBy = Automatic
+
+	column Region
+		dataType: string
+		lineageTag: 4da8f0cd-764d-4759-8172-0472377f4b2b
+		summarizeBy: none
+		sourceColumn: Region
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Units Sold'
+		dataType: int64
+		formatString: 0
+		lineageTag: e193897b-eb6e-4d98-a7cd-aabd7fa08937
+		summarizeBy: sum
+		sourceColumn: Units Sold
+
+		annotation SummarizationSetBy = Automatic
+
+	column Revenue
+		dataType: double
+		lineageTag: 38604895-f5a4-4959-8d32-21972a706af4
+		summarizeBy: sum
+		sourceColumn: Revenue
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Category
+		dataType: string
+		lineageTag: bee46ddb-1e9d-46f6-9a9d-84f7c8b98690
+		summarizeBy: none
+		sourceColumn: Category
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Payment Method'
+		dataType: string
+		lineageTag: 878640c8-5ae7-47ba-8b61-5492fa625364
+		summarizeBy: none
+		sourceColumn: Payment Method
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Customer Type'
+		dataType: string
+		lineageTag: a1ab431a-dac5-419b-9dac-d7cb4e1a0d74
+		summarizeBy: none
+		sourceColumn: Customer Type
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Delivery Status'
+		dataType: string
+		lineageTag: eb8becc1-041e-4d52-97db-08454a1bd0e9
+		summarizeBy: none
+		sourceColumn: Delivery Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Unit Price'
+		dataType: double
+		lineageTag: f8502d6d-e2d8-42e2-bf48-f9dd6a16e6c9
+		summarizeBy: sum
+		sourceColumn: Unit Price
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Quantity
+		dataType: int64
+		formatString: 0
+		lineageTag: 3348ec21-9147-4158-b6d8-57a048e37402
+		summarizeBy: sum
+		sourceColumn: Quantity
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Discount Type'
+		dataType: string
+		lineageTag: 8b561b99-9379-4e20-87b4-ae5303d29745
+		summarizeBy: none
+		sourceColumn: Discount Type
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Region Manager'
+		dataType: string
+		lineageTag: 3bae930b-97b1-4bcb-9c2c-8270086f7b4a
+		summarizeBy: none
+		sourceColumn: Region Manager
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Return Status'
+		dataType: string
+		lineageTag: a681a7df-d967-409c-a762-42f7b0575e7f
+		summarizeBy: none
+		sourceColumn: Return Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Return Amount'
+		dataType: double
+		lineageTag: 64802e15-75a2-411b-b736-f24b6e9dce6b
+		summarizeBy: sum
+		sourceColumn: Return Amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column City
+		dataType: string
+		lineageTag: c61fd3dd-6c6f-4bfc-9871-292f2e89b7bf
+		summarizeBy: none
+		sourceColumn: City
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Customer Name'
+		dataType: string
+		lineageTag: df22212f-3933-4ea4-bff4-46f9dffcad67
+		summarizeBy: none
+		sourceColumn: Customer Name
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Sales = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("C:\Mac\Home\Documents\Final_Sample_Sales_Data_With_2345_Customers.xlsx"), null, true),
+				    Sheet1_Sheet = Source{[Item="Sheet1",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(Sheet1_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Date", Int64.Type}, {"Product", type text}, {"Salesperson", type text}, {"Region", type text}, {"Units Sold", Int64.Type}, {"Revenue", type number}, {"Category", type text}, {"Payment Method", type text}, {"Customer Type", type text}, {"Delivery Status", type text}, {"Unit Price", type number}, {"Quantity", Int64.Type}}),
+				    #"Changed Type1" = Table.TransformColumnTypes(#"Changed Type",{{"Date", type date}, {"Return Amount", type number}})
+				in
+				    #"Changed Type1"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

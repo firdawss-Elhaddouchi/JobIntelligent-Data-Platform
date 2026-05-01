@@ -1,0 +1,165 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 1938.3840667986065,
+            "y": 274.16719187060664
+          },
+          "nodeIndex": "Sales",
+          "nodeLineageTag": "1956d61a-1e1a-4bb5-92e7-95ba749c111c",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2222.3840667986065,
+            "y": 372.16719187060664
+          },
+          "nodeIndex": "Calculations",
+          "nodeLineageTag": "1f1717e7-14f4-419c-9ce2-3fee66f8fe8f",
+          "size": {
+            "height": 104,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 50,
+            "y": 467.36002455575465
+          },
+          "nodeIndex": "gold dim_company",
+          "nodeLineageTag": "3f3da3e1-5f7a-43e4-9c31-7b674ee3ed8a",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 618.38406679860645,
+            "y": 52.309960151507084
+          },
+          "nodeIndex": "gold dim_contract_type",
+          "nodeLineageTag": "7b3ff2ff-0ad2-4b6f-94b5-37204a8796aa",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 572.57210014929842,
+            "y": 526.33438374121329
+          },
+          "nodeIndex": "gold dim_date",
+          "nodeLineageTag": "b46d45a4-5636-4845-8823-d3784e5438e5",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 118.65771233378985,
+            "y": -50
+          },
+          "nodeIndex": "gold dim_location",
+          "nodeLineageTag": "770aeae2-0418-4a7f-952d-be89ec9c0918",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 334.19155381154781,
+            "y": 176.1916817749343
+          },
+          "nodeIndex": "gold fact_jobs",
+          "nodeLineageTag": "0b3392bc-b0b1-4ac4-9374-93ee98f66723",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 852.38406679860634,
+            "y": 312.16719187060664
+          },
+          "nodeIndex": "gold job_features",
+          "nodeLineageTag": "11fed5db-a26e-445e-b9f9-1a0496a8c12b",
+          "size": {
+            "height": 224,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1136.3840667986065,
+            "y": 360.16719187060664
+          },
+          "nodeIndex": "gold jobs_per_company",
+          "nodeLineageTag": "a447fec3-e30b-4716-b612-eedb2309e726",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1420.3840667986065,
+            "y": 360.16719187060664
+          },
+          "nodeIndex": "gold jobs_per_contract_type",
+          "nodeLineageTag": "795d1d18-ec95-48f2-a815-998d1404be86",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1704.3840667986065,
+            "y": 360.16719187060664
+          },
+          "nodeIndex": "gold jobs_per_country",
+          "nodeLineageTag": "b852aad1-bb16-4277-a489-729031e503e2",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 100,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}
