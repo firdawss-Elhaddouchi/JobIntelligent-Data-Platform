@@ -1,34 +1,68 @@
-relationship e2a382e6-d061-40f5-8ec8-275444e797bb
+relationship 4d938287-57ac-481c-a6b3-8407cd62d465
 	joinOnDateBehavior: datePartOnly
-	fromColumn: Sales.Date
-	toColumn: LocalDateTable_46d4998b-cbc4-46ab-81c7-6f581f99b41d.Date
+	fromColumn: DimDate.YearMonth
+	toColumn: LocalDateTable_d9fa17de-2378-4b36-9906-f14c892054a6.Date
 
-relationship 38250f14-c037-4c90-b259-505632051efc
+relationship AutoDetected_d6ab2c19-9836-420b-8fea-d1ef991a4ca9
+	fromColumn: FactSales.CustomerKey
+	toColumn: DimCustomer.CustomerKey
+
+relationship AutoDetected_271db69c-6d57-4c83-a0a6-8ac545c40f4c
+	fromColumn: DimCustomer.RegionKey
+	toColumn: DimRegion.RegionKey
+
+relationship AutoDetected_716e4ba1-0c10-49e0-8942-5540c3898422
+	isActive: false
+	fromColumn: FactSales.RegionKey
+	toColumn: DimRegion.RegionKey
+
+relationship AutoDetected_c57afcc2-a2b7-42f7-9399-ea37be86b4ac
+	fromColumn: FactTargets.RegionKey
+	toColumn: DimRegion.RegionKey
+
+relationship AutoDetected_d1b9db7e-9c6c-40c7-9a57-a79af98afbe9
+	fromColumn: FactSales.Date
+	toColumn: DimDate.Date
+
+relationship AutoDetected_de29d158-2188-4be6-97d3-282e6bbd1fd2
+	fromColumn: FactTargets.Date
+	toColumn: DimDate.Date
+
+relationship AutoDetected_5c8ebd9e-55a4-4667-af83-38e4ae74d766
+	fromColumn: FactSales.ProductKey
+	toColumn: DimProduct.ProductKey
+
+relationship 40868476-2c77-443b-ad7e-4e316abe026a
+	joinOnDateBehavior: datePartOnly
+	fromColumn: DimDate.Date
+	toColumn: LocalDateTable_752bc1d7-6d25-402c-9c1c-169ca5268e39.Date
+
+relationship f9c05125-358f-4876-8dc9-a749199b606c
 	fromColumn: 'gold fact_jobs'.company_id
 	toColumn: 'gold dim_company'.company_id
 
 	annotation PBI_IsFromSource = FS
 
-relationship 3708e418-0e9c-4b64-b4d4-8acaafa50e7f
+relationship 77e488d3-5b6a-4f7c-ae24-10f5d4641591
 	fromColumn: 'gold fact_jobs'.contract_type_id
 	toColumn: 'gold dim_contract_type'.contract_type_id
 
 	annotation PBI_IsFromSource = FS
 
-relationship 7c6b68ea-573f-4f05-9917-aa7eb16e0ddd
+relationship 0235e391-8773-4b2e-9a03-a26f1b292250
 	fromColumn: 'gold fact_jobs'.expires_date_id
 	toColumn: 'gold dim_date'.date_id
 
 	annotation PBI_IsFromSource = FS
 
-relationship 80925dff-3b0a-4321-acca-d938cbc6f9e7
+relationship 10d98776-9060-4fb8-ac12-09711406f711
 	isActive: false
 	fromColumn: 'gold fact_jobs'.posted_date_id
 	toColumn: 'gold dim_date'.date_id
 
 	annotation PBI_IsFromSource = FS
 
-relationship edeed90f-2e89-4539-ae7d-e60463089327
+relationship 09d68f1d-a0c7-428d-9814-a5bf20e00f68
 	fromColumn: 'gold fact_jobs'.location_id
 	toColumn: 'gold dim_location'.location_id
 

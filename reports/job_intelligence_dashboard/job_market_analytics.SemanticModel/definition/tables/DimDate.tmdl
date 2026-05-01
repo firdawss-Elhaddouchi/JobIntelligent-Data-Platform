@@ -1,0 +1,94 @@
+table DimDate
+	lineageTag: ee2a3582-e9d7-406b-b38c-2e512b594edc
+
+	column Date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 189d6af9-989a-4edb-aa30-3b44d4aa2b18
+		summarizeBy: none
+		sourceColumn: Date
+
+		variation Variation
+			isDefault
+			relationship: 40868476-2c77-443b-ad7e-4e316abe026a
+			defaultHierarchy: LocalDateTable_752bc1d7-6d25-402c-9c1c-169ca5268e39.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Year
+		dataType: string
+		lineageTag: 11c58237-ddcf-4995-82ca-03f5ce79c42b
+		summarizeBy: none
+		sourceColumn: Year
+
+		changedProperty = DataType
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quarter
+		dataType: string
+		lineageTag: 37734186-2d76-48e6-aa74-b9ee63744dad
+		summarizeBy: none
+		sourceColumn: Quarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: b1ce0160-0bbf-4aa0-b60b-fecf9599314d
+		summarizeBy: sum
+		sourceColumn: MonthNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthName
+		dataType: string
+		lineageTag: 27ba2f97-7d70-4b48-9cd9-9813a26f5e77
+		summarizeBy: none
+		sourceColumn: MonthName
+
+		annotation SummarizationSetBy = Automatic
+
+	column YearMonth
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 4b130839-878e-4cc6-9374-0b62c02516c8
+		summarizeBy: none
+		sourceColumn: YearMonth
+
+		variation Variation
+			isDefault
+			relationship: 4d938287-57ac-481c-a6b3-8407cd62d465
+			defaultHierarchy: LocalDateTable_d9fa17de-2378-4b36-9906-f14c892054a6.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 8aa26954-b5a3-4a1d-88ad-92c3556652fb
+		summarizeBy: count
+		sourceColumn: DateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimDate = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("\\Mac\Home\Downloads\PowerBI_AI_Demo_Dataset.xlsx"), null, true),
+				    DimDate_Sheet = Source{[Item="DimDate",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(DimDate_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Date", type date}, {"Year", Int64.Type}, {"Quarter", type text}, {"MonthNumber", Int64.Type}, {"MonthName", type text}, {"YearMonth", type date}, {"DateKey", Int64.Type}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

@@ -1,0 +1,97 @@
+table FactTargets
+	lineageTag: 2a23b714-4f7d-46b9-97ed-e0a997a3d4be
+
+	measure Target = ```
+			
+			    SUM ( FactTargets[TargetAmount] )
+			```
+		lineageTag: 96a7e081-abc7-42a5-ba9e-3240c55b203e
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Target MTD' = ```
+			
+			    TOTALMTD ( FactTargets[Target], DimDate[Date] )
+			```
+		lineageTag: 53cef18c-4bd2-4753-a3bd-01806d590354
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Target YTD' = ```
+			
+			    TOTALYTD ( FactTargets[Target], DimDate[Date] )
+			```
+		lineageTag: df95c9b5-30a1-4793-a237-69a22e4a26bc
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Target QTD' = ```
+			
+			    TOTALQTD ( FactTargets[Target], DimDate[Date] )
+			```
+		lineageTag: 03da652f-209c-4674-8099-64ac96639c44
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column TargetId
+		dataType: int64
+		formatString: 0
+		lineageTag: 89fa416f-f5e4-414b-9a5e-8848a0f363c5
+		summarizeBy: count
+		sourceColumn: TargetId
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: d4cffb51-0d20-43e0-90c6-6b3fb6426fbb
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 9c8682d6-5ce1-4edb-af84-cd3d87ef8570
+		summarizeBy: none
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column ProductKey
+		dataType: string
+		lineageTag: 83e44f7e-15d9-48aa-ba87-95e867d30103
+		summarizeBy: none
+		sourceColumn: ProductKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column TargetAmount
+		dataType: double
+		lineageTag: 32703723-22e4-4597-b625-52543466155e
+		summarizeBy: sum
+		sourceColumn: TargetAmount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition FactTargets = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("\\Mac\Home\Downloads\PowerBI_AI_Demo_Dataset.xlsx"), null, true),
+				    FactTargets_Sheet = Source{[Item="FactTargets",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(FactTargets_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"TargetId", Int64.Type}, {"Date", type date}, {"RegionKey", Int64.Type}, {"ProductKey", type any}, {"TargetAmount", type number}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

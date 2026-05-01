@@ -1,0 +1,89 @@
+table DimCustomer
+	lineageTag: 0223b7d7-9ce9-4492-9513-865b67f095e4
+
+	measure 'Count Sales' = COUNTROWS(FactSales) * 1.0932
+		formatString: 0
+		lineageTag: ec5a133e-e7f7-4316-a41d-412176f3ef37
+
+	measure 'Count Invoices' = COUNTROWS(FactSales) * 0.8907
+		formatString: 0
+		lineageTag: 15391f23-9164-4a43-8996-3bbe0d3552aa
+
+		annotation PBI_FormatHint = {"isDecimal":true}
+
+	measure 'max units by item' = MAXX( ALLSELECTED( DimProduct[ProductName]) , [Units]) * 1.5
+		lineageTag: 5b311886-39a6-4439-8f79-0a8f14443ed8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column CustomerKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 90b654e1-061d-413d-8a8c-b8dd752a609b
+		summarizeBy: none
+		sourceColumn: CustomerKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column CustomerID
+		dataType: string
+		lineageTag: 4b2811f0-ffe8-47c6-8d96-611c53a7a43b
+		summarizeBy: none
+		sourceColumn: CustomerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column CustomerName
+		dataType: string
+		lineageTag: 68cbc895-b0f5-45d1-95bd-06cf68e8c3e7
+		summarizeBy: none
+		sourceColumn: CustomerName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Segment
+		dataType: string
+		lineageTag: 9c5c5071-52f8-433e-844a-c88f391031b4
+		summarizeBy: none
+		sourceColumn: Segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: e0bf09ad-a4bb-4e38-a739-38b319d2a5ce
+		summarizeBy: none
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column Country
+		dataType: string
+		lineageTag: f32b1429-b486-437a-8beb-095c0042a6a2
+		summarizeBy: none
+		sourceColumn: Country
+
+		annotation SummarizationSetBy = Automatic
+
+	column City
+		dataType: string
+		lineageTag: 39052ccc-bf5d-4e82-8275-27a57e5f49ce
+		summarizeBy: none
+		sourceColumn: City
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimCustomer = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("\\Mac\Home\Downloads\PowerBI_AI_Demo_Dataset.xlsx"), null, true),
+				    DimCustomer_Sheet = Source{[Item="DimCustomer",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(DimCustomer_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"CustomerKey", Int64.Type}, {"CustomerID", type text}, {"CustomerName", type text}, {"Segment", type text}, {"RegionKey", Int64.Type}, {"Country", type text}, {"City", type text}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_ResultType = Table
+

@@ -1,11 +1,11 @@
 table 'gold fact_jobs'
-	lineageTag: 0b3392bc-b0b1-4ac4-9374-93ee98f66723
+	lineageTag: 85312321-27c1-4b88-b67a-bbb0808b4e1e
 
 	column job_id
 		dataType: string
 		isNullable: false
 		sourceProviderType: nvarchar(max)
-		lineageTag: e0f0e01e-a51e-4f31-a041-3c997c79dbdb
+		lineageTag: a006bc35-51a6-4cb8-9558-ee296806adf2
 		summarizeBy: none
 		sourceColumn: job_id
 
@@ -14,7 +14,7 @@ table 'gold fact_jobs'
 	column job_title
 		dataType: string
 		sourceProviderType: nvarchar(max)
-		lineageTag: 721721b0-d11f-4d8e-84d7-e3003dc8c919
+		lineageTag: aedb4a0c-c0d4-40b5-83f3-3e4a491bcbe1
 		summarizeBy: none
 		sourceColumn: job_title
 
@@ -24,7 +24,7 @@ table 'gold fact_jobs'
 		dataType: int64
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: 8b4bf3f6-d200-4672-9b21-adae9f9ebc70
+		lineageTag: 2c3ff8ea-2dae-402d-8649-048524c9793c
 		summarizeBy: none
 		sourceColumn: company_id
 
@@ -34,7 +34,7 @@ table 'gold fact_jobs'
 		dataType: int64
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: f1a55b3a-6b66-4d87-939d-d5c5b71c801f
+		lineageTag: 853d7d0c-13b2-48e9-90c6-f53b4288cbd2
 		summarizeBy: none
 		sourceColumn: location_id
 
@@ -44,7 +44,7 @@ table 'gold fact_jobs'
 		dataType: int64
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: 7a7efb0d-941c-4ac7-ae0a-294f718edd65
+		lineageTag: e28cecde-bea1-464c-ab16-eb988bfad3b7
 		summarizeBy: sum
 		sourceColumn: posted_date_id
 
@@ -54,7 +54,7 @@ table 'gold fact_jobs'
 		dataType: int64
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: e18c06e3-c8b5-460c-8f31-283567a46665
+		lineageTag: 09ac5fc1-722d-43cb-9f9a-02b29a74cda9
 		summarizeBy: none
 		sourceColumn: expires_date_id
 
@@ -64,7 +64,7 @@ table 'gold fact_jobs'
 		dataType: int64
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: 67abc707-a246-498b-86b3-8aec3cc6a0fb
+		lineageTag: 42adc6bf-5b88-4129-823f-b67fdf5dfbcf
 		summarizeBy: none
 		sourceColumn: contract_type_id
 
@@ -73,7 +73,7 @@ table 'gold fact_jobs'
 	column salary_min
 		dataType: double
 		sourceProviderType: double
-		lineageTag: 5da6644f-4db2-4175-bd68-5c2604a7df5a
+		lineageTag: 2724dafc-26d8-44cd-a992-6ef4ddfbd3a9
 		summarizeBy: sum
 		sourceColumn: salary_min
 
@@ -84,7 +84,7 @@ table 'gold fact_jobs'
 	column salary_max
 		dataType: double
 		sourceProviderType: double
-		lineageTag: c3036d04-4c23-4655-b411-d3be957c92e8
+		lineageTag: c1ed8132-5c9f-4783-b0e5-cc67c6f4182c
 		summarizeBy: sum
 		sourceColumn: salary_max
 
@@ -95,7 +95,7 @@ table 'gold fact_jobs'
 	column salary_avg
 		dataType: double
 		sourceProviderType: double
-		lineageTag: ac928c37-5d64-4843-aee9-299c4768be04
+		lineageTag: c7094a12-9b9e-4351-9c4f-e95d5dbf551f
 		summarizeBy: sum
 		sourceColumn: salary_avg
 
@@ -106,7 +106,7 @@ table 'gold fact_jobs'
 	column currency
 		dataType: string
 		sourceProviderType: nvarchar(max)
-		lineageTag: ed1fb092-6e93-45d9-a66a-ba7a1c8f6f01
+		lineageTag: e39b42b8-43bb-422d-92af-079efae4451f
 		summarizeBy: none
 		sourceColumn: currency
 
@@ -116,7 +116,7 @@ table 'gold fact_jobs'
 		dataType: int64
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: 66488bd5-8ade-4192-8399-770b7a203e0e
+		lineageTag: 69a458a8-797d-435e-8526-92d6f0e7161d
 		summarizeBy: sum
 		sourceColumn: is_remote
 
@@ -125,7 +125,7 @@ table 'gold fact_jobs'
 	column job_url
 		dataType: string
 		sourceProviderType: nvarchar(max)
-		lineageTag: 3a73f085-9ae3-4719-87fe-1bcb57108d54
+		lineageTag: c6f3b9aa-795f-4edf-a231-7dd372ccb2d9
 		summarizeBy: none
 		sourceColumn: job_url
 
@@ -134,7 +134,7 @@ table 'gold fact_jobs'
 	column source
 		dataType: string
 		sourceProviderType: nvarchar(max)
-		lineageTag: f19ce7a0-143c-4889-92c2-152872370786
+		lineageTag: 7c1249c1-f6d3-401a-a9d7-b79fd4684ffa
 		summarizeBy: none
 		sourceColumn: source
 
@@ -145,9 +145,9 @@ table 'gold fact_jobs'
 		source =
 				let
 				    Source = PostgreSQL.Database("localhost:5432", "airflow"),
-				    gold_jobs_fact = Source{[Schema="gold",Item="fact_jobs"]}[Data]
+				    gold_fact_jobs = Source{[Schema="gold",Item="fact_jobs"]}[Data]
 				in
-				    gold_jobs_fact
+				    gold_fact_jobs
 
 	annotation PBI_NavigationStepName = Navigation
 

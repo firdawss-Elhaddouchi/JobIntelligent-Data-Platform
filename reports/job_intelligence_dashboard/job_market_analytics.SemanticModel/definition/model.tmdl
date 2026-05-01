@@ -6,25 +6,27 @@ model Model
 		legacyRedirects
 		returnErrorValuesAsNull
 
-annotation PBI_QueryOrder = ["Sales","Calculations","gold dim_company","gold dim_contract_type","gold dim_date","gold dim_location","gold fact_jobs","gold job_features","gold jobs_per_company","gold jobs_per_contract_type","gold jobs_per_country"]
-
 annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["DimCustomer","DimDate","DimProduct","DimRegion","FactSales","FactTargets","_Measures","gold dim_company","gold dim_contract_type","gold dim_date","gold dim_location","gold fact_jobs"]
 
 annotation PBI_ProTooling = ["DevMode"]
 
-ref table Sales
-ref table DateTableTemplate_5a6370bc-4715-4a92-bde1-3429e6214aa3
-ref table LocalDateTable_46d4998b-cbc4-46ab-81c7-6f581f99b41d
-ref table Calculations
+ref table DimCustomer
+ref table DimDate
+ref table DateTableTemplate_04b59d11-b3fc-4a12-a467-978d216aabaa
+ref table LocalDateTable_d9fa17de-2378-4b36-9906-f14c892054a6
+ref table DimProduct
+ref table DimRegion
+ref table FactSales
+ref table FactTargets
+ref table LocalDateTable_752bc1d7-6d25-402c-9c1c-169ca5268e39
+ref table _Measures
 ref table 'gold dim_company'
 ref table 'gold dim_contract_type'
 ref table 'gold dim_date'
 ref table 'gold dim_location'
 ref table 'gold fact_jobs'
-ref table 'gold job_features'
-ref table 'gold jobs_per_company'
-ref table 'gold jobs_per_contract_type'
-ref table 'gold jobs_per_country'
 
 ref cultureInfo en-US
 
