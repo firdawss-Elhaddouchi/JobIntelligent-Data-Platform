@@ -1,12 +1,12 @@
 table 'gold dim_contract_type'
-	lineageTag: 7b3ff2ff-0ad2-4b6f-94b5-37204a8796aa
+	lineageTag: e9e985e4-042c-4a2c-9ae8-3ef001476460
 
 	column contract_type_id
 		dataType: int64
 		isNullable: false
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: c99c32bc-e05e-4507-ad61-968d7d5017da
+		lineageTag: 0e72ab6b-a42a-4b82-9119-220820620a02
 		summarizeBy: none
 		sourceColumn: contract_type_id
 
@@ -15,7 +15,7 @@ table 'gold dim_contract_type'
 	column contract_type
 		dataType: string
 		sourceProviderType: nvarchar(max)
-		lineageTag: 28d11c84-e569-4cd5-a16d-92ba8f879b2a
+		lineageTag: 18e75dce-d8a4-4ce9-a9c6-ac31cde2b9e5
 		summarizeBy: none
 		sourceColumn: contract_type
 

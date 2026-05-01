@@ -1,12 +1,12 @@
 table 'gold dim_date'
-	lineageTag: b46d45a4-5636-4845-8823-d3784e5438e5
+	lineageTag: 300854f4-a11f-49cc-a383-54992ecb30ed
 
 	column date_id
 		dataType: int64
 		isNullable: false
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: ef24205b-558d-4125-bb18-a1529a2240bf
+		lineageTag: e4c7c208-b4f8-4784-98cf-8c923280469b
 		summarizeBy: none
 		sourceColumn: date_id
 
@@ -16,7 +16,7 @@ table 'gold dim_date'
 		dataType: dateTime
 		formatString: Long Date
 		sourceProviderType: date
-		lineageTag: ba100910-43c3-4992-b84a-256896ae3399
+		lineageTag: e72a088e-f219-4a08-982d-d532a086d732
 		summarizeBy: none
 		sourceColumn: date
 
@@ -28,7 +28,7 @@ table 'gold dim_date'
 		dataType: int64
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: 4f7298cb-19b0-4ffa-b525-2adc52872730
+		lineageTag: 8a561e86-7477-408f-bd9b-627083af10db
 		summarizeBy: none
 		sourceColumn: day
 
@@ -38,7 +38,7 @@ table 'gold dim_date'
 		dataType: int64
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: 56d8a01f-4cd5-4b61-a4e5-fe5f7b747dfd
+		lineageTag: 0878d554-705d-49b0-89c2-0273c79a13f1
 		summarizeBy: none
 		sourceColumn: month
 
@@ -47,7 +47,7 @@ table 'gold dim_date'
 	column month_name
 		dataType: string
 		sourceProviderType: nvarchar(max)
-		lineageTag: dfac461e-be6b-4dfc-bb1f-21dbc3c8e8f5
+		lineageTag: 5a2d41d2-422c-4438-9463-ba0355468014
 		summarizeBy: none
 		sourceColumn: month_name
 
@@ -57,7 +57,7 @@ table 'gold dim_date'
 		dataType: int64
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: a585c58e-a88c-4746-8b11-5ca2184b167f
+		lineageTag: 9272c79d-47bf-4366-98c1-fb1ad043ce95
 		summarizeBy: none
 		sourceColumn: quarter
 
@@ -67,7 +67,7 @@ table 'gold dim_date'
 		dataType: int64
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: b0cd4ff6-d943-4bb4-b5c0-77a06ba42a45
+		lineageTag: 91903614-4a09-475c-9230-16a64b9ae901
 		summarizeBy: none
 		sourceColumn: year
 
@@ -76,7 +76,7 @@ table 'gold dim_date'
 	column day_of_week
 		dataType: string
 		sourceProviderType: nvarchar(max)
-		lineageTag: ee885665-f720-45bb-85b3-4efa4e466277
+		lineageTag: dc912df3-c4b1-4507-86ad-100d512b07d9
 		summarizeBy: none
 		sourceColumn: day_of_week
 

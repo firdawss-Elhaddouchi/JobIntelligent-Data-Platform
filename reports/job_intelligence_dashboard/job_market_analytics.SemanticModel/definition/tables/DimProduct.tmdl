@@ -1,0 +1,67 @@
+table DimProduct
+	lineageTag: bbe5846d-5633-4da5-aec6-b7a3f49fb637
+
+	column ProductKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 9f840ae8-4523-468a-a5ad-87806c40fc14
+		summarizeBy: none
+		sourceColumn: ProductKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column ProductID
+		dataType: string
+		lineageTag: 4f2db329-45a2-4490-94b0-1630effe5321
+		summarizeBy: none
+		sourceColumn: ProductID
+
+		annotation SummarizationSetBy = Automatic
+
+	column ProductName
+		dataType: string
+		lineageTag: 5ffd0e19-a317-4b27-b1df-bd6b63e90492
+		summarizeBy: none
+		sourceColumn: ProductName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Category
+		dataType: string
+		lineageTag: d7f2d366-a704-41b3-b31e-bd80b20d47a9
+		summarizeBy: none
+		sourceColumn: Category
+
+		annotation SummarizationSetBy = Automatic
+
+	column Subcategory
+		dataType: string
+		lineageTag: ac0f92c4-3104-4488-a52d-00710af1be4d
+		summarizeBy: none
+		sourceColumn: Subcategory
+
+		annotation SummarizationSetBy = Automatic
+
+	column UnitPrice
+		dataType: double
+		lineageTag: d1a802c0-44b2-4f0d-811a-51c035123481
+		summarizeBy: none
+		sourceColumn: UnitPrice
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition DimProduct = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("\\Mac\Home\Downloads\PowerBI_AI_Demo_Dataset.xlsx"), null, true),
+				    DimProduct_Sheet = Source{[Item="DimProduct",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(DimProduct_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"ProductKey", Int64.Type}, {"ProductID", type text}, {"ProductName", type text}, {"Category", type text}, {"Subcategory", type any}, {"UnitPrice", type number}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_ResultType = Table
+

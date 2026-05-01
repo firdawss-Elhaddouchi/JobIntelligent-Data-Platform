@@ -1,12 +1,12 @@
 table 'gold dim_company'
-	lineageTag: 3f3da3e1-5f7a-43e4-9c31-7b674ee3ed8a
+	lineageTag: 2bbc5588-d141-4fdf-b1ac-389839d01203
 
 	column company_id
 		dataType: int64
 		isNullable: false
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: fd332807-05dc-42dd-b8cd-89b0801a20f3
+		lineageTag: a4890609-b37a-4d78-b0b9-2bccf467dfc5
 		summarizeBy: none
 		sourceColumn: company_id
 
@@ -15,7 +15,7 @@ table 'gold dim_company'
 	column company_name
 		dataType: string
 		sourceProviderType: nvarchar(max)
-		lineageTag: 8405ce03-afdb-4ecf-8046-25303780eed3
+		lineageTag: 25e6c17d-0abb-4fb0-9dbb-0119f875b572
 		summarizeBy: none
 		sourceColumn: company_name
 

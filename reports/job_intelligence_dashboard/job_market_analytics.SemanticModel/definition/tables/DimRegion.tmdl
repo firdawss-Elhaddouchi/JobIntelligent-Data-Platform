@@ -1,0 +1,41 @@
+table DimRegion
+	lineageTag: 32fa17d4-1f68-4736-ae17-d84da280cee7
+
+	column RegionKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 63f29088-39ba-4c48-93a1-7d7fa00f2827
+		summarizeBy: none
+		sourceColumn: RegionKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column RegionName
+		dataType: string
+		lineageTag: 41526d14-9da2-4642-b6d8-a3797553b508
+		summarizeBy: none
+		sourceColumn: RegionName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Country
+		dataType: string
+		lineageTag: ed9f4f7e-e442-4559-935e-a303f22888b3
+		summarizeBy: none
+		sourceColumn: Country
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimRegion = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("\\Mac\Home\Downloads\PowerBI_AI_Demo_Dataset.xlsx"), null, true),
+				    DimRegion_Sheet = Source{[Item="DimRegion",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(DimRegion_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"RegionKey", Int64.Type}, {"RegionName", type text}, {"Country", type text}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_ResultType = Table
+

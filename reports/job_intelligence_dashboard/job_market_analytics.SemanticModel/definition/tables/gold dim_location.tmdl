@@ -1,12 +1,12 @@
 table 'gold dim_location'
-	lineageTag: 770aeae2-0418-4a7f-952d-be89ec9c0918
+	lineageTag: 143e3167-0200-47f7-ac3a-8e2dfcc021b4
 
 	column location_id
 		dataType: int64
 		isNullable: false
 		formatString: 0
 		sourceProviderType: int
-		lineageTag: 5db9acac-ccac-4587-a62a-0c4c5bfed557
+		lineageTag: 7db6f82f-0e62-4934-aad3-7638dc8076b2
 		summarizeBy: none
 		sourceColumn: location_id
 
@@ -15,7 +15,7 @@ table 'gold dim_location'
 	column location
 		dataType: string
 		sourceProviderType: nvarchar(max)
-		lineageTag: 3005794b-6387-454b-a9c2-7ee2b866fbb9
+		lineageTag: 6f6ca173-d919-40fe-af87-1ffdc198394b
 		summarizeBy: none
 		sourceColumn: location
 
@@ -24,7 +24,7 @@ table 'gold dim_location'
 	column city
 		dataType: string
 		sourceProviderType: nvarchar(max)
-		lineageTag: 29287fc6-3fd0-445f-b227-e09c087d4294
+		lineageTag: cadabf64-c365-45c2-891a-46f87a10e036
 		summarizeBy: none
 		sourceColumn: city
 
@@ -33,7 +33,7 @@ table 'gold dim_location'
 	column country
 		dataType: string
 		sourceProviderType: nvarchar(max)
-		lineageTag: 66b366cf-2f43-42dd-bf35-8cccc470c2fb
+		lineageTag: 4469a351-95f2-4068-b0ba-3aaf59687f4e
 		summarizeBy: none
 		sourceColumn: country
 
