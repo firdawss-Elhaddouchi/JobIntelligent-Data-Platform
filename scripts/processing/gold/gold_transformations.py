@@ -36,8 +36,11 @@ def ensure_columns(df, cols):
     return df
 
 def clean_datetime(col):
-    col = pd.to_datetime(col, errors="coerce", utc=True)
-    return col.dt.tz_convert(None)
+    # col = pd.to_datetime(col, errors="coerce", utc=True)
+    # return col.dt.tz_convert(None)
+
+    # Convert to datetime, coerce errors to NaT, and strip timezone for Postgres compatibility
+    return pd.to_datetime(col, errors="coerce", utc=True).dt.tz_convert(None)
 
 
 def safe_replace(df, table_name, engine, schema="gold"):

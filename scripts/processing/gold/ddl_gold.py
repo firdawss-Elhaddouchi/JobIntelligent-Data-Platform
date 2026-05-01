@@ -10,6 +10,8 @@ Extended Star Schema with multiple dimensions:
 """
 
 from sqlalchemy import create_engine, text
+import os
+from dotenv import load_dotenv
 
 import os
 POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow")
@@ -115,11 +117,12 @@ def create_gold_schema():
         # =========================
         conn.execute(text("DROP TABLE IF EXISTS gold.jobs_per_location"))
         conn.execute(text("""
-        CREATE TABLE gold.jobs_per_country (
+        CREATE TABLE gold.jobs_per_location(
             country TEXT,
             job_count INT
         );
         """))
+        # jobs_per_country
 
         # =========================
         # AGG: JOBS PER COMPANY
@@ -166,6 +169,29 @@ def create_gold_schema():
             aws INT,
             remote INT,
             salary_avg FLOAT
+        );
+        """))
+
+        # =========================
+        # STAGING TABLE: JOBS (FOR LOADING)
+        # =========================
+        conn.execute(text("DROP TABLE IF EXISTS gold.jobs_staging CASCADE"))
+        conn.execute(text("""
+        CREATE TABLE gold.jobs_staging (
+            job_id TEXT,
+            job_title TEXT,
+            company_name TEXT,
+            location TEXT,
+            posted_date DATE,  
+            expires_date DATE,  
+            contract_type TEXT,
+            salary_min FLOAT,
+            salary_max FLOAT,
+            salary_avg FLOAT,
+            currency TEXT,
+            is_remote INT,
+            job_url TEXT,
+            source TEXT
         );
         """))
 

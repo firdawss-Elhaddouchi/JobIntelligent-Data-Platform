@@ -1,21 +1,21 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.2.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.0.0/schema.json",
   "themeCollection": {
     "baseTheme": {
       "name": "CY24SU10",
       "reportVersionAtImport": {
-        "visual": "1.8.97",
-        "report": "2.0.97",
-        "page": "1.3.97"
+        "visual": "1.8.95",
+        "report": "2.0.95",
+        "page": "1.3.95"
       },
       "type": "SharedResources"
     },
     "customTheme": {
-      "name": "Temperature896143890792232.json",
+      "name": "Custom0018858155223803186.json",
       "reportVersionAtImport": {
-        "visual": "1.8.101",
-        "report": "2.0.101",
-        "page": "1.3.101"
+        "visual": "2.1.0",
+        "report": "2.1.0",
+        "page": "2.0.0"
       },
       "type": "RegisteredResources"
     }
@@ -50,137 +50,6 @@
   },
   "resourcePackages": [
     {
-      "name": "RegisteredResources",
-      "type": "RegisteredResources",
-      "items": [
-        {
-          "name": "bg-black6286212116795452.png",
-          "path": "bg-black6286212116795452.png",
-          "type": "Image"
-        },
-        {
-          "name": "bg2563191034753747.png",
-          "path": "bg2563191034753747.png",
-          "type": "Image"
-        },
-        {
-          "name": "bg9959077222540345.png",
-          "path": "bg9959077222540345.png",
-          "type": "Image"
-        },
-        {
-          "name": "bill6276120880499232.png",
-          "path": "bill6276120880499232.png",
-          "type": "Image"
-        },
-        {
-          "name": "box_(1)8006484519887254.png",
-          "path": "box_(1)8006484519887254.png",
-          "type": "Image"
-        },
-        {
-          "name": "box9495995652985949.png",
-          "path": "box9495995652985949.png",
-          "type": "Image"
-        },
-        {
-          "name": "customer_(1)28414935596903335.png",
-          "path": "customer_(1)28414935596903335.png",
-          "type": "Image"
-        },
-        {
-          "name": "customer6895482499430734.png",
-          "path": "customer6895482499430734.png",
-          "type": "Image"
-        },
-        {
-          "name": "earning7703743299909331.png",
-          "path": "earning7703743299909331.png",
-          "type": "Image"
-        },
-        {
-          "name": "emoji9279791003477742.png",
-          "path": "emoji9279791003477742.png",
-          "type": "Image"
-        },
-        {
-          "name": "expensive27410665931457157.png",
-          "path": "expensive27410665931457157.png",
-          "type": "Image"
-        },
-        {
-          "name": "handle-with-care48772839503336685.png",
-          "path": "handle-with-care48772839503336685.png",
-          "type": "Image"
-        },
-        {
-          "name": "home_(1)2996862751835341.png",
-          "path": "home_(1)2996862751835341.png",
-          "type": "Image"
-        },
-        {
-          "name": "home008350649385341136.png",
-          "path": "home008350649385341136.png",
-          "type": "Image"
-        },
-        {
-          "name": "home8215941181778355.png",
-          "path": "home8215941181778355.png",
-          "type": "Image"
-        },
-        {
-          "name": "maths3514427344289124.png",
-          "path": "maths3514427344289124.png",
-          "type": "Image"
-        },
-        {
-          "name": "power-bi-side-bar-new63100887897268.png",
-          "path": "power-bi-side-bar-new63100887897268.png",
-          "type": "Image"
-        },
-        {
-          "name": "products3900540600157303.png",
-          "path": "products3900540600157303.png",
-          "type": "Image"
-        },
-        {
-          "name": "profit-up7864231142035587.png",
-          "path": "profit-up7864231142035587.png",
-          "type": "Image"
-        },
-        {
-          "name": "return-box_(1)37628205900367573.png",
-          "path": "return-box_(1)37628205900367573.png",
-          "type": "Image"
-        },
-        {
-          "name": "return-box_(2)41299933991793614.png",
-          "path": "return-box_(2)41299933991793614.png",
-          "type": "Image"
-        },
-        {
-          "name": "return-box5676243633561393.png",
-          "path": "return-box5676243633561393.png",
-          "type": "Image"
-        },
-        {
-          "name": "shopping-cart7686631937701276.png",
-          "path": "shopping-cart7686631937701276.png",
-          "type": "Image"
-        },
-        {
-          "name": "stats10799332217481883.png",
-          "path": "stats10799332217481883.png",
-          "type": "Image"
-        },
-        {
-          "name": "Temperature896143890792232.json",
-          "path": "Temperature896143890792232.json",
-          "type": "CustomTheme"
-        }
-      ]
-    },
-    {
       "name": "SharedResources",
       "type": "SharedResources",
       "items": [
@@ -188,6 +57,117 @@
           "name": "CY24SU10",
           "path": "BaseThemes/CY24SU10.json",
           "type": "BaseTheme"
+        }
+      ]
+    },
+    {
+      "name": "RegisteredResources",
+      "type": "RegisteredResources",
+      "items": [
+        {
+          "name": "home_(3)6624824218452107.png",
+          "path": "home_(3)6624824218452107.png",
+          "type": "Image"
+        },
+        {
+          "name": "customer8191094188026546.png",
+          "path": "customer8191094188026546.png",
+          "type": "Image"
+        },
+        {
+          "name": "box9793038581902576.png",
+          "path": "box9793038581902576.png",
+          "type": "Image"
+        },
+        {
+          "name": "pie-chart7997621912200018.png",
+          "path": "pie-chart7997621912200018.png",
+          "type": "Image"
+        },
+        {
+          "name": "pulse-logo-demo-white09771246407564271.png",
+          "path": "pulse-logo-demo-white09771246407564271.png",
+          "type": "Image"
+        },
+        {
+          "name": "designed_by_pbi@4x27801548622315386.png",
+          "path": "designed_by_pbi@4x27801548622315386.png",
+          "type": "Image"
+        },
+        {
+          "name": "Power-BI-Side-bar4193508549329197.png",
+          "path": "Power-BI-Side-bar4193508549329197.png",
+          "type": "Image"
+        },
+        {
+          "name": "bg21268643414986876.png",
+          "path": "bg21268643414986876.png",
+          "type": "Image"
+        },
+        {
+          "name": "pulse-logo-dem9572511468881666.png",
+          "path": "pulse-logo-dem9572511468881666.png",
+          "type": "Image"
+        },
+        {
+          "name": "Asset_2@4x9645110718448802.png",
+          "path": "Asset_2@4x9645110718448802.png",
+          "type": "Image"
+        },
+        {
+          "name": "Asset_3@4x13770785104193473.png",
+          "path": "Asset_3@4x13770785104193473.png",
+          "type": "Image"
+        },
+        {
+          "name": "Asset_4@4x949794477885739.png",
+          "path": "Asset_4@4x949794477885739.png",
+          "type": "Image"
+        },
+        {
+          "name": "Asset_5@4x5130190212112941.png",
+          "path": "Asset_5@4x5130190212112941.png",
+          "type": "Image"
+        },
+        {
+          "name": "Asset_6@4x5761747036153557.png",
+          "path": "Asset_6@4x5761747036153557.png",
+          "type": "Image"
+        },
+        {
+          "name": "Asset_7@4x09137802997652145.png",
+          "path": "Asset_7@4x09137802997652145.png",
+          "type": "Image"
+        },
+        {
+          "name": "document36148426892305285.png",
+          "path": "document36148426892305285.png",
+          "type": "Image"
+        },
+        {
+          "name": "cogs24791670963430523.png",
+          "path": "cogs24791670963430523.png",
+          "type": "Image"
+        },
+        {
+          "name": "money7995794915604191.png",
+          "path": "money7995794915604191.png",
+          "type": "Image"
+        },
+        {
+          "name": "profit8926519592090898.png",
+          "path": "profit8926519592090898.png",
+          "type": "Image"
+        },
+        {
+          "name": "quantity6204549809625284.png",
+          "path": "quantity6204549809625284.png",
+          "type": "Image"
+        },
+        {
+          "name": "Custom0018858155223803186.json",
+          "path": "Custom0018858155223803186.json",
+          "type": "CustomTheme"
         }
       ]
     }
@@ -198,14 +178,6 @@
     "defaultDrillFilterOtherVisuals": true,
     "allowChangeFilterTypes": true,
     "useEnhancedTooltips": true,
-    "filterPaneHiddenInEditMode": true,
     "useDefaultAggregateDisplayName": true
-  },
-  "slowDataSourceSettings": {
-    "isCrossHighlightingDisabled": false,
-    "isSlicerSelectionsButtonEnabled": false,
-    "isFilterSelectionsButtonEnabled": false,
-    "isFieldWellButtonEnabled": false,
-    "isApplyAllButtonEnabled": false
   }
 }
