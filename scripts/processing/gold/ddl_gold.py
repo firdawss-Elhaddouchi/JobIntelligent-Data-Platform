@@ -33,8 +33,8 @@ def create_gold_schema():
             location_id SERIAL PRIMARY KEY,
             location TEXT,
             city TEXT,
-            country TEXT,
-            is_remote INTEGER
+            country TEXT
+            
         );
         """))
 
@@ -62,9 +62,7 @@ def create_gold_schema():
         conn.execute(text("""
         CREATE TABLE gold.dim_company (
             company_id SERIAL PRIMARY KEY,
-            company_name TEXT UNIQUE,
-            industry TEXT,
-            company_size TEXT
+            company_name TEXT UNIQUE
         );
         """))
 
@@ -87,7 +85,6 @@ def create_gold_schema():
         CREATE TABLE gold.jobs_fact (
             job_id TEXT PRIMARY KEY,
             job_title TEXT,
-
             company_id INT REFERENCES gold.dim_company(company_id),
             location_id INT REFERENCES gold.dim_location(location_id),
             posted_date_id INT REFERENCES gold.dim_date(date_id),
@@ -96,9 +93,8 @@ def create_gold_schema():
             salary_min FLOAT,
             salary_max FLOAT,
             salary_avg FLOAT,
-
             currency TEXT,
-            is_remote BOOLEAN,
+            is_remote INT,
             job_url TEXT,
             source TEXT
            
@@ -138,24 +134,24 @@ def create_gold_schema():
         # =========================
         # AGG: SALARY TRENDS
         # =========================
-        conn.execute(text("DROP TABLE IF EXISTS gold.salary_trends"))
-        conn.execute(text("""
-        CREATE TABLE gold.salary_trends (
-            full_date DATE,
-            salary_avg FLOAT
-        );
-        """))
+        # conn.execute(text("DROP TABLE IF EXISTS gold.salary_trends"))
+        # conn.execute(text("""
+        # CREATE TABLE gold.salary_trends (
+        #     full_date DATE,
+        #     salary_avg FLOAT
+        # );
+        # """))
 
         # =========================
         # AGG: SKILLS DEMAND
         # =========================
-        conn.execute(text("DROP TABLE IF EXISTS gold.skills_demand"))
-        conn.execute(text("""
-        CREATE TABLE gold.skills_demand (
-            skill TEXT,
-            count INT
-        );
-        """))
+        # conn.execute(text("DROP TABLE IF EXISTS gold.skills_demand"))
+        # conn.execute(text("""
+        # CREATE TABLE gold.skills_demand (
+        #     skill TEXT,
+        #     count INT
+        # );
+        # """))
 
         # =========================
         # FEATURE TABLE (ML)
