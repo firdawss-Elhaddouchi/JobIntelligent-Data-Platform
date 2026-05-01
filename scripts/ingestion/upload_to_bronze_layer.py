@@ -14,7 +14,10 @@ from scripts.ingestion import adzuna_client
 from scripts.ingestion.arbeitnow_client import collect_arbeitnow
 from scripts.ingestion import arbeitnow_client
 from scripts.ingestion import arbeitnow_client
+from scripts.common.utilies import get_minio_client,create_bucket_if_not_exists
+
 from scripts.common import logging_config
+
 logger = logging_config.setup_logger("upload to bronze layer")
 # to run use this : python -m scripts.ingestion.upload_to_bronze_layer
 
@@ -40,27 +43,7 @@ DATA_KEYWORDS = [
 "machine learning", "ai", "intelligence artificialielle",
 "bi", "business intelligence", "big data", "etl", "python"
 ]
-# =========================
-# 3️⃣ MINIO CLIENT
-# =========================
-def get_minio_client():
-    return boto3.client(
-        "s3",
-        endpoint_url=MINIO_ENDPOINT,
-        aws_access_key_id=MINIO_ROOT_USER,
-        aws_secret_access_key=MINIO_ROOT_PASSWORD
-    )
 
-# =========================
-# 4️⃣ BUCKET CHECK
-# =========================
-def create_bucket_if_not_exists(s3, bucket_name):
-    try:
-        s3.head_bucket(Bucket=bucket_name)
-        logger.info(f"Bucket exists: {bucket_name}")
-    except ClientError:
-        s3.create_bucket(Bucket=bucket_name)
-        logger.info(f"Bucket created: {bucket_name}")
 
 # =========================
 # 5️⃣ UPLOAD TO MINIO
@@ -166,10 +149,9 @@ def run_pipeline():
 
     s3 = get_minio_client()
     timestamp = int(time.time())
-
     last_run = get_last_run(s3)
     now = datetime.now(timezone.utc)
-    print(last_run)
+    formatted_date = datetime.fromtimestamp(timestamp).date().isoformat()
     sources = {
         "adzuna": lambda: collect_adzuna(last_run),
         "arbeitnow": lambda: collect_arbeitnow(last_run),
@@ -190,12 +172,12 @@ def run_pipeline():
                 "data": data
             }
 
-            prefix = f"{source_name}/ingestion_timestamp={timestamp}"
+            prefix = f"{source_name}/ingestion_date={formatted_date}"
 
             upload_to_minio(s3, f"{prefix}/data.json", bronze_data)
 
             logger.info(f"{source_name} uploaded ({len(data)} records)")
-
+        
         except Exception as e:
             logger.exception(f"Error in {source_name}: {e}")
 

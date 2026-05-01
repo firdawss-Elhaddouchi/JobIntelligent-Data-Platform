@@ -211,7 +211,7 @@ test/
 *.pdf
 logs/
 data/
-# git rm -r --cached data/
-# git add .gitignore
-# git commit -m "ignore data"
-# git push
+git rm -r --cached data/
+git add .gitignore
+git commit -m "ignore data"
+git push
