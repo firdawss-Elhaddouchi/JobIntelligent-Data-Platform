@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "job_market_analytics"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "a5cb2595-99d2-4850-9e60-19e3428293dd"
+  }
+}

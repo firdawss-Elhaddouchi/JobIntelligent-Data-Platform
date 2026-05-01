@@ -1,0 +1,54 @@
+table 'gold dim_location'
+	lineageTag: 770aeae2-0418-4a7f-952d-be89ec9c0918
+
+	column location_id
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 5db9acac-ccac-4587-a62a-0c4c5bfed557
+		summarizeBy: none
+		sourceColumn: location_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column location
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: 3005794b-6387-454b-a9c2-7ee2b866fbb9
+		summarizeBy: none
+		sourceColumn: location
+
+		annotation SummarizationSetBy = Automatic
+
+	column city
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: 29287fc6-3fd0-445f-b227-e09c087d4294
+		summarizeBy: none
+		sourceColumn: city
+
+		annotation SummarizationSetBy = Automatic
+
+	column country
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: 66b366cf-2f43-42dd-bf35-8cccc470c2fb
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'gold dim_location' = m
+		mode: directQuery
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "airflow"),
+				    gold_dim_location = Source{[Schema="gold",Item="dim_location"]}[Data]
+				in
+				    gold_dim_location
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

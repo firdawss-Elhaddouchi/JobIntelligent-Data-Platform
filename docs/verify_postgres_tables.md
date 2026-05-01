@@ -67,7 +67,7 @@ You’re already in the right place in Power BI 👍 — you just need to connec
 
 ---
 
-## ✅ Step-by-step: Connect PostgreSQL → Power BI
+# ✅ Step-by-step: Connect PostgreSQL → Power BI
 
 ### 1. Choose the correct connector
 

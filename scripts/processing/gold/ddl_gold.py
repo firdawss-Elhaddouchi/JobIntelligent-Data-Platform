@@ -13,10 +13,8 @@ from sqlalchemy import create_engine, text
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
-
-# POSTGRES_URI = "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow"
-POSTGRES_URI = os.getenv("POSTGRES_URI")
+import os
+POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow")
 engine = create_engine(POSTGRES_URI)
 
 
@@ -85,9 +83,9 @@ def create_gold_schema():
         # =========================
         # FACT TABLE: JOBS
         # =========================
-        conn.execute(text("DROP TABLE IF EXISTS gold.jobs_fact CASCADE"))
+        conn.execute(text("DROP TABLE IF EXISTS gold.fact_jobs CASCADE"))
         conn.execute(text("""
-        CREATE TABLE gold.jobs_fact (
+        CREATE TABLE gold.fact_jobs (
             job_id TEXT PRIMARY KEY,
             job_title TEXT,
             company_id INT REFERENCES gold.dim_company(company_id),
@@ -109,10 +107,10 @@ def create_gold_schema():
         # =========================
         # INDEXES
         # =========================
-        conn.execute(text("CREATE INDEX idx_jobs_location ON gold.jobs_fact(location_id);"))
-        conn.execute(text("CREATE INDEX idx_jobs_posted_date ON gold.jobs_fact(posted_date_id);"))
-        conn.execute(text("CREATE INDEX idx_jobs_expires_date ON gold.jobs_fact(expires_date_id);"))
-        conn.execute(text("CREATE INDEX idx_jobs_company ON gold.jobs_fact(company_id);"))
+        conn.execute(text("CREATE INDEX idx_jobs_location ON gold.fact_jobs(location_id);"))
+        conn.execute(text("CREATE INDEX idx_jobs_posted_date ON gold.fact_jobs(posted_date_id);"))
+        conn.execute(text("CREATE INDEX idx_jobs_expires_date ON gold.fact_jobs(expires_date_id);"))
+        conn.execute(text("CREATE INDEX idx_jobs_company ON gold.fact_jobs(company_id);"))
 
         # =========================
         # AGG: JOBS PER LOCATION

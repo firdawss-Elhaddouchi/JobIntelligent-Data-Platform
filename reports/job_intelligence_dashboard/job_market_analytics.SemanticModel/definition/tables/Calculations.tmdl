@@ -1,0 +1,97 @@
+table Calculations
+	lineageTag: 1f1717e7-14f4-419c-9ce2-3fee66f8fe8f
+
+	measure 'Average Revenue per Sale' = AVERAGE(Sales[Revenue])
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: 6cca72f9-54cb-4f16-9e25-9b5cf643eaa5
+
+	measure 'Total Customers' = DISTINCTCOUNT(Sales[Customer Name])
+		formatString: 0
+		lineageTag: e91c7ed3-67f9-402c-8e92-0e6d958f0ebf
+
+	measure 'Percent New Customers' =
+			
+			DIVIDE(
+			    COUNTROWS(FILTER(Sales, Sales[Customer Type] = "New")),
+			    COUNTROWS(Sales),
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 51d20cf5-3894-4013-b97c-da0578b906f5
+
+	measure 'Average Purchase Value' =
+			
+			DIVIDE(
+			    SUM(Sales[Revenue]),
+			    DISTINCTCOUNT(Sales[Customer Name])
+			)
+		formatString: \$#,0.0;(\$#,0.0);\$#,0.0
+		lineageTag: bc30dad1-724c-48c2-b937-16e140281c84
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	measure 'Total Products' = DISTINCTCOUNT(Sales[Product])
+		formatString: 0
+		lineageTag: 88348a53-6fff-45fc-b93b-e2df590676f3
+
+	measure 'Total Returns' = SUM(Sales[Return Amount])
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		lineageTag: e67b33f4-30c5-4847-a53e-fbed8ffe550c
+
+	measure '% Orders Returned' =
+			
+			DIVIDE(
+			    COUNTROWS(FILTER(Sales, Sales[Return Status] <> "No Returns")),
+			    COUNTROWS(Sales),
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 6e563199-d0a3-44a8-9bf9-9b48558788b6
+
+	measure 'Percent Orders Returned' =
+			
+			DIVIDE(
+			    COUNTROWS(FILTER(Sales,  Sales[Return Status]="Returned")),
+			    COUNTROWS(Sales),
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 8ba36c4d-d2f2-4a07-baa8-bfd26c7ee2b5
+
+	measure 'Average Return per Order' =
+			
+			DIVIDE(
+			    SUM(Sales[Return Amount]),
+			    COUNTROWS(Sales),
+			    0
+			)
+		formatString: 0
+		lineageTag: 59023c88-7124-4ab9-b3dd-427a2df7cceb
+
+	measure 'Total Retruned' = CALCULATE(COUNTROWS(Sales),Sales[Return Status]="Returned")
+		formatString: 0
+		lineageTag: 802e360e-5655-45a2-8d60-03e45e77865f
+
+	column Calculations
+		dataType: string
+		isHidden
+		lineageTag: b2c08f94-b27f-4618-aeaf-40cea5dab277
+		summarizeBy: none
+		sourceColumn: Calculations
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Calculations = m
+		mode: import
+		source =
+				let
+				    Source = ""
+				in
+				    Source
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+
