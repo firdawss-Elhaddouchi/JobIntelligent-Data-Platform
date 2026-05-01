@@ -100,9 +100,8 @@ def build_dim_location(df):
         # "location_id",
         "location",
         "city",
-        "country",
-        "is_remote"
-    ]]
+        "country"
+        ]]
 
 
 # ============================================================

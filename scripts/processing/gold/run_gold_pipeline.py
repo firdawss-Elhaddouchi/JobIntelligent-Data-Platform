@@ -40,7 +40,7 @@ from scripts.processing.gold.gold_transformations import (
     safe_append,
     safe_replace,
     compute_salary_avg,
-    salary_trends,
+    # salary_trends,
     job_features
 )
 
@@ -157,6 +157,7 @@ def run_gold_pipeline():
         return
 
     df_all = pd.concat(all_dfs, ignore_index=True)
+   
     logger.info(f"Loaded {len(df_all)} rows from Silver")
 
     # -------------------------
@@ -177,7 +178,7 @@ def run_gold_pipeline():
     loc = jobs_per_country(df_all)
     comp = jobs_per_company(df_all)
     contract = jobs_per_contract_type(df_all)
-    sal = salary_trends(df_all)
+    # sal = salary_trends(df_all)
     features = job_features(df_all)
 
     # -------------------------
@@ -196,13 +197,16 @@ def run_gold_pipeline():
     logger.info("Preparing staging table...")
 
     df = compute_salary_avg(df_all)
-
+    print("#########################")
+    print(df['is_remote'])
+    print("#########################")
     df_staging = df[[
         "job_id", "job_title", "company_name", "location",
         "posted_date","expires_date", "contract_type",
-        "salary_min", "salary_max", "salary_avg",
+        "salary_min", "salary_max", "salary_avg","is_remote",
         "currency", "job_url", "source"
     ]].copy()
+    print("#########################")
 
     df_staging.to_sql(
         "jobs_staging",
@@ -211,11 +215,7 @@ def run_gold_pipeline():
         if_exists="append",
         index=False
     )
-    print("#########################")
-    print(df_staging['posted_date'])
-    print("#########################")
-    print(dim_date['date'])
-    print("#########################")
+
 
     logger.info(f"Inserted {len(df_staging)} rows into staging")
 
@@ -229,7 +229,7 @@ def run_gold_pipeline():
         job_id, job_title,
         company_id, location_id, posted_date_id,expires_date_id, contract_type_id,
         salary_min, salary_max, salary_avg,
-        currency, job_url, source
+        currency,is_remote, job_url, source
     )
     SELECT
         s.job_id,
@@ -243,6 +243,7 @@ def run_gold_pipeline():
         s.salary_max,
         s.salary_avg,
         s.currency,
+        s.is_remote,
         s.job_url,
         s.source
     FROM gold.jobs_staging s
@@ -266,7 +267,7 @@ def run_gold_pipeline():
     safe_replace(loc, "jobs_per_country", engine)
     safe_replace(comp, "jobs_per_company", engine)
     safe_replace(contract, "jobs_per_contract_type", engine)
-    safe_replace(sal, "salary_trends", engine)
+    # safe_replace(sal, "salary_trends", engine)
     safe_replace(features, "job_features", engine)
 
     logger.info(" Gold pipeline completed successfully")
