@@ -143,11 +143,10 @@ def get_job_listings(search: str = None, remote_only: bool = False, db: Session 
     if remote_only:
         base_query += " AND f.is_remote = 1"
         
-    # If using NLP search, we fetch a larger pool to score in Python
     if search:
-        base_query += " LIMIT 2000"
+        pass # NLP Scoring requires fetching the pool
     else:
-        base_query += " LIMIT 50"
+        pass # Return all jobs when not searching
     
     result = db.execute(text(base_query)).fetchall()
     
@@ -211,30 +210,43 @@ def get_job_listings(search: str = None, remote_only: bool = False, db: Session 
         # Sort the filtered jobs by their NLP score in descending order (most relevant first).
         scored_jobs.sort(key=lambda x: x[1], reverse=True)
         
-        # 7. Pagination / Truncation
-        # Return only the top 50 most relevant results to the frontend for performance optimization.
-        jobs = [item[0] for item in scored_jobs][:50]
+        # 7. Pagination / Truncation removed as requested by user
+        jobs = [item[0] for item in scored_jobs]
         
     return {"jobs": jobs}
 
 @app.get("/api/recommendations")
 def get_recommendations(user_id: int, db: Session = Depends(get_db)):
-    """Personalized Recommendations based on the User's actual skills vs Job Features ML Table"""
+    """Personalized Recommendations based on the User's actual skills vs Job Titles & Features"""
+    import re
     # 1. Fetch user skills
     user = db.execute(text("SELECT skills FROM app.users WHERE user_id = :uid"), {"uid": user_id}).fetchone()
     if not user or not user[0]:
         return {"recommendations": []} # No skills = no recs
         
     user_skills = user[0].lower()
+    skill_list = [s.strip() for s in user_skills.split(",") if s.strip()]
     
-    # 2. Build dynamic ML query based on what we have in job_features (python, sql, aws)
+    # 2. Build dynamic ML & Title matching query
     conditions = []
+    params = {}
+    
+    # Check ML features if they exist in user skills
     if "python" in user_skills: conditions.append("j.python = 1")
     if "sql" in user_skills: conditions.append("j.sql = 1")
     if "aws" in user_skills: conditions.append("j.aws = 1")
     
+    # Check all other skills against the job title using PostgreSQL Regex (~*)
+    for i, skill in enumerate(skill_list):
+        if skill not in ["python", "sql", "aws"]:
+            conditions.append(f"f.job_title ~* :skill_{i}")
+            # Regex to ensure we match whole words (e.g., 'C' and not the 'c' in 'Scientist')
+            # (^|[^a-zA-Z0-9_]) means start of string or a non-alphanumeric character
+            escaped_skill = re.escape(skill)
+            params[f"skill_{i}"] = f"(^|[^a-zA-Z0-9_]){escaped_skill}($|[^a-zA-Z0-9_])"
+    
     if not conditions:
-        return {"recommendations": []} # No matching skills in our ML model
+        return {"recommendations": []} # No matching skills to query
         
     where_clause = " OR ".join(conditions)
     
@@ -251,15 +263,29 @@ def get_recommendations(user_id: int, db: Session = Depends(get_db)):
         LEFT JOIN gold.dim_date d ON f.posted_date_id = d.date_id
         LEFT JOIN gold.dim_contract_type ct ON f.contract_type_id = ct.contract_type_id
         WHERE {where_clause}
-        LIMIT 5
     """)
-    result = db.execute(query).fetchall()
+    result = db.execute(query, params).fetchall()
     
     recs = []
     for row in result:
+        # Determine which skills matched for UI display
+        matched_tags = [skill for skill, val in zip(['Python', 'SQL', 'AWS'], [row[3], row[4], row[5]]) if val == 1]
+        job_title_lower = (row[1] or "").lower()
+        for s in skill_list:
+            if s not in ["python", "sql", "aws"]:
+                # Use regex to check if the exact word is in the title
+                escaped_s = re.escape(s)
+                pattern = r'(?<![a-zA-Z0-9_])' + escaped_s + r'(?![a-zA-Z0-9_])'
+                if re.search(pattern, job_title_lower):
+                    matched_tags.append(s.title() if len(s) > 3 else s.upper())
+                
+        # If no tags matched but the job is returned, default to "Skill Match"
+        if not matched_tags:
+            matched_tags.append("Skill Match")
+            
         recs.append({
             "job_id": row[0], "job_title": row[1], "salary_avg": row[2],
-            "skills": [skill for skill, val in zip(['Python', 'SQL', 'AWS'], [row[3], row[4], row[5]]) if val == 1],
+            "skills": matched_tags,
             "company_name": row[6], "location": row[7], "city": row[8], "country": row[9],
             "posted_date": str(row[10]) if row[10] else None, "is_remote": row[11],
             "job_url": row[12], "source": row[13], "salary_min": row[14], "salary_max": row[15],
@@ -336,11 +362,28 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
 # In a fully productionized ML system, this would utilize models like spaCy or HuggingFace Transformers.
 # Here, we implement a robust keyword-based extraction heuristic to map raw CV text to our Gold Layer schema.
 
-# Pre-defined technological ontology dictionary
-TECH_SKILLS = ["python", "sql", "aws", "azure", "gcp", "docker", "kubernetes", "airflow", "power bi", "tableau", "java", "scala", "javascript", "react", "fastapi", "pandas", "spark", "hadoop"]
+# Pre-defined technological ontology dictionary (Expanded for better NLP extraction)
+TECH_SKILLS = [
+    # Data & Analytics
+    "python", "sql", "r", "sas", "excel", "power bi", "tableau", "looker", "qlik", "alteryx", "matlab", "data mining", "matplotlib",
+    # Big Data & Cloud
+    "aws", "azure", "gcp", "hadoop", "spark", "pyspark", "kafka", "snowflake", "bigquery", "redshift", "databricks",
+    # Orchestration & DevOps
+    "docker", "kubernetes", "airflow", "dbt", "terraform", "jenkins", "gitlab ci", "ansible", "linux", "windows", "bash", "git", "github", "gitlab",
+    # Web & Backend
+    "java", "scala", "c", "c++", "c#", "go", "rust", "javascript", "typescript", "react", "angular", "vue", "node.js", "django", "flask", "fastapi", "spring boot", "php", "html", "css",
+    # Machine Learning & AI
+    "pandas", "numpy", "scikit-learn", "tensorflow", "keras", "pytorch", "huggingface", "nlp", "computer vision",
+    # Databases
+    "postgresql", "mysql", "mongodb", "cassandra", "redis", "elasticsearch", "neo4j", "oracle"
+]
 
 # Pre-defined professional taxonomy
-ROLES = ["data engineer", "data scientist", "data analyst", "backend developer", "frontend developer", "full stack", "software engineer", "machine learning engineer"]
+ROLES = [
+    "data engineer", "data scientist", "data analyst", "backend developer", "frontend developer", 
+    "full stack", "software engineer", "machine learning engineer", "devops engineer", "cloud architect",
+    "business analyst", "product manager", "scrum master"
+]
 
 def extract_info_from_text(text: str):
     """
@@ -352,16 +395,24 @@ def extract_info_from_text(text: str):
     Returns:
         tuple: A comma-separated string of identified skills, and the identified professional role.
     """
+    import re
     # Normalize text for case-insensitive matching
     text_lower = text.lower()
     
     # 1. Skill Extraction Phase
     found_skills = []
     for skill in TECH_SKILLS:
-        # Token search within the normalized text body
-        if skill in text_lower:
-            # Format cleanly: acronyms (AWS, SQL) in uppercase, others (Python) in Title Case
-            found_skills.append(skill.title() if len(skill) > 3 else skill.upper())
+        # Handle special characters like C++ or Node.js by escaping them
+        escaped_skill = re.escape(skill)
+        # Use a custom boundary that supports non-word characters (+, #)
+        pattern = r'(?<![a-zA-Z0-9_])' + escaped_skill + r'(?![a-zA-Z0-9_])'
+        
+        if re.search(pattern, text_lower):
+            # Format cleanly: acronyms (AWS, SQL, GCP, C++) in uppercase, others in Title Case
+            if len(skill) <= 3 or skill in ["html", "css", "json", "rest", "php"]:
+                found_skills.append(skill.upper())
+            else:
+                found_skills.append(skill.title())
             
     # 2. Role Classification Phase
     found_role = ""

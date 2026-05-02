@@ -60,6 +60,12 @@ class App {
                 });
                 document.getElementById(targetViewId).classList.add('active');
 
+                // Reset scroll position to top of page when changing tabs
+                const scrollArea = document.querySelector('.scroll-area');
+                if (scrollArea) {
+                    scrollArea.scrollTo(0, 0);
+                }
+
                 // Route actions
                 if (targetViewId === 'favorites-view') this.renderFavorites();
                 if (targetViewId === 'applied-view') this.renderApplied();
