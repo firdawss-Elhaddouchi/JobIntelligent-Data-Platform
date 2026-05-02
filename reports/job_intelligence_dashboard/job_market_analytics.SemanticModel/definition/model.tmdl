@@ -27,6 +27,7 @@ ref table 'gold dim_contract_type'
 ref table 'gold dim_date'
 ref table 'gold dim_location'
 ref table 'gold fact_jobs'
+ref table Calculations
 
 ref cultureInfo en-US
 
