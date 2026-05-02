@@ -88,8 +88,6 @@ def create_gold_schema():
         CREATE TABLE gold.jobs_fact (
             job_id TEXT PRIMARY KEY,
             job_title TEXT,
-            job_description TEXT,
-            tags TEXT,
             company_id INT REFERENCES gold.dim_company(company_id),
             location_id INT REFERENCES gold.dim_location(location_id),
             posted_date_id INT REFERENCES gold.dim_date(date_id),

@@ -34,7 +34,7 @@ with DAG(
     'job_market_medallion_pipeline',
     default_args=default_args,
     description='End-to-end Medallion architecture for job market data analysis',
-    schedule_interval=timedelta(days=1),  # Runs daily
+    schedule_interval='0 23 * * *',  # Runs every day at 23:00 (11 PM)
     catchup=False,
     tags=['scraping', 'minio', 'medallion', 'parquet']
 ) as dag:
