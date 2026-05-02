@@ -1,0 +1,273 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.2.0/schema.json",
+  "themeCollection": {
+    "baseTheme": {
+      "name": "CY24SU10",
+      "reportVersionAtImport": {
+        "visual": "1.8.95",
+        "report": "2.0.95",
+        "page": "1.3.95"
+      },
+      "type": "SharedResources"
+    },
+    "customTheme": {
+      "name": "Custom0018858155223803186.json",
+      "reportVersionAtImport": {
+        "visual": "2.1.0",
+        "report": "2.1.0",
+        "page": "2.0.0"
+      },
+      "type": "RegisteredResources"
+    }
+  },
+  "objects": {
+    "section": [
+      {
+        "properties": {
+          "verticalAlignment": {
+            "expr": {
+              "Literal": {
+                "Value": "'Top'"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "outspacePane": [
+      {
+        "properties": {
+          "expanded": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "resourcePackages": [
+    {
+      "name": "SharedResources",
+      "type": "SharedResources",
+      "items": [
+        {
+          "name": "CY24SU10",
+          "path": "BaseThemes/CY24SU10.json",
+          "type": "BaseTheme"
+        }
+      ]
+    },
+    {
+      "name": "RegisteredResources",
+      "type": "RegisteredResources",
+      "items": [
+        {
+          "name": "Asset_2@4x9645110718448802.png",
+          "path": "Asset_2@4x9645110718448802.png",
+          "type": "Image"
+        },
+        {
+          "name": "Asset_3@4x13770785104193473.png",
+          "path": "Asset_3@4x13770785104193473.png",
+          "type": "Image"
+        },
+        {
+          "name": "Asset_4@4x949794477885739.png",
+          "path": "Asset_4@4x949794477885739.png",
+          "type": "Image"
+        },
+        {
+          "name": "Asset_5@4x5130190212112941.png",
+          "path": "Asset_5@4x5130190212112941.png",
+          "type": "Image"
+        },
+        {
+          "name": "Asset_6@4x5761747036153557.png",
+          "path": "Asset_6@4x5761747036153557.png",
+          "type": "Image"
+        },
+        {
+          "name": "bg21268643414986876.png",
+          "path": "bg21268643414986876.png",
+          "type": "Image"
+        },
+        {
+          "name": "briefcase26221689110647173.png",
+          "path": "briefcase26221689110647173.png",
+          "type": "Image"
+        },
+        {
+          "name": "calendar04758984638334374.png",
+          "path": "calendar04758984638334374.png",
+          "type": "Image"
+        },
+        {
+          "name": "cogs24791670963430523.png",
+          "path": "cogs24791670963430523.png",
+          "type": "Image"
+        },
+        {
+          "name": "Custom0018858155223803186.json",
+          "path": "Custom0018858155223803186.json",
+          "type": "CustomTheme"
+        },
+        {
+          "name": "document36148426892305285.png",
+          "path": "document36148426892305285.png",
+          "type": "Image"
+        },
+        {
+          "name": "enterprise16705431149032213.png",
+          "path": "enterprise16705431149032213.png",
+          "type": "Image"
+        },
+        {
+          "name": "full-time-job11172016886665181.png",
+          "path": "full-time-job11172016886665181.png",
+          "type": "Image"
+        },
+        {
+          "name": "home_(3)6624824218452107.png",
+          "path": "home_(3)6624824218452107.png",
+          "type": "Image"
+        },
+        {
+          "name": "income38485898164288257.png",
+          "path": "income38485898164288257.png",
+          "type": "Image"
+        },
+        {
+          "name": "infographic19753358452051817.png",
+          "path": "infographic19753358452051817.png",
+          "type": "Image"
+        },
+        {
+          "name": "infographic5242846373182869.png",
+          "path": "infographic5242846373182869.png",
+          "type": "Image"
+        },
+        {
+          "name": "infographic6206940356275797.png",
+          "path": "infographic6206940356275797.png",
+          "type": "Image"
+        },
+        {
+          "name": "infographic7083336362246682.png",
+          "path": "infographic7083336362246682.png",
+          "type": "Image"
+        },
+        {
+          "name": "JobIntellig_-White8037808168300397.png",
+          "path": "JobIntellig_-White8037808168300397.png",
+          "type": "Image"
+        },
+        {
+          "name": "jobIntellig27505997122109416.png",
+          "path": "jobIntellig27505997122109416.png",
+          "type": "Image"
+        },
+        {
+          "name": "location424622071463006.png",
+          "path": "location424622071463006.png",
+          "type": "Image"
+        },
+        {
+          "name": "money7995794915604191.png",
+          "path": "money7995794915604191.png",
+          "type": "Image"
+        },
+        {
+          "name": "part-time45719807922102507.png",
+          "path": "part-time45719807922102507.png",
+          "type": "Image"
+        },
+        {
+          "name": "Power-BI-Side-bar4193508549329197.png",
+          "path": "Power-BI-Side-bar4193508549329197.png",
+          "type": "Image"
+        },
+        {
+          "name": "quantity6204549809625284.png",
+          "path": "quantity6204549809625284.png",
+          "type": "Image"
+        },
+        {
+          "name": "salary_max47619001027744334.png",
+          "path": "salary_max47619001027744334.png",
+          "type": "Image"
+        },
+        {
+          "name": "salary_min7801209461342691.png",
+          "path": "salary_min7801209461342691.png",
+          "type": "Image"
+        },
+        {
+          "name": "search15096208393255284.png",
+          "path": "search15096208393255284.png",
+          "type": "Image"
+        },
+        {
+          "name": "search35793556011605243.png",
+          "path": "search35793556011605243.png",
+          "type": "Image"
+        },
+        {
+          "name": "search8069739821983395.png",
+          "path": "search8069739821983395.png",
+          "type": "Image"
+        },
+        {
+          "name": "search8122241487269222.png",
+          "path": "search8122241487269222.png",
+          "type": "Image"
+        },
+        {
+          "name": "siren42951678428345497.png",
+          "path": "siren42951678428345497.png",
+          "type": "Image"
+        },
+        {
+          "name": "teleworking_yallow8832864290127488.png",
+          "path": "teleworking_yallow8832864290127488.png",
+          "type": "Image"
+        },
+        {
+          "name": "teleworking6948157539971045.png",
+          "path": "teleworking6948157539971045.png",
+          "type": "Image"
+        },
+        {
+          "name": "wages14366045871066102.png",
+          "path": "wages14366045871066102.png",
+          "type": "Image"
+        },
+        {
+          "name": "wages1441914539024587.png",
+          "path": "wages1441914539024587.png",
+          "type": "Image"
+        },
+        {
+          "name": "wages36303196483501843.png",
+          "path": "wages36303196483501843.png",
+          "type": "Image"
+        },
+        {
+          "name": "wages7285295608690187.png",
+          "path": "wages7285295608690187.png",
+          "type": "Image"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "useStylableVisualContainerHeader": true,
+    "exportDataMode": "AllowSummarized",
+    "defaultDrillFilterOtherVisuals": true,
+    "allowChangeFilterTypes": true,
+    "useEnhancedTooltips": true,
+    "useDefaultAggregateDisplayName": true
+  }
+}

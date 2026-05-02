@@ -1,0 +1,223 @@
+DEFINE
+
+// =========================
+// CORE BUSINESS MEASURES
+// =========================
+// MEASURE FactSales[Revenue] =
+//     SUM ( FactSales[SalesAmount] );
+
+// MEASURE FactSales[COGS] =
+//     SUM ( FactSales[CostAmount] );
+
+// MEASURE FactSales[Gross Profit] =
+//     [Revenue] - [COGS];
+
+// MEASURE FactSales[Gross Margin %] =
+//     DIVIDE ( [Gross Profit], [Revenue] );
+
+// MEASURE FactSales[Units] =
+//     SUM ( FactSales[Quantity] );
+
+// MEASURE FactSales[ASP] =
+//     DIVIDE ( [Revenue], [Units] );
+
+// MEASURE FactSales[Discount Amount] =
+//     SUM ( FactSales[DiscountAmount] );
+
+// MEASURE FactSales[Discount %] =
+//     DIVIDE ( [Discount Amount], [Revenue] );
+
+// MEASURE FactSales[Tax Amount] =
+//     SUM ( FactSales[TaxAmount] );
+
+// // =========================
+// // TARGET MEASURES
+// // =========================
+// MEASURE FactTargets[Target] =
+//     SUM ( FactTargets[TargetAmount] );
+
+// MEASURE FactSales[Revenue Var vs Target] =
+//     [Revenue] - FactTargets[Target];
+
+// MEASURE FactSales[Revenue Var % vs Target] =
+//     DIVIDE ( [Revenue Var vs Target], FactTargets[Target] );
+
+// // =========================
+// // STANDARD TIME INTELLIGENCE (uses DimDate[Date])
+// // =========================
+
+// // ---- MTD ----
+// MEASURE FactSales[Revenue MTD] =
+//     TOTALMTD ( [Revenue], DimDate[Date] );
+
+// MEASURE FactTargets[Target MTD] =
+//     TOTALMTD ( FactTargets[Target], DimDate[Date] );
+
+// MEASURE FactSales[Revenue Var vs Target MTD] =
+//     [Revenue MTD] - [Target MTD];
+
+// MEASURE FactSales[Revenue Var % vs Target MTD] =
+//     DIVIDE ( [Revenue Var vs Target MTD], [Target MTD] );
+
+// MEASURE FactSales[Gross Profit MTD] =
+//     TOTALMTD ( [Gross Profit], DimDate[Date] );
+
+// MEASURE FactSales[Gross Margin % MTD] =
+//     DIVIDE ( [Gross Profit MTD], [Revenue MTD] );
+
+// // ---- YTD ----
+// MEASURE FactSales[Revenue YTD] =
+//     TOTALYTD ( [Revenue], DimDate[Date] );
+
+// MEASURE FactTargets[Target YTD] =
+//     TOTALYTD ( FactTargets[Target], DimDate[Date] );
+
+// MEASURE FactSales[Revenue Var vs Target YTD] =
+//     [Revenue YTD] - [Target YTD];
+
+// MEASURE FactSales[Revenue Var % vs Target YTD] =
+//     DIVIDE ( [Revenue Var vs Target YTD], [Target YTD] );
+
+// MEASURE FactSales[Gross Profit YTD] =
+//     TOTALYTD ( [Gross Profit], DimDate[Date] );
+
+// MEASURE FactSales[Gross Margin % YTD] =
+//     DIVIDE ( [Gross Profit YTD], [Revenue YTD] );
+
+// MEASURE FactSales[Units YTD] =
+//     TOTALYTD ( [Units], DimDate[Date] );
+
+// MEASURE FactSales[ASP YTD] =
+//     DIVIDE ( [Revenue YTD], [Units YTD] );
+
+// // ---- QTD (optional but useful) ----
+// MEASURE FactSales[Revenue QTD] =
+//     TOTALQTD ( [Revenue], DimDate[Date] );
+
+// MEASURE FactTargets[Target QTD] =
+//     TOTALQTD ( FactTargets[Target], DimDate[Date] );
+
+// MEASURE FactSales[Revenue Var vs Target QTD] =
+//     [Revenue QTD] - [Target QTD];
+
+// MEASURE FactSales[Revenue Var % vs Target QTD] =
+//     DIVIDE ( [Revenue Var vs Target QTD], [Target QTD] );
+
+// // =========================
+// // YoY & MoM (Actuals)
+// // =========================
+// MEASURE FactSales[Revenue LY] =
+//     CALCULATE ( [Revenue], DATEADD ( DimDate[Date], -1, YEAR ) );
+
+// MEASURE FactSales[Revenue YoY Δ] =
+//     [Revenue] - [Revenue LY];
+
+// MEASURE FactSales[Revenue YoY %] =
+//     DIVIDE ( [Revenue YoY Δ], [Revenue LY] );
+
+// MEASURE FactSales[Gross Profit LY] =
+//     CALCULATE ( [Gross Profit], DATEADD ( DimDate[Date], -1, YEAR ) );
+
+// MEASURE FactSales[Gross Profit YoY %] =
+//     DIVIDE ( [Gross Profit] - [Gross Profit LY], [Gross Profit LY] );
+
+// MEASURE FactSales[Revenue PM] =
+//     CALCULATE ( [Revenue], PARALLELPERIOD ( DimDate[Date], -1, MONTH ) );
+
+// MEASURE FactSales[Revenue MoM Δ] =
+//     [Revenue] - [Revenue PM];
+
+// MEASURE FactSales[Revenue MoM %] =
+//     DIVIDE ( [Revenue MoM Δ], [Revenue PM] );
+
+// // =========================
+// // ROLLING / LTM
+// // =========================
+// MEASURE FactSales[Revenue LTM] =
+//     CALCULATE (
+//         [Revenue],
+//         DATESINPERIOD ( DimDate[Date], MAX ( DimDate[Date] ), -12, MONTH )
+//     );
+
+// MEASURE FactSales[Revenue LTM LY] =
+//     CALCULATE (
+//         [Revenue],
+//         DATESINPERIOD (
+//             DimDate[Date],
+//             DATEADD ( MAX ( DimDate[Date] ), -12, MONTH ),
+//             -12,
+//             MONTH
+//         )
+//     );
+
+// MEASURE FactSales[Revenue LTM YoY %] =
+//     DIVIDE ( [Revenue LTM] - [Revenue LTM LY], [Revenue LTM LY] );
+
+// // =========================
+// // PARETO / RANKING HELPERS (for Customers/Products)
+// // =========================
+// MEASURE FactSales[Revenue YTD Rank (Customer)] =
+//     RANKX (
+//         ALLSELECTED ( DimCustomer[CustomerName] ),
+//         [Revenue YTD],
+//         ,
+//         DESC,
+//         DENSE
+//     );
+
+// MEASURE FactSales[Cumulative Revenue % YTD (Customer)] =
+//     VAR TotalYTD = CALCULATE ( [Revenue YTD], ALLSELECTED ( DimCustomer[CustomerName] ) )
+//     VAR ThisRank =
+//         [Revenue YTD Rank (Customer)]
+//     VAR Accum =
+//         CALCULATE (
+//             [Revenue YTD],
+//             FILTER (
+//                 ALLSELECTED ( DimCustomer[CustomerName] ),
+//                 [Revenue YTD Rank (Customer)] <= ThisRank
+//             )
+//         )
+//     RETURN
+//         DIVIDE ( Accum, TotalYTD );
+
+// MEASURE FactSales[Revenue YTD Rank (Product)] =
+//     RANKX (
+//         ALLSELECTED ( DimProduct[ProductName] ),
+//         [Revenue YTD],
+//         ,
+//         DESC,
+//         DENSE
+//     );
+
+// MEASURE FactSales[Cumulative Revenue % YTD (Product)] =
+//     VAR TotalYTD = CALCULATE ( [Revenue YTD], ALLSELECTED ( DimProduct[ProductName] ) )
+//     VAR ThisRank =
+//         [Revenue YTD Rank (Product)]
+//     VAR Accum =
+//         CALCULATE (
+//             [Revenue YTD],
+//             FILTER (
+//                 ALLSELECTED ( DimProduct[ProductName] ),
+//                 [Revenue YTD Rank (Product)] <= ThisRank
+//             )
+//         )
+//     RETURN
+//         DIVIDE ( Accum, TotalYTD );
+
+// // =========================
+// // QUALITY / KPI FLAGS
+// // =========================
+// MEASURE FactSales[On Track (YTD)] =
+//     VAR VarPct = [Revenue Var % vs Target YTD]
+//     RETURN
+//         IF (
+//             ISBLANK ( VarPct ),
+//             BLANK (),
+//             IF ( VarPct >= 0, "On Track", "At Risk" )
+//         );
+
+// // =========================
+// // SAFE HANDLING FOR OPTIONAL COLUMNS
+// // (If DiscountAmount/TaxAmount are missing in your model,
+// // the corresponding measures above will simply evaluate to BLANK.)
+// // =========================

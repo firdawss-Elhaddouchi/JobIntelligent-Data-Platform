@@ -14,7 +14,7 @@ import os
 from dotenv import load_dotenv
 
 import os
-POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow")
+POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow")
 engine = create_engine(POSTGRES_URI)
 
 
@@ -83,9 +83,9 @@ def create_gold_schema():
         # =========================
         # FACT TABLE: JOBS
         # =========================
-        conn.execute(text("DROP TABLE IF EXISTS gold.fact_jobs CASCADE"))
+        conn.execute(text("DROP TABLE IF EXISTS gold.jobs_fact CASCADE"))
         conn.execute(text("""
-        CREATE TABLE gold.fact_jobs (
+        CREATE TABLE gold.jobs_fact (
             job_id TEXT PRIMARY KEY,
             job_title TEXT,
             job_description TEXT,
@@ -109,10 +109,10 @@ def create_gold_schema():
         # =========================
         # INDEXES
         # =========================
-        conn.execute(text("CREATE INDEX idx_jobs_location ON gold.fact_jobs(location_id);"))
-        conn.execute(text("CREATE INDEX idx_jobs_posted_date ON gold.fact_jobs(posted_date_id);"))
-        conn.execute(text("CREATE INDEX idx_jobs_expires_date ON gold.fact_jobs(expires_date_id);"))
-        conn.execute(text("CREATE INDEX idx_jobs_company ON gold.fact_jobs(company_id);"))
+        conn.execute(text("CREATE INDEX idx_jobs_location ON gold.jobs_fact(location_id);"))
+        conn.execute(text("CREATE INDEX idx_jobs_posted_date ON gold.jobs_fact(posted_date_id);"))
+        conn.execute(text("CREATE INDEX idx_jobs_expires_date ON gold.jobs_fact(expires_date_id);"))
+        conn.execute(text("CREATE INDEX idx_jobs_company ON gold.jobs_fact(company_id);"))
 
         # =========================
         # AGG: JOBS PER LOCATION
@@ -186,7 +186,7 @@ def create_gold_schema():
             location TEXT,
             posted_date DATE,  
             expires_date DATE,  
-            contract_type TEXT,
+            contract_type TEXT, 
             salary_min FLOAT,
             salary_max FLOAT,
             salary_avg FLOAT,
@@ -218,7 +218,7 @@ def create_gold_schema():
         conn.execute(text("""
         CREATE TABLE app.user_favorites (
             user_id INT REFERENCES app.users(user_id) ON DELETE CASCADE,
-            job_id TEXT REFERENCES gold.fact_jobs(job_id) ON DELETE CASCADE,
+            job_id TEXT REFERENCES gold.jobs_fact(job_id) ON DELETE CASCADE,
             saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (user_id, job_id)
         );
@@ -228,7 +228,7 @@ def create_gold_schema():
         conn.execute(text("""
         CREATE TABLE app.user_applications (
             user_id INT REFERENCES app.users(user_id) ON DELETE CASCADE,
-            job_id TEXT REFERENCES gold.fact_jobs(job_id) ON DELETE CASCADE,
+            job_id TEXT REFERENCES gold.jobs_fact(job_id) ON DELETE CASCADE,
             applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (user_id, job_id)
         );

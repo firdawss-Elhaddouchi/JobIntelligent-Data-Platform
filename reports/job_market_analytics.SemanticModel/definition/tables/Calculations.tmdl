@@ -1,0 +1,186 @@
+table Calculations
+	lineageTag: 3e44464f-aefe-4167-9650-9c9abcea5d5a
+
+	measure 'Min Salary' = MIN('gold jobs_fact'[salary_min])
+		lineageTag: 2dd3c3ba-d0c0-4d75-9a2f-6412ccdacda2
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Max Salary' = MAX('gold jobs_fact'[salary_max])
+		lineageTag: 42265933-2cae-4958-b855-3d03fcd5b373
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Top Contract' =
+			
+			VAR T =
+			    TOPN(
+			        1,
+			        VALUES('gold dim_contract_type'[contract_type]),
+			        CALCULATE(COUNT('gold jobs_fact'[job_id])),
+			        DESC
+			    )
+			RETURN
+			    SELECTEDVALUE('gold dim_contract_type'[contract_type])
+		lineageTag: e1c0c1a9-fc1f-4bda-a72a-0e122106045f
+
+	measure 'Avg Salary' = ```
+			
+			CALCULATE(
+			    AVERAGE('gold jobs_fact'[salary_avg]), 
+			    USERELATIONSHIP('gold jobs_fact'[posted_date_id], 'gold dim_date'[date_id])
+			)
+			```
+		lineageTag: d1c0fe61-6906-4834-86c2-bc363bd7e288
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Main Currency' =
+			
+			SELECTEDVALUE('gold jobs_fact'[currency])
+		lineageTag: 751668aa-dc8e-40b6-817e-94e202a4363e
+
+	measure 'Total Jobs' =
+			
+			VAR Result = COUNTROWS('gold jobs_fact')
+			RETURN
+			    IF(ISBLANK(Result), 0, Result)
+		formatString: 0
+		lineageTag: 396499f0-fe76-4777-b6a4-edb49fd7f2c4
+
+	measure 'Remote Work %' =
+			
+			VAR RemoteJobs = SUM('gold jobs_fact'[is_remote])
+			VAR Total = [Total Jobs]
+			VAR Percentage = DIVIDE(RemoteJobs, Total, 0)
+			RETURN
+			    Percentage
+		lineageTag: ba455f81-540b-4c10-9966-4a68f68a882f
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Active Companies' =
+			
+			VAR UniqueCompanies = DISTINCTCOUNT('gold jobs_fact'[company_id])
+			RETURN
+			    IF(UniqueCompanies > 0, UniqueCompanies, 0)
+		formatString: 0
+		lineageTag: 598d101d-2bb6-477a-97f0-4022fe70fd7d
+
+	measure 'Top City' =
+			
+			VAR TopCityTable = TOPN(1, VALUES('gold dim_location'[city]), [Total Jobs])
+			VAR Result = MAXX(TopCityTable, 'gold dim_location'[city])
+			RETURN
+			    IF(ISBLANK(Result), "No Data", Result)
+		lineageTag: dd6fa826-68bc-4c4d-a55c-e29e6f45b16b
+
+	measure 'Full Time Jobs' =
+			
+			CALCULATE(
+			    COUNT('gold jobs_fact'[job_id]),
+			    'gold dim_contract_type'[contract_type_id] = 3
+			)
+		formatString: 0
+		lineageTag: 95a23295-945c-4c86-b495-fdc6f406fe6d
+
+	measure 'Part Time Jobs' =
+			
+			CALCULATE(
+			    COUNT('gold jobs_fact'[job_id]),
+			    'gold dim_contract_type'[contract_type_id] = 1
+			)
+		formatString: 0
+		lineageTag: c3a884bc-a590-47c4-9a57-057672577844
+
+	measure 'Active Jobs' =
+			
+			CALCULATE(
+			    COUNT('gold jobs_fact'[job_id]),
+			    FILTER(
+			        'gold jobs_fact',
+			        VAR ExpDate =
+			            CALCULATE(
+			                MAX('gold dim_date'[date]),
+			                USERELATIONSHIP(
+			                    'gold jobs_fact'[expires_date_id],
+			                    'gold dim_date'[date_id]
+			                )
+			            )
+			        RETURN
+			            ISBLANK(ExpDate) || ExpDate >= TODAY()
+			    )
+			)
+		formatString: 0
+		lineageTag: 5c4de3e8-ffca-4220-9fda-aeaa1960d0b2
+
+	measure 'Expired Jobs' =
+			
+			CALCULATE(
+			    COUNT('gold jobs_fact'[job_id]),
+			    FILTER(
+			        'gold jobs_fact',
+			        VAR ExpDate =
+			            CALCULATE(
+			                MAX('gold dim_date'[date]),
+			                USERELATIONSHIP(
+			                    'gold jobs_fact'[expires_date_id],
+			                    'gold dim_date'[date_id]
+			                )
+			            )
+			        RETURN
+			            ExpDate < TODAY()
+			    )
+			)
+		formatString: 0
+		lineageTag: 7c47ab78-5d69-40cf-b46a-446922d0d482
+
+	measure 'Peak Month' =
+			
+			VAR TopMonthTable = TOPN(1, VALUES('gold dim_date'[month_name]), [Total Jobs])
+			RETURN
+			    MAXX(TopMonthTable, 'gold dim_date'[month_name])
+		lineageTag: 1309a1d4-8a32-483b-a53f-445e13ede940
+
+	measure 'Urgent Jobs' =
+			
+			CALCULATE(
+			    [Total Jobs],
+			    NOT ISBLANK('gold jobs_fact'[expires_date_id])
+			)
+		formatString: 0
+		lineageTag: e238ea85-e952-4b08-9fb5-6f2ed5a5eddd
+
+	measure 'New Jobs' =
+			
+			CALCULATE(
+			    [Total Jobs],
+			    'gold dim_date'[date] = TODAY(),
+			    USERELATIONSHIP('gold jobs_fact'[posted_date_id], 'gold dim_date'[date_id])
+			)
+		formatString: 0
+		lineageTag: 287f4312-c37e-4691-b719-855ad4a5d6cf
+
+	measure 'Jobs by Country Count' =
+			
+			VAR Result = [Total Jobs]
+			RETURN
+			    IF(ISBLANK(Result), 0, Result)
+		formatString: 0
+		lineageTag: 1f9d3211-6f37-4101-9ab9-703b33b23709
+
+	column Column
+		formatString: 0
+		lineageTag: ebb6521e-8ce6-4c10-a30c-7f3a3c8aa571
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Column]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Calculations = calculated
+		mode: import
+		source = Row("Column", BLANK())
+
+	annotation PBI_Id = 188452668b2847ecaf2d895e2b1f060f
+

@@ -1,0 +1,267 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "6fe2838db7ab7d550c89",
+  "position": {
+    "x": 630,
+    "y": 221.42857142857144,
+    "z": 27000,
+    "height": 278.57142857142861,
+    "width": 707.14285714285722,
+    "tabOrder": 27000
+  },
+  "visual": {
+    "visualType": "esriVisual",
+    "query": {
+      "queryState": {
+        "Latitude": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "gold dim_location"
+                    }
+                  },
+                  "Property": "city"
+                }
+              },
+              "queryRef": "gold dim_location.city",
+              "nativeQueryRef": "city"
+            }
+          ]
+        },
+        "Location": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "gold dim_location"
+                    }
+                  },
+                  "Property": "location"
+                }
+              },
+              "queryRef": "gold dim_location.location",
+              "nativeQueryRef": "location"
+            }
+          ]
+        },
+        "Size": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Calculations"
+                    }
+                  },
+                  "Property": "Total Jobs"
+                }
+              },
+              "queryRef": "Calculations.Total Jobs",
+              "nativeQueryRef": "Total Jobs"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Calculations"
+                  }
+                },
+                "Property": "Total Jobs"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "mapTools": [
+        {
+          "properties": {
+            "basemaps": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "share": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "mapObject": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "'{\"portalUrl\":\"https://www.arcgis.com\",\"version\":\"2.4\",\"isAuthorNamedUser\":false,\"map\":{\"webmap\":{\"is3d\":false,\"itemData\":{\"operationalLayers\":[{\"id\":\"MyLayer\",\"visibility\":true,\"opacity\":1,\"minScale\":0,\"maxScale\":0,\"refreshInterval\":0,\"title\":\"location\",\"objectIdField\":\"objectId\",\"type\":\"DataLayer\",\"layerType\":\"ArcGISFeatureLayer\",\"popupEnabled\":true,\"disablePopup\":false,\"visible\":true,\"geometryType\":\"point\",\"source\":[{\"attributes\":{},\"geometry\":{\"x\":0,\"y\":0,\"type\":\"point\",\"spatialReference\":{\"latestWkid\":3857,\"wkid\":102100}}}],\"spatialReference\":{\"latestWkid\":3857,\"wkid\":102100},\"esriMaps\":{\"isTimeEnabled\":\"false\",\"clusterInfo\":null,\"lastShareInfo\":null},\"timeInfo\":null,\"showLabels\":true,\"featureCollection\":{\"layers\":[{\"popupInfo\":{\"popupElements\":[{\"type\":\"fields\",\"fieldInfos\":[{\"fieldName\":\"gold_20dim_location_city\",\"isEditable\":true,\"label\":\"city\",\"tooltip\":\"\",\"visible\":true},{\"fieldName\":\"gold_20dim_location_location\",\"isEditable\":true,\"label\":\"location\",\"tooltip\":\"\",\"visible\":true},{\"fieldName\":\"Calculations_Total_20Jobs\",\"format\":{\"digitSeparator\":true,\"places\":0},\"isEditable\":true,\"label\":\"Total Jobs\",\"tooltip\":\"\",\"visible\":true},{\"fieldName\":\"ROW_ID\",\"format\":{\"digitSeparator\":true,\"places\":0},\"isEditable\":true,\"label\":\"ROW_ID\",\"tooltip\":\"\",\"visible\":true}]}],\"expressionInfos\":[],\"fieldInfos\":[{\"fieldName\":\"gold_20dim_location_city\",\"isEditable\":true,\"label\":\"city\",\"tooltip\":\"\",\"visible\":true},{\"fieldName\":\"gold_20dim_location_location\",\"isEditable\":true,\"label\":\"location\",\"tooltip\":\"\",\"visible\":true},{\"fieldName\":\"Calculations_Total_20Jobs\",\"format\":{\"digitSeparator\":true,\"places\":0},\"isEditable\":true,\"label\":\"Total Jobs\",\"tooltip\":\"\",\"visible\":true},{\"fieldName\":\"ROW_ID\",\"format\":{\"digitSeparator\":true,\"places\":0},\"isEditable\":true,\"label\":\"ROW_ID\",\"tooltip\":\"\",\"visible\":true}],\"title\":\"\",\"actions\":[]},\"effect\":null,\"layerDefinition\":{\"objectIdField\":\"objectId\",\"fields\":[{\"alias\":\"objectId\",\"editable\":false,\"name\":\"objectId\",\"nullable\":false,\"type\":\"esriFieldTypeOID\"},{\"alias\":\"city\",\"editable\":true,\"length\":-1,\"name\":\"gold_20dim_location_city\",\"nullable\":true,\"type\":\"esriFieldTypeString\"},{\"alias\":\"location\",\"editable\":true,\"length\":-1,\"name\":\"gold_20dim_location_location\",\"nullable\":true,\"type\":\"esriFieldTypeString\"},{\"alias\":\"Total Jobs\",\"editable\":true,\"name\":\"Calculations_Total_20Jobs\",\"nullable\":true,\"type\":\"esriFieldTypeInteger\"},{\"alias\":\"ROW_ID\",\"editable\":true,\"name\":\"ROW_ID\",\"nullable\":true,\"type\":\"esriFieldTypeInteger\"}],\"geometryType\":\"point\",\"drawingInfo\":{\"renderer\":{\"authoringInfo\":{\"classificationMethod\":\"esriClassifyNaturalBreaks\",\"type\":\"classedSize\"},\"type\":\"classBreaks\",\"visualVariables\":[],\"classBreakInfos\":[{\"classMaxValue\":3,\"symbol\":{\"type\":\"esriSMS\",\"color\":[250,168,63,255],\"angle\":0,\"xoffset\":0,\"yoffset\":0,\"size\":3,\"style\":\"esriSMSCircle\",\"outline\":{\"type\":\"esriSLS\",\"color\":[255,255,255,204],\"width\":1,\"style\":\"esriSLSSolid\"}}},{\"classMaxValue\":10,\"symbol\":{\"type\":\"esriSMS\",\"color\":[250,168,63,255],\"angle\":0,\"xoffset\":0,\"yoffset\":0,\"size\":9.75,\"style\":\"esriSMSCircle\",\"outline\":{\"type\":\"esriSLS\",\"color\":[255,255,255,204],\"width\":1,\"style\":\"esriSLSSolid\"}}},{\"classMaxValue\":24,\"symbol\":{\"type\":\"esriSMS\",\"color\":[250,168,63,255],\"angle\":0,\"xoffset\":0,\"yoffset\":0,\"size\":16.5,\"style\":\"esriSMSCircle\",\"outline\":{\"type\":\"esriSLS\",\"color\":[255,255,255,204],\"width\":1,\"style\":\"esriSLSSolid\"}}},{\"classMaxValue\":48,\"symbol\":{\"type\":\"esriSMS\",\"color\":[250,168,63,255],\"angle\":0,\"xoffset\":0,\"yoffset\":0,\"size\":23.25,\"style\":\"esriSMSCircle\",\"outline\":{\"type\":\"esriSLS\",\"color\":[255,255,255,204],\"width\":1,\"style\":\"esriSLSSolid\"}}},{\"classMaxValue\":96,\"symbol\":{\"type\":\"esriSMS\",\"color\":[250,168,63,255],\"angle\":0,\"xoffset\":0,\"yoffset\":0,\"size\":30,\"style\":\"esriSMSCircle\",\"outline\":{\"type\":\"esriSLS\",\"color\":[255,255,255,204],\"width\":1,\"style\":\"esriSLSSolid\"}}}],\"defaultLabel\":\"Other\",\"defaultSymbol\":{\"type\":\"esriSMS\",\"color\":[128,128,128,255],\"angle\":0,\"xoffset\":0,\"yoffset\":0,\"size\":3,\"style\":\"esriSMSCircle\",\"outline\":{\"type\":\"esriSLS\",\"color\":[255,255,255,64],\"width\":0.75,\"style\":\"esriSLSSolid\"}},\"field\":\"Calculations_Total_20Jobs\",\"minValue\":1},\"transparency\":0},\"featureReduction\":null,\"locationProvider\":{\"type\":\"cachedgeocode\",\"sourceCountry\":\"world\",\"targetSR\":102100,\"lookupFields\":[{\"lookupField\":\"SingleLine\",\"outField\":\"gold_20dim_location_location\"}],\"geocodeServiceUrl\":\"https://utility.arcgis.com/usrsvcs/appservices/L7zl5sI0W1hBHWRI/rest/services/World/GeocodeServer\"},\"minScale\":0,\"maxScale\":0,\"definitionExpression\":null,\"templates\":[{\"name\":\"New Feature\",\"description\":\"\",\"prototype\":{\"attributes\":{\"gold_20dim_location_city\":null,\"gold_20dim_location_location\":null,\"Calculations_Total_20Jobs\":null,\"ROW_ID\":null}}}],\"elevationInfo\":null,\"name\":\"location\",\"type\":\"DataLayer\",\"queryParameters\":{\"tableId\":\"\"}},\"featureSet\":{\"features\":[{\"attributes\":{},\"geometry\":{\"x\":0,\"y\":0,\"type\":\"point\",\"spatialReference\":{\"latestWkid\":3857,\"wkid\":102100}}}]}}]}}],\"tables\":[],\"baseMap\":{\"baseMapLayers\":[{\"id\":\"VectorTile_1970\",\"opacity\":1,\"title\":\"Light Gray Base\",\"visibility\":true,\"layerType\":\"VectorTileLayer\",\"styleUrl\":\"https://cdn.arcgis.com/sharing/rest/content/items/291da5eab3a0412593b66d384379f89f/resources/styles/root.json\"},{\"id\":\"VectorTile_7117\",\"opacity\":1,\"title\":\"Light Gray Reference\",\"visibility\":true,\"layerType\":\"VectorTileLayer\",\"styleUrl\":\"https://cdn.arcgis.com/sharing/rest/content/items/1768e8369a214dfab4e2167d5c5f2454/resources/styles/root.json\",\"isReference\":true}],\"title\":\"Light Gray Canvas\"},\"version\":\"2.26\",\"authoringApp\":\"ArcGIS for Power BI\",\"authoringAppVersion\":\"2026.1.970\",\"bookmarks\":[],\"initialState\":{\"viewpoint\":{\"targetGeometry\":{\"spatialReference\":{\"latestWkid\":3857,\"wkid\":102100},\"xmin\":-19722031.05984499,\"ymin\":1669658.553224003,\"xmax\":7477321.085144988,\"ymax\":10905697.554975996}}}}},\"webmapExtensions\":{\"format\":2}},\"embedCheckPassed\":false}'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "geometryCache": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "'{\"key\":\"cachedgeocode@@world\",\"compressionMethod\":\"pako\",\"data\":\"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\"}'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 0,
+                      "Percent": -0.1
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "width": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 0,
+                      "Percent": -0.6
+                    }
+                  }
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Geographic Distribution'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "padding": [
+        {
+          "properties": {
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            },
+            "top": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "left": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

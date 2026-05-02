@@ -1,0 +1,87 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "903e8066ed8959009259",
+  "displayName": "Job Search & Detailed View",
+  "displayOption": "FitToPage",
+  "height": 750,
+  "width": 1360,
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "image": {
+            "image": {
+              "name": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'bg.png'"
+                  }
+                }
+              },
+              "url": {
+                "expr": {
+                  "ResourcePackageItem": {
+                    "PackageName": "RegisteredResources",
+                    "PackageType": 1,
+                    "ItemName": "bg21268643414986876.png"
+                  }
+                }
+              },
+              "scaling": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'Normal'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "91D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "visualInteractions": [
+    {
+      "source": "7bc89d783a746802a9b5",
+      "target": "e404b8ebe70e0e700dd8",
+      "type": "NoFilter"
+    },
+    {
+      "source": "7bc89d783a746802a9b5",
+      "target": "dc33b834200594116d62",
+      "type": "NoFilter"
+    },
+    {
+      "source": "40b7ca76894278bd8e15",
+      "target": "dc33b834200594116d62",
+      "type": "DataFilter"
+    },
+    {
+      "source": "40b7ca76894278bd8e15",
+      "target": "e404b8ebe70e0e700dd8",
+      "type": "NoFilter"
+    },
+    {
+      "source": "dc33b834200594116d62",
+      "target": "7bc89d783a746802a9b5",
+      "type": "NoFilter"
+    },
+    {
+      "source": "dc33b834200594116d62",
+      "target": "e404b8ebe70e0e700dd8",
+      "type": "NoFilter"
+    },
+    {
+      "source": "dc33b834200594116d62",
+      "target": "40b7ca76894278bd8e15",
+      "type": "HighlightFilter"
+    }
+  ]
+}

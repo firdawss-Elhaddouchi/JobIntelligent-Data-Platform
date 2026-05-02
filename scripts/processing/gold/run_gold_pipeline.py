@@ -242,6 +242,8 @@ def run_gold_pipeline():
         "currency", "job_url", "source"
     ]].copy()
 
+    df_staging = df_staging.rename(columns={"contract_type_std": "contract_type"})
+
     # Ensure NaT and NaN are translated to None for PostgreSQL NULLs[cite: 3, 5]
     df_staging = df_staging.where(pd.notnull(df_staging), None)
 
@@ -257,41 +259,37 @@ def run_gold_pipeline():
     # FACT TABLE
     # -------------------------
     logger.info("Building fact table...")
-
     sql = """
-    INSERT INTO gold.fact_jobs (
-        job_id, job_title,
-        job_description,tags,
-        company_id, location_id, posted_date_id,expires_date_id, contract_type_id,
-        salary_min, salary_max, salary_avg,
-        currency,is_remote, job_url, source
-    )
-    SELECT
-        s.job_id,
-        s.job_title,
-        s.job_description,
-        s.tags,
-        c.company_id,
-        l.location_id,
-        d1.date_id,
-        d2.date_id,
-        ct.contract_type_id,
-        s.salary_min,
-        s.salary_max,
-        s.salary_avg,
-        s.currency,
-        s.is_remote,
-        s.job_url,
-        s.source
-    FROM gold.jobs_staging s
-    LEFT JOIN gold.dim_company c ON s.company_name = c.company_name
-    LEFT JOIN gold.dim_location l ON s.location = l.location
-    LEFT JOIN gold.dim_date d1 ON s.posted_date::DATE = d1.date::DATE
-    LEFT JOIN gold.dim_date d2 ON s.expires_date::DATE = d2.date::DATE
-    LEFT JOIN gold.dim_contract_type ct ON s.contract_type_std = ct.contract_type
-    WHERE s.job_id IS NOT NULL
-    ON CONFLICT (job_id) DO NOTHING;
-    """
+        INSERT INTO gold.jobs_fact (
+            job_id, job_title,
+            company_id, location_id, posted_date_id, expires_date_id, contract_type_id,
+            salary_min, salary_max, salary_avg,
+            currency, is_remote, job_url, source
+        )
+        SELECT
+            s.job_id,
+            s.job_title,
+            c.company_id,
+            l.location_id,
+            d1.date_id,
+            d2.date_id,
+            ct.contract_type_id,
+            s.salary_min,
+            s.salary_max,
+            s.salary_avg,
+            s.currency,
+            s.is_remote,
+            s.job_url,
+            s.source
+        FROM gold.jobs_staging s
+        LEFT JOIN gold.dim_company c ON s.company_name = c.company_name
+        LEFT JOIN gold.dim_location l ON s.location = l.location
+        LEFT JOIN gold.dim_date d1 ON s.posted_date::TEXT::DATE = d1.date::DATE
+        LEFT JOIN gold.dim_date d2 ON s.expires_date::TEXT::DATE = d2.date::DATE
+        LEFT JOIN gold.dim_contract_type ct ON s.contract_type = ct.contract_type
+        WHERE s.job_id IS NOT NULL
+        ON CONFLICT (job_id) DO NOTHING;
+        """
     # LEFT JOIN gold.dim_date d2 ON TO_TIMESTAMP(s.expires_date::DOUBLE PRECISION)::DATE = d2.date::DATE
 
     with engine.begin() as conn:

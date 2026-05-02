@@ -1,0 +1,31 @@
+relationship f9c05125-358f-4876-8dc9-a749199b606c
+	fromColumn: 'gold jobs_fact'.company_id
+	toColumn: 'gold dim_company'.company_id
+
+	annotation PBI_IsFromSource = FS
+
+relationship 77e488d3-5b6a-4f7c-ae24-10f5d4641591
+	fromColumn: 'gold jobs_fact'.contract_type_id
+	toColumn: 'gold dim_contract_type'.contract_type_id
+
+	annotation PBI_IsFromSource = FS
+
+relationship 0235e391-8773-4b2e-9a03-a26f1b292250
+	isActive: false
+	fromColumn: 'gold jobs_fact'.expires_date_id
+	toColumn: 'gold dim_date'.date_id
+
+	annotation PBI_IsFromSource = FS
+
+relationship 10d98776-9060-4fb8-ac12-09711406f711
+	fromColumn: 'gold jobs_fact'.posted_date_id
+	toColumn: 'gold dim_date'.date_id
+
+	annotation PBI_IsFromSource = FS
+
+relationship 09d68f1d-a0c7-428d-9814-a5bf20e00f68
+	fromColumn: 'gold jobs_fact'.location_id
+	toColumn: 'gold dim_location'.location_id
+
+	annotation PBI_IsFromSource = FS
+

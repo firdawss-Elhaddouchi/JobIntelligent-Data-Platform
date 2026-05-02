@@ -1,0 +1,472 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
+  "name": "e3f0ed18ec2226440792",
+  "position": {
+    "x": 212.5,
+    "y": 231.25,
+    "z": 4000,
+    "height": 238.75,
+    "width": 673.75,
+    "tabOrder": 37000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "HierarchyLevel": {
+                  "Expression": {
+                    "Hierarchy": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "gold dim_date"
+                        }
+                      },
+                      "Hierarchy": "date Hierarchy"
+                    }
+                  },
+                  "Level": "date"
+                }
+              },
+              "queryRef": "gold dim_date.date Hierarchy.date",
+              "nativeQueryRef": "date Hierarchy date",
+              "active": true
+            },
+            {
+              "field": {
+                "HierarchyLevel": {
+                  "Expression": {
+                    "Hierarchy": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "gold dim_date"
+                        }
+                      },
+                      "Hierarchy": "date Hierarchy"
+                    }
+                  },
+                  "Level": "year"
+                }
+              },
+              "queryRef": "gold dim_date.date Hierarchy.year",
+              "nativeQueryRef": "date Hierarchy year",
+              "active": false
+            },
+            {
+              "field": {
+                "HierarchyLevel": {
+                  "Expression": {
+                    "Hierarchy": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "gold dim_date"
+                        }
+                      },
+                      "Hierarchy": "date Hierarchy"
+                    }
+                  },
+                  "Level": "quarter"
+                }
+              },
+              "queryRef": "gold dim_date.date Hierarchy.quarter",
+              "nativeQueryRef": "date Hierarchy quarter",
+              "active": false
+            },
+            {
+              "field": {
+                "HierarchyLevel": {
+                  "Expression": {
+                    "Hierarchy": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "gold dim_date"
+                        }
+                      },
+                      "Hierarchy": "date Hierarchy"
+                    }
+                  },
+                  "Level": "month"
+                }
+              },
+              "queryRef": "gold dim_date.date Hierarchy.month",
+              "nativeQueryRef": "date Hierarchy month",
+              "active": false
+            },
+            {
+              "field": {
+                "HierarchyLevel": {
+                  "Expression": {
+                    "Hierarchy": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "gold dim_date"
+                        }
+                      },
+                      "Hierarchy": "date Hierarchy"
+                    }
+                  },
+                  "Level": "day"
+                }
+              },
+              "queryRef": "gold dim_date.date Hierarchy.day",
+              "nativeQueryRef": "date Hierarchy day",
+              "active": false
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "gold jobs_fact"
+                    }
+                  },
+                  "Property": "currency"
+                }
+              },
+              "queryRef": "gold fact_jobs.currency",
+              "nativeQueryRef": "currency"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "gold jobs_fact"
+                        }
+                      },
+                      "Property": "salary_avg"
+                    }
+                  },
+                  "Function": 5
+                }
+              },
+              "queryRef": "CountNonNull(gold fact_jobs.salary_avg)",
+              "nativeQueryRef": "Count of salary_avg"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "HierarchyLevel": {
+                "Expression": {
+                  "Hierarchy": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "gold dim_date"
+                      }
+                    },
+                    "Hierarchy": "date Hierarchy"
+                  }
+                },
+                "Level": "date"
+              }
+            },
+            "direction": "Ascending"
+          },
+          {
+            "field": {
+              "HierarchyLevel": {
+                "Expression": {
+                  "Hierarchy": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "gold dim_date"
+                      }
+                    },
+                    "Hierarchy": "date Hierarchy"
+                  }
+                },
+                "Level": "year"
+              }
+            },
+            "direction": "Ascending"
+          },
+          {
+            "field": {
+              "HierarchyLevel": {
+                "Expression": {
+                  "Hierarchy": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "gold dim_date"
+                      }
+                    },
+                    "Hierarchy": "date Hierarchy"
+                  }
+                },
+                "Level": "quarter"
+              }
+            },
+            "direction": "Ascending"
+          },
+          {
+            "field": {
+              "HierarchyLevel": {
+                "Expression": {
+                  "Hierarchy": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "gold dim_date"
+                      }
+                    },
+                    "Hierarchy": "date Hierarchy"
+                  }
+                },
+                "Level": "month"
+              }
+            },
+            "direction": "Ascending"
+          },
+          {
+            "field": {
+              "HierarchyLevel": {
+                "Expression": {
+                  "Hierarchy": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "gold dim_date"
+                      }
+                    },
+                    "Hierarchy": "date Hierarchy"
+                  }
+                },
+                "Level": "day"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "dataPoint": [
+        {
+          "properties": {}
+        }
+      ],
+      "plotArea": [
+        {
+          "properties": {
+            "image": {
+              "image": {
+                "name": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "''"
+                    }
+                  }
+                },
+                "url": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "''"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "26D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "valueAxis": [
+        {
+          "properties": {
+            "showAxisTitle": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'wf_standard-font, helvetica, arial, sans-serif'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "categoryAxis": [
+        {
+          "properties": {
+            "showAxisTitle": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'wf_standard-font, helvetica, arial, sans-serif'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            },
+            "axisType": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Scalar'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 0,
+                      "Percent": -0.1
+                    }
+                  }
+                }
+              }
+            },
+            "width": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Salary Trend over Time'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 0,
+                      "Percent": -0.6
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "padding": [
+        {
+          "properties": {
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            },
+            "top": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "left": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

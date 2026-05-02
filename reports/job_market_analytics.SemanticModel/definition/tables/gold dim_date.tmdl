@@ -1,0 +1,124 @@
+table 'gold dim_date'
+	lineageTag: 300854f4-a11f-49cc-a383-54992ecb30ed
+
+	column date_id
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: e4c7c208-b4f8-4784-98cf-8c923280469b
+		summarizeBy: none
+		sourceColumn: date_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column date
+		dataType: dateTime
+		formatString: Short Date
+		sourceProviderType: date
+		lineageTag: e72a088e-f219-4a08-982d-d532a086d732
+		summarizeBy: none
+		sourceColumn: date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column day
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 8a561e86-7477-408f-bd9b-627083af10db
+		summarizeBy: none
+		sourceColumn: day
+
+		annotation SummarizationSetBy = Automatic
+
+	column month
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 0878d554-705d-49b0-89c2-0273c79a13f1
+		summarizeBy: none
+		sourceColumn: month
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_name
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: 5a2d41d2-422c-4438-9463-ba0355468014
+		summarizeBy: none
+		sourceColumn: month_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column quarter
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 9272c79d-47bf-4366-98c1-fb1ad043ce95
+		summarizeBy: none
+		sourceColumn: quarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column year
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 91903614-4a09-475c-9230-16a64b9ae901
+		summarizeBy: none
+		sourceColumn: year
+
+		annotation SummarizationSetBy = Automatic
+
+	column day_of_week
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: dc912df3-c4b1-4507-86ad-100d512b07d9
+		summarizeBy: none
+		sourceColumn: day_of_week
+
+		annotation SummarizationSetBy = Automatic
+
+	hierarchy 'date Hierarchy'
+		lineageTag: 6eead5f7-7e5a-4151-a47c-130a820fa0c3
+
+		level date
+			lineageTag: ba049fb8-5f98-45c6-8ef4-4407294906a7
+			column: date
+
+		level year
+			lineageTag: 01ea72c2-f2c1-44b1-9a17-dccb72c5de6b
+			column: year
+
+		level quarter
+			lineageTag: 2c984526-52f6-45ff-95ca-6f5eb3c3d3d5
+			column: quarter
+
+		level month
+			lineageTag: e592b429-4d1b-40f9-91ca-cc41b3b2a2e8
+			column: month
+
+		level day
+			lineageTag: 48da2d56-1860-4116-b97b-08577b6df903
+			column: day
+
+		level day_of_week
+			lineageTag: 6bffae16-e405-4b2d-a458-5d78e65c06ac
+			column: day_of_week
+
+	partition 'gold dim_date' = m
+		mode: directQuery
+		source =
+				let
+				    Source = PostgreSQL.Database("localhost:5432", "airflow"),
+				    gold_dim_date = Source{[Schema="gold",Item="dim_date"]}[Data]
+				in
+				    gold_dim_date
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,99 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 1136.3676694660771,
+            "y": 549.41289107391924
+          },
+          "nodeIndex": "gold dim_company",
+          "nodeLineageTag": "2bbc5588-d141-4fdf-b1ac-389839d01203",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 2
+        },
+        {
+          "location": {
+            "x": 1704.7517362646836,
+            "y": 134.36282666967168
+          },
+          "nodeIndex": "gold dim_contract_type",
+          "nodeLineageTag": "e9e985e4-042c-4a2c-9ae8-3ef001476460",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 3
+        },
+        {
+          "location": {
+            "x": 1658.9397696153756,
+            "y": 608.38725025937788
+          },
+          "nodeIndex": "gold dim_date",
+          "nodeLineageTag": "300854f4-a11f-49cc-a383-54992ecb30ed",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 7
+        },
+        {
+          "location": {
+            "x": 1205.0253817998669,
+            "y": 32.052866518164592
+          },
+          "nodeIndex": "gold dim_location",
+          "nodeLineageTag": "143e3167-0200-47f7-ac3a-8e2dfcc021b4",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 4
+        },
+        {
+          "location": {
+            "x": 2298.7517362646836,
+            "y": 607.886725055438
+          },
+          "nodeIndex": "Calculations",
+          "nodeLineageTag": "3e44464f-aefe-4167-9650-9c9abcea5d5a",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1420.5592232776248,
+            "y": 258.24454829309889
+          },
+          "nodeIndex": "gold jobs_fact",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 30.208135261693876,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}

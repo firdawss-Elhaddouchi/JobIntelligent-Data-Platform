@@ -1,0 +1,79 @@
+cultureInfo en-US
+
+	linguisticMetadata =
+			{
+			  "Version": "4.1.0",
+			  "Language": "en-US",
+			  "Entities": {
+			    "dimcustomer.customername": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "DimCustomer",
+			          "ConceptualProperty": "CustomerName"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "dimcustomer.count_invoices": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "DimCustomer",
+			          "ConceptualProperty": "Count Invoices"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "dimcustomer.count_sales": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "DimCustomer",
+			          "ConceptualProperty": "Count Sales"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "dimproduct.productname": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "DimProduct",
+			          "ConceptualProperty": "ProductName"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "table_measures.revenue": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Measures",
+			          "ConceptualProperty": "Revenue"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "table_measures.cogs": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Measures",
+			          "ConceptualProperty": "COGS"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "table_measures.gross_profit": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Measures",
+			          "ConceptualProperty": "Gross Profit"
+			        }
+			      },
+			      "State": "Generated"
+			    }
+			  },
+			  "Agents": {
+			    "Internal": {
+			      "Version": "1.1.0"
+			    }
+			  }
+			}
+		contentType: json
+
