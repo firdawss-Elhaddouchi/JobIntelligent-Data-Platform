@@ -3,6 +3,10 @@ import pandas as pd
 import boto3
 from sqlalchemy import create_engine
 from io import BytesIO
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from scripts.processing.gold.gold_transformations import (
     build_jobs_fact,
@@ -14,6 +18,8 @@ from scripts.processing.gold.gold_transformations import (
     job_features
 )
 
+
+
 # =========================
 # CONFIG
 # =========================
@@ -23,7 +29,8 @@ SECRET_KEY = "minioadmin"
 
 SILVER_BUCKET = "silver"
 
-POSTGRES_URI = "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow"
+# POSTGRES_URI = "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow"
+POSTGRES_URI = os.getenv("POSTGRES_URI")
 
 
 # =========================

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse | Intelligent Job Data Platform</title>
+    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- ================= LOGIN SCREEN ================= -->
+    <div id="login-view">
+        <div class="login-box">
+            <div class="brand-logo">
+                <i class="fa-solid fa-cube"></i> Pulse
+            </div>
+            <p>Access your professional data ecosystem</p>
+            
+            <div class="input-group">
+                <i class="fa-regular fa-envelope"></i>
+                <input type="email" placeholder="Work Email Address" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" placeholder="Password" autocomplete="new-password">
+            </div>
+            
+            <button class="btn-auth" onclick="app.login()">Sign In to Dashboard</button>
+            
+            <div style="text-align: center; margin-top: 24px;">
+                <a href="#" style="color: var(--text-secondary); font-size: 0.9rem; text-decoration: none; font-weight: 500;" onclick="app.showRegister()">Create an account</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= REGISTER SCREEN ================= -->
+    <div id="register-view" style="display: none; position: fixed; inset: 0; background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="login-box">
+            <div class="brand-logo">
+                <i class="fa-solid fa-cube"></i> Pulse
+            </div>
+            <p>Join the intelligent job platform</p>
+            
+            <div class="input-group">
+                <i class="fa-regular fa-user"></i>
+                <input type="text" placeholder="Full Name" id="reg-name" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fa-regular fa-envelope"></i>
+                <input type="email" placeholder="Work Email Address" id="reg-email" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" placeholder="Password" id="reg-pass" autocomplete="new-password">
+            </div>
+            
+            <button class="btn-auth" onclick="app.register()">Create Account</button>
+            
+            <div style="text-align: center; margin-top: 24px;">
+                <a href="#" style="color: var(--text-secondary); font-size: 0.9rem; text-decoration: none; font-weight: 500;" onclick="app.showLogin()">Already have an account? Sign In</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= APP LAYOUT ================= -->
+    <div class="app-container" id="app-main" style="display: none;">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fa-solid fa-cube"></i> Pulse
+            </div>
+            
+            <div style="flex: 1; overflow-y: auto;">
+                <div class="nav-section">
+                    <div class="nav-label">Analytics</div>
+                    <a class="nav-item active" data-target="dashboard-view"><i class="fa-solid fa-chart-pie"></i> Overview</a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-label">Job Market</div>
+                    <a class="nav-item" data-target="search-view"><i class="fa-solid fa-magnifying-glass"></i> Search Jobs</a>
+                    <a class="nav-item" data-target="recommendations-view"><i class="fa-solid fa-wand-magic-sparkles"></i> For You</a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-label">My Workspace</div>
+                    <a class="nav-item" data-target="favorites-view"><i class="fa-regular fa-heart"></i> Saved Favorites</a>
+                    <a class="nav-item" data-target="applied-view"><i class="fa-regular fa-paper-plane"></i> Applications</a>
+                    <a class="nav-item" data-target="profile-view"><i class="fa-regular fa-user"></i> My Profile</a>
+                </div>
+            </div>
+
+            <div class="user-card" onclick="app.logout()">
+                <div class="user-avatar">A</div>
+                <div class="user-info">
+                    <h4>Amina Elhaddouchi</h4>
+                    <p>Log Out</p>
+                </div>
+                <i class="fa-solid fa-arrow-right-from-bracket" style="color: var(--text-tertiary);"></i>
+            </div>
+        </aside>
+
+        <!-- MAIN WRAPPER -->
+        <div class="main-wrapper">
+            
+            <header class="topbar">
+                <div class="page-title" id="page-title-display">Overview</div>
+                <div class="topbar-actions" style="position: relative;">
+                    <!-- Dark Mode Toggle -->
+                    <button class="icon-btn" onclick="app.toggleTheme()"><i id="theme-icon" class="fa-solid fa-moon"></i></button>
+                    
+                    <button class="icon-btn" onclick="app.toggleNotifications()"><i class="fa-regular fa-bell"></i></button>
+                    <!-- Notifications Dropdown -->
+                    <div id="notifications-dropdown" style="display: none; position: absolute; top: 50px; right: 50px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 300px; padding: 20px; z-index: 100;">
+                        <h4 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Notifications</h4>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px;"><i class="fa-solid fa-circle-check" style="color: var(--primary);"></i> Data Pipeline synced successfully.</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);"><i class="fa-solid fa-star" style="color: #f59e0b;"></i> 3 new matching jobs found.</div>
+                    </div>
+
+                    <button class="icon-btn" onclick="app.openSettings()"><i class="fa-solid fa-gear"></i></button>
+                </div>
+            </header>
+
+            <main class="scroll-area">
+                
+                <!-- DASHBOARD VIEW -->
+                <div id="dashboard-view" class="view-section active">
+                    
+                    <div class="metrics-grid">
+                        <div class="metric-card metric-primary">
+                            <div class="metric-icon-wrap"><i class="fa-solid fa-layer-group"></i></div>
+                            <h3>Total Jobs Analyzed</h3>
+                            <div class="value" id="dash-total">--</div>
+                        </div>
+                        <div class="metric-card metric-info">
+                            <div class="metric-icon-wrap"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+                            <h3>Market Avg Salary</h3>
+                            <div class="value" id="dash-salary">--</div>
+                        </div>
+                        <div class="metric-card metric-warning">
+                            <div class="metric-icon-wrap"><i class="fa-solid fa-house-laptop"></i></div>
+                            <h3>Remote Opportunities</h3>
+                            <div class="value" id="dash-remote">--</div>
+                        </div>
+                        <div class="metric-card metric-purple">
+                            <div class="metric-icon-wrap"><i class="fa-solid fa-bookmark"></i></div>
+                            <h3>Saved in Workspace</h3>
+                            <div class="value" id="dash-favs">0</div>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--surface); border-radius: var(--radius-lg); padding: 32px; border: 1px solid var(--border);">
+                        <h3 style="margin-bottom: 24px; font-size: 1.2rem;">Data Pipeline Status</h3>
+                        <div style="display: flex; gap: 20px; align-items: center;">
+                            <div style="flex: 1; height: 8px; background: var(--background); border-radius: 4px; overflow: hidden;">
+                                <div style="width: 100%; height: 100%; background: var(--primary);"></div>
+                            </div>
+                            <span style="font-weight: 600; color: var(--primary);">100% Synced</span>
+                        </div>
+                        <p style="margin-top: 16px; color: var(--text-secondary);">Your Gold Layer PostgreSQL tables (dim_company, dim_location, fact_jobs) are fully integrated and real-time operational.</p>
+                    </div>
+
+                </div>
+
+                <!-- SEARCH JOBS VIEW -->
+                <div id="search-view" class="view-section">
+                    <div class="search-bar-modern">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search Data Warehouse by job title, company, or keyword...">
+                        <div style="display: flex; gap: 12px; margin-right: 8px;">
+                            <button class="btn btn-secondary" id="filterRemoteBtn"><i class="fa-solid fa-filter"></i> Remote</button>
+                            <button class="btn btn-primary" onclick="app.searchJobs()">Search</button>
+                        </div>
+                    </div>
+
+                    <div class="data-grid" id="search-results">
+                        <!-- Filled by JS -->
+                        <div class="empty-state" style="grid-column: 1/-1;">
+                            <i class="fa-solid fa-database"></i>
+                            <h3>Querying Data Warehouse...</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECOMMENDATIONS VIEW -->
+                <div id="recommendations-view" class="view-section">
+                    <div class="rec-banner">
+                        <div>
+                            <h2>AI-Powered Matches</h2>
+                            <p>We analyzed your profile against our Machine Learning `job_features` table.</p>
+                        </div>
+                        <i class="fa-solid fa-microchip rec-icon"></i>
+                    </div>
+
+                    <div class="data-grid" id="recs-grid">
+                        <div class="empty-state" style="grid-column: 1/-1;">
+                            <i class="fa-solid fa-bolt"></i>
+                            <h3>Generating Models...</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAVORITES VIEW -->
+                <div id="favorites-view" class="view-section">
+                    <div class="data-grid" id="favorites-grid"></div>
+                </div>
+
+                <!-- APPLIED VIEW -->
+                <div id="applied-view" class="view-section">
+                    <div class="data-grid" id="applied-grid"></div>
+                </div>
+
+                <!-- PROFILE VIEW -->
+                <div id="profile-view" class="view-section">
+                    <div class="profile-grid">
+                        
+                        <div class="panel">
+                            <h3>Upload Resume (Silver Layer)</h3>
+                            <input type="file" id="resumeInput" style="display: none;" accept=".pdf,.doc,.docx" onchange="app.handleFileUpload(event)">
+                            <div class="upload-zone" id="upload-zone" onclick="document.getElementById('resumeInput').click()">
+                                <i class="fa-solid fa-cloud-arrow-up" id="upload-icon"></i>
+                                <h4 id="upload-text">Drag & Drop your CV here or Click to Browse</h4>
+                                <p style="color: var(--text-tertiary); margin-top: 8px;">Supports PDF, DOCX (Max 5MB)</p>
+                            </div>
+                            <div id="upload-success" style="display:none; margin-top: 15px; padding: 10px; background: var(--primary-light); color: var(--primary-dark); border-radius: 8px; font-weight: 600; text-align: center;">
+                                <i class="fa-solid fa-check-circle"></i> Resume uploaded successfully!
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <h3>Professional Identity</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" class="form-control" id="profile-name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Current Role</label>
+                                    <input type="text" class="form-control" id="profile-role" placeholder="e.g. Data Engineer">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Core Competencies (Used for ML Recommendations)</label>
+                                <input type="text" class="form-control" id="profile-skills" placeholder="e.g. Python, SQL, AWS">
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border);">
+                                <button class="btn btn-danger" onclick="app.deleteAccount()"><i class="fa-regular fa-trash-can"></i> Delete Account</button>
+                                <button class="btn btn-primary" onclick="app.saveProfile()"><i class="fa-solid fa-check"></i> Save Changes</button>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ================= MODAL ================= -->
+    <div class="modal-backdrop" id="job-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <button class="modal-close" onclick="app.closeModal()"><i class="fa-solid fa-xmark"></i></button>
+                <div class="modal-title" id="modal-title">Senior Data Engineer</div>
+                <div class="modal-subtitle"><i class="fa-solid fa-building"></i> <span id="modal-company">Company Name</span></div>
+            </div>
+            
+            <div class="modal-body">
+                <div class="detail-tags">
+                    <div class="detail-tag"><i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> <span id="modal-location">Location</span></div>
+                    <div class="detail-tag"><i class="fa-solid fa-sack-dollar" style="color: var(--primary);"></i> <span id="modal-salary">Salary</span></div>
+                </div>
+
+                <div class="modal-desc">
+                    <strong>Data Lineage:</strong> This record was ingested from an External Source API (Bronze), cleaned into Parquet format on MinIO (Silver), and loaded via SQLAlchemy into PostgreSQL (Gold) for real-time analytics.
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="modal-save-btn" onclick="app.toggleFavorite()"><i class="fa-regular fa-bookmark"></i> Save for later</button>
+                    <button class="btn btn-primary" onclick="app.applyJob()">Submit Application <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= SETTINGS MODAL ================= -->
+    <div class="modal-backdrop" id="settings-modal">
+        <div class="modal-card" style="max-width: 500px;">
+            <div class="modal-header">
+                <button class="modal-close" onclick="app.closeSettings()"><i class="fa-solid fa-xmark"></i></button>
+                <div class="modal-title">Platform Settings</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Data Refresh Rate</label>
+                    <select class="form-control">
+                        <option>Real-time (DirectQuery)</option>
+                        <option>Every 1 hour</option>
+                        <option>Daily</option>
+                    </select>
+                </div>
+                <div class="modal-footer" style="margin-top: 30px;">
+                    <button class="btn btn-primary" onclick="app.closeSettings()">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

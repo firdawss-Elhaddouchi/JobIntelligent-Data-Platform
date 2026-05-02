@@ -20,7 +20,7 @@ docker exec -it postgres_db psql -U airflow -d airflow
 Once inside PostgreSQL:
 
 ```sql
-\dt
+\dt gold.*
 ```
 
 👉 You should see:
@@ -41,7 +41,7 @@ job_features
 Example:
 
 ```sql
-SELECT * FROM jobs_fact LIMIT 10;
+SELECT * FROM gold.jobs_fact LIMIT 10;
 ```
 
 ---
@@ -49,7 +49,7 @@ SELECT * FROM jobs_fact LIMIT 10;
 # 🧠 ✅ 4. Check columns
 
 ```sql
-\d jobs_fact
+\d gold.jobs_fact
 ```
 
 ---
@@ -57,7 +57,7 @@ SELECT * FROM jobs_fact LIMIT 10;
 # 🧠 ✅ 5. Count rows (VERY IMPORTANT)
 
 ```sql
-SELECT COUNT(*) FROM jobs_fact;
+SELECT COUNT(*) FROM gold.jobs_fact;
 ```
 
 ---

@@ -10,8 +10,11 @@ Extended Star Schema with multiple dimensions:
 """
 
 from sqlalchemy import create_engine, text
+import os
+from dotenv import load_dotenv
 
-POSTGRES_URI = "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow"
+import os
+POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow")
 engine = create_engine(POSTGRES_URI)
 
 
@@ -116,11 +119,12 @@ def create_gold_schema():
         # =========================
         conn.execute(text("DROP TABLE IF EXISTS gold.jobs_per_location"))
         conn.execute(text("""
-        CREATE TABLE gold.jobs_per_country (
+        CREATE TABLE gold.jobs_per_location(
             country TEXT,
             job_count INT
         );
         """))
+        # jobs_per_country
 
         # =========================
         # AGG: JOBS PER COMPANY
@@ -167,6 +171,66 @@ def create_gold_schema():
             aws INT,
             remote INT,
             salary_avg FLOAT
+        );
+        """))
+
+        # =========================
+        # STAGING TABLE: JOBS (FOR LOADING)
+        # =========================
+        conn.execute(text("DROP TABLE IF EXISTS gold.jobs_staging CASCADE"))
+        conn.execute(text("""
+        CREATE TABLE gold.jobs_staging (
+            job_id TEXT,
+            job_title TEXT,
+            company_name TEXT,
+            location TEXT,
+            posted_date DATE,  
+            expires_date DATE,  
+            contract_type TEXT,
+            salary_min FLOAT,
+            salary_max FLOAT,
+            salary_avg FLOAT,
+            currency TEXT,
+            is_remote INT,
+            job_url TEXT,
+            source TEXT
+        );
+        """))
+
+        # =========================
+        # APP PLATFORM TABLES (OLTP)
+        # =========================
+        conn.execute(text("DROP SCHEMA IF EXISTS app CASCADE;"))
+        conn.execute(text("CREATE SCHEMA IF NOT EXISTS app"))
+
+        conn.execute(text("DROP TABLE IF EXISTS app.users CASCADE"))
+        conn.execute(text("""
+        CREATE TABLE app.users (
+            user_id SERIAL PRIMARY KEY,
+            full_name TEXT,
+            email TEXT UNIQUE,
+            password_hash TEXT,
+            skills TEXT
+        );
+        """))
+
+        conn.execute(text("DROP TABLE IF EXISTS app.user_favorites CASCADE"))
+        conn.execute(text("""
+        CREATE TABLE app.user_favorites (
+            user_id INT REFERENCES app.users(user_id) ON DELETE CASCADE,
+            job_id TEXT REFERENCES gold.fact_jobs(job_id) ON DELETE CASCADE,
+            saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, job_id)
+        );
+        """))
+
+        conn.execute(text("DROP TABLE IF EXISTS app.user_applications CASCADE"))
+        conn.execute(text("""
+        CREATE TABLE app.user_applications (
+            user_id INT REFERENCES app.users(user_id) ON DELETE CASCADE,
+            job_id TEXT REFERENCES gold.fact_jobs(job_id) ON DELETE CASCADE,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, job_id)
         );
         """))
 

@@ -12,7 +12,6 @@ Fact + Aggregations + ML features
 
 import pandas as pd
 from sqlalchemy import text
-
 from scripts.processing.silver.standardizer import normalize_location_pro
 
 
@@ -37,8 +36,11 @@ def ensure_columns(df, cols):
     return df
 
 def clean_datetime(col):
-    col = pd.to_datetime(col, errors="coerce", utc=True)
-    return col.dt.tz_convert(None)
+    # col = pd.to_datetime(col, errors="coerce", utc=True)
+    # return col.dt.tz_convert(None)
+
+    # Convert to datetime, coerce errors to NaT, and strip timezone for Postgres compatibility
+    return pd.to_datetime(col, errors="coerce", utc=True).dt.tz_convert(None)
 
 
 def safe_replace(df, table_name, engine, schema="gold"):
@@ -46,7 +48,8 @@ def safe_replace(df, table_name, engine, schema="gold"):
         print(f"[SKIP] {table_name} empty")
         return
 
-    df.to_sql(table_name, engine, schema=schema, if_exists="replace", index=False)
+    with engine.begin() as conn:
+        df.to_sql(table_name, conn, schema=schema, if_exists="replace", index=False)
     print(f"[REPLACE] {table_name} refreshed ({len(df)} rows)")
 
 
@@ -61,8 +64,6 @@ def safe_append(df, table_name, engine, schema="gold", unique_cols=None):
     cols_to_drop = [c for c in df.columns if c.endswith('_id')]
     df_for_stg = df.drop(columns=cols_to_drop)
     
-    df_for_stg.to_sql(staging_table, engine, if_exists="replace", index=False)
-
     # 2. Get list of columns (excluding the auto-increment ID)
     columns_list = ", ".join(df_for_stg.columns)
     unique_condition = " AND ".join([f"target.{col} = staging.{col}" for col in unique_cols])
@@ -71,7 +72,7 @@ def safe_append(df, table_name, engine, schema="gold", unique_cols=None):
     upsert_query = f"""
     INSERT INTO {schema}.{table_name} ({columns_list})
     SELECT staging.{columns_list.replace(', ', ', staging.')} 
-    FROM {staging_table} AS staging
+    FROM {schema}.{staging_table} AS staging
     WHERE NOT EXISTS (
         SELECT 1 FROM {schema}.{table_name} AS target
         WHERE {unique_condition}
@@ -79,8 +80,9 @@ def safe_append(df, table_name, engine, schema="gold", unique_cols=None):
     """
 
     with engine.begin() as conn:
+        df_for_stg.to_sql(staging_table, conn, schema=schema, if_exists="replace", index=False)
         conn.execute(text(upsert_query))
-        conn.execute(text(f"DROP TABLE {staging_table}"))
+        conn.execute(text(f"DROP TABLE {schema}.{staging_table}"))
         print(f"[LOAD] {table_name} processed via SQL Engine (Auto-ID maintained).")
 
 # ============================================================

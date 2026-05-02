@@ -51,12 +51,12 @@ from scripts.processing.gold.gold_transformations import (
 logger = setup_logger("gold_pipeline")
 load_dotenv()
 
-MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://localhost:9000")
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
 ACCESS_KEY = os.getenv("MINIO_ROOT_USER", "minioadmin")
 SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
 
 SILVER_BUCKET = "silver"
-POSTGRES_URI = "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow"
+POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow")
 
 
 
@@ -67,6 +67,7 @@ POSTGRES_URI = "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow"
 def get_today_silver_key(s3, source_name):
     """
     Retrieve today's Silver layer file key for a given source.
+    If today's data does not exist, fallback to the most recent available data.
 
     Args:
         s3 (boto3.client): MinIO S3 client
@@ -76,19 +77,36 @@ def get_today_silver_key(s3, source_name):
         str | None: S3 key if exists, otherwise None
     """
     today_str = datetime.today().strftime("%Y-%m-%d")
-    key = f"{source_name}/cleaning_date={today_str}/data.parquet"
+    today_key = f"{source_name}/cleaning_date={today_str}/data.parquet"
 
     try:
-        response = s3.list_objects_v2(
+        # First try to find today's data specifically
+        response_today = s3.list_objects_v2(
             Bucket=SILVER_BUCKET,
-            Prefix=key
+            Prefix=today_key
         )
 
-        if 'Contents' in response and len(response['Contents']) > 0:
-            logger.info(f"Found Silver data for {source_name}: {key}")
-            return key
+        if 'Contents' in response_today and len(response_today['Contents']) > 0:
+            logger.info(f"Found today's Silver data for {source_name}: {today_key}")
+            return today_key
 
-        logger.warning(f"No Silver data found for {source_name} today")
+        logger.warning(f"No Silver data found for {source_name} today. Looking for the most recent data...")
+
+        # Fallback to the most recent data if today is missing
+        response_all = s3.list_objects_v2(
+            Bucket=SILVER_BUCKET,
+            Prefix=f"{source_name}/cleaning_date="
+        )
+
+        if 'Contents' in response_all and len(response_all['Contents']) > 0:
+            # Sort by key to get the most recent date folder
+            keys = [obj['Key'] for obj in response_all['Contents'] if obj['Key'].endswith('.parquet')]
+            if keys:
+                latest_key = sorted(keys)[-1]
+                logger.info(f"Found fallback latest Silver data for {source_name}: {latest_key}")
+                return latest_key
+
+        logger.warning(f"No Silver data found at all for {source_name}")
         return None
 
     except Exception as e:
@@ -197,30 +215,43 @@ def run_gold_pipeline():
     # -------------------------
     logger.info("Preparing staging table...")
 
+    # -------------------------
+    # 5. STAGING PREPARATION
+    # -------------------------
+    logger.info("*********************************************************************************** => : Preparing Staging table for Fact processing...")
     df = compute_salary_avg(df_all)
-    print("#########################")
-    # print(df_all['contract_type'].unique())
-    print(df['contract_type'].unique())
-    print(dim_contract['contract_type'].unique())
-    print("#########################")
+    
+    # Convert to datetime and FORCE the conversion to a DatetimeIndex
+    # Use utc=True to handle the mixed timezones from your sources
+    df["posted_date"] = pd.to_datetime(df["posted_date"], errors="coerce", utc=True)
+    df["expires_date"] = pd.to_datetime(df["expires_date"], errors="coerce", utc=True)
+
+    # Remove timezone info (to match your Postgres DATE type) and convert to date objects
+    # We use .dt only after ensuring the series is a datetime type
+    if pd.api.types.is_datetime64_any_dtype(df["posted_date"]):
+        df["posted_date"] = df["posted_date"].dt.tz_localize(None).dt.date
+        
+    if pd.api.types.is_datetime64_any_dtype(df["expires_date"]):
+        df["expires_date"] = df["expires_date"].dt.tz_localize(None).dt.date
+
+    # STEP 3: Create the staging DataFrame
     df_staging = df[[
-        "job_id", "job_title", "company_name","job_description","tags", "location",
-        "posted_date","expires_date", "contract_type_std",
-        "salary_min", "salary_max", "salary_avg","is_remote",
+        "job_id", "job_title", "company_name", "location",
+        "posted_date", "expires_date", "contract_type_std",
+        "salary_min", "salary_max", "salary_avg", "is_remote",
         "currency", "job_url", "source"
     ]].copy()
-    print("#########################")
 
-    df_staging.to_sql(
-        "jobs_staging",
-        engine,
-        schema="gold",
-        if_exists="append",
-        index=False
-    )
+    # Ensure NaT and NaN are translated to None for PostgreSQL NULLs[cite: 3, 5]
+    df_staging = df_staging.where(pd.notnull(df_staging), None)
 
+    # Clear old staging data to prevent join duplication in the Fact table
+    with engine.begin() as conn:
+        conn.execute(text("TRUNCATE TABLE gold.jobs_staging;"))
 
-    logger.info(f"Inserted {len(df_staging)} rows into staging")
+    df_staging.to_sql("jobs_staging", engine, schema="gold", if_exists="append", index=False)
+
+    logger.info(f"Staging table populated with {len(df_staging)} rows.")
 
     # -------------------------
     # FACT TABLE
@@ -256,11 +287,12 @@ def run_gold_pipeline():
     LEFT JOIN gold.dim_company c ON s.company_name = c.company_name
     LEFT JOIN gold.dim_location l ON s.location = l.location
     LEFT JOIN gold.dim_date d1 ON s.posted_date::DATE = d1.date::DATE
-    LEFT JOIN gold.dim_date d2 ON TO_TIMESTAMP(s.expires_date::DOUBLE PRECISION)::DATE = d2.date::DATE
+    LEFT JOIN gold.dim_date d2 ON s.expires_date::DATE = d2.date::DATE
     LEFT JOIN gold.dim_contract_type ct ON s.contract_type_std = ct.contract_type
     WHERE s.job_id IS NOT NULL
     ON CONFLICT (job_id) DO NOTHING;
     """
+    # LEFT JOIN gold.dim_date d2 ON TO_TIMESTAMP(s.expires_date::DOUBLE PRECISION)::DATE = d2.date::DATE
 
     with engine.begin() as conn:
         conn.execute(text(sql))
