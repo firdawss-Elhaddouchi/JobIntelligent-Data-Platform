@@ -260,7 +260,7 @@ def run_gold_pipeline():
     # -------------------------
     logger.info("Building fact table...")
     sql = """
-        INSERT INTO gold.jobs_fact (
+        INSERT INTO gold.fact_jobs (
             job_id, job_title,
             company_id, location_id, posted_date_id, expires_date_id, contract_type_id,
             salary_min, salary_max, salary_avg,

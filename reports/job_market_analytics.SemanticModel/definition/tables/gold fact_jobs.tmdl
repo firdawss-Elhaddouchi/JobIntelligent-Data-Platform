@@ -1,4 +1,4 @@
-table 'gold jobs_fact'
+table 'gold fact_jobs'
 	lineageTag: 85312321-27c1-4b88-b67a-bbb0808b4e1e
 
 	column job_id
@@ -102,7 +102,7 @@ table 'gold jobs_fact'
 
 		annotation SummarizationSetBy = User
 
-		annotation __PBI_SemanticLinks = [{"LinkTarget":{"TableName":"gold jobs_fact","TableItemName":"salary_avg (bins)","ObjectType":4},"LinkType":"UsedInGroup"}]
+		annotation __PBI_SemanticLinks = [{"LinkTarget":{"TableName":"gold fact_jobs","TableItemName":"salary_avg (bins)","ObjectType":4},"LinkType":"UsedInGroup"}]
 
 	column currency
 		dataType: string
@@ -143,12 +143,12 @@ table 'gold jobs_fact'
 
 	column 'salary_avg (bins)' =
 			IF(
-				ISBLANK('gold jobs_fact'[salary_avg]),
+				ISBLANK('gold fact_jobs'[salary_avg]),
 				BLANK(),
 				IF(
-					'gold jobs_fact'[salary_avg] >= 0,
-					ROUNDDOWN('gold jobs_fact'[salary_avg] / 1000, 0) * 1000,
-					ROUNDUP('gold jobs_fact'[salary_avg] / 1000, 0) * 1000
+					'gold fact_jobs'[salary_avg] >= 0,
+					ROUNDDOWN('gold fact_jobs'[salary_avg] / 1000, 0) * 1000,
+					ROUNDUP('gold fact_jobs'[salary_avg] / 1000, 0) * 1000
 				)
 			)
 		formatString: 0.00
@@ -163,7 +163,7 @@ table 'gold jobs_fact'
 				      "Column": {
 				        "Expression": {
 				          "SourceRef": {
-				            "Entity": "gold jobs_fact"
+				            "Entity": "gold fact_jobs"
 				          }
 				        },
 				        "Property": "salary_avg"
@@ -178,42 +178,24 @@ table 'gold jobs_fact'
 				  }
 				}
 
-		annotation GroupingDesignState = {"Version":0,"Sources":[{"Name":"g","Entity":"gold jobs_fact"}],"GroupedColumns":[{"Column":{"Expression":{"SourceRef":{"Source":"g"}},"Property":"salary_avg"}}],"BinItem":{"Expression":{"Floor":{"Expression":{"Column":{"Expression":{"SourceRef":{"Source":"g"}},"Property":"salary_avg"}},"Size":1000.0}}}}
+		annotation GroupingDesignState = {"Version":0,"Sources":[{"Name":"g","Entity":"gold fact_jobs"}],"GroupedColumns":[{"Column":{"Expression":{"SourceRef":{"Source":"g"}},"Property":"salary_avg"}}],"BinItem":{"Expression":{"Floor":{"Expression":{"Column":{"Expression":{"SourceRef":{"Source":"g"}},"Property":"salary_avg"}},"Size":1000.0}}}}
 
 		annotation SummarizationSetBy = Automatic
 
-	column 'Remote Label' = IF('gold jobs_fact'[is_remote]=1, "Remote", "On-site")
+	column 'Remote Label' = IF('gold fact_jobs'[is_remote]=1, "Remote", "On-site")
 		lineageTag: a8564b8d-5070-4ee8-b1e8-82f9c6a66057
 		summarizeBy: none
 
 		annotation SummarizationSetBy = Automatic
 
-	column job_description
-		dataType: string
-		sourceProviderType: nvarchar(max)
-		lineageTag: 75944afb-e6a5-45d7-ae94-efc8b37da461
-		summarizeBy: none
-		sourceColumn: job_description
-
-		annotation SummarizationSetBy = Automatic
-
-	column tags
-		dataType: string
-		sourceProviderType: nvarchar(max)
-		lineageTag: 571201e5-66c4-4ad3-b71a-904bd0fa95e5
-		summarizeBy: none
-		sourceColumn: tags
-
-		annotation SummarizationSetBy = Automatic
-
-	partition 'gold jobs_fact' = m
+	partition 'gold fact_jobs' = m
 		mode: directQuery
 		source =
 				let
 				    Source = PostgreSQL.Database("localhost:5432", "airflow"),
-				    gold_jobs_fact = Source{[Schema="gold",Item="jobs_fact"]}[Data]
+				    gold_fact_jobs = Source{[Schema="gold",Item="fact_jobs"]}[Data]
 				in
-				    gold_jobs_fact
+				    gold_fact_jobs
 
 	annotation PBI_NavigationStepName = Navigation
 

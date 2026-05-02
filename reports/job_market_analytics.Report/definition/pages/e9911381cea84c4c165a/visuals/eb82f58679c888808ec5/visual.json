@@ -20,7 +20,7 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "gold jobs_fact"
+                      "Entity": "gold fact_jobs"
                     }
                   },
                   "Property": "Remote Label"
@@ -64,7 +64,7 @@
                 "From": [
                   {
                     "Name": "g",
-                    "Entity": "gold jobs_fact",
+                    "Entity": "gold fact_jobs",
                     "Type": 0
                   }
                 ],

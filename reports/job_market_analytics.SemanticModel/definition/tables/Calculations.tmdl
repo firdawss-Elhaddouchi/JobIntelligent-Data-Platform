@@ -1,12 +1,12 @@
 table Calculations
 	lineageTag: 3e44464f-aefe-4167-9650-9c9abcea5d5a
 
-	measure 'Min Salary' = MIN('gold jobs_fact'[salary_min])
+	measure 'Min Salary' = MIN('gold fact_jobs'[salary_min])
 		lineageTag: 2dd3c3ba-d0c0-4d75-9a2f-6412ccdacda2
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
-	measure 'Max Salary' = MAX('gold jobs_fact'[salary_max])
+	measure 'Max Salary' = MAX('gold fact_jobs'[salary_max])
 		lineageTag: 42265933-2cae-4958-b855-3d03fcd5b373
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
@@ -17,7 +17,7 @@ table Calculations
 			    TOPN(
 			        1,
 			        VALUES('gold dim_contract_type'[contract_type]),
-			        CALCULATE(COUNT('gold jobs_fact'[job_id])),
+			        CALCULATE(COUNT('gold fact_jobs'[job_id])),
 			        DESC
 			    )
 			RETURN
@@ -27,8 +27,8 @@ table Calculations
 	measure 'Avg Salary' = ```
 			
 			CALCULATE(
-			    AVERAGE('gold jobs_fact'[salary_avg]), 
-			    USERELATIONSHIP('gold jobs_fact'[posted_date_id], 'gold dim_date'[date_id])
+			    AVERAGE('gold fact_jobs'[salary_avg]), 
+			    USERELATIONSHIP('gold fact_jobs'[posted_date_id], 'gold dim_date'[date_id])
 			)
 			```
 		lineageTag: d1c0fe61-6906-4834-86c2-bc363bd7e288
@@ -37,12 +37,12 @@ table Calculations
 
 	measure 'Main Currency' =
 			
-			SELECTEDVALUE('gold jobs_fact'[currency])
+			SELECTEDVALUE('gold fact_jobs'[currency])
 		lineageTag: 751668aa-dc8e-40b6-817e-94e202a4363e
 
 	measure 'Total Jobs' =
 			
-			VAR Result = COUNTROWS('gold jobs_fact')
+			VAR Result = COUNTROWS('gold fact_jobs')
 			RETURN
 			    IF(ISBLANK(Result), 0, Result)
 		formatString: 0
@@ -50,7 +50,7 @@ table Calculations
 
 	measure 'Remote Work %' =
 			
-			VAR RemoteJobs = SUM('gold jobs_fact'[is_remote])
+			VAR RemoteJobs = SUM('gold fact_jobs'[is_remote])
 			VAR Total = [Total Jobs]
 			VAR Percentage = DIVIDE(RemoteJobs, Total, 0)
 			RETURN
@@ -61,7 +61,7 @@ table Calculations
 
 	measure 'Active Companies' =
 			
-			VAR UniqueCompanies = DISTINCTCOUNT('gold jobs_fact'[company_id])
+			VAR UniqueCompanies = DISTINCTCOUNT('gold fact_jobs'[company_id])
 			RETURN
 			    IF(UniqueCompanies > 0, UniqueCompanies, 0)
 		formatString: 0
@@ -78,7 +78,7 @@ table Calculations
 	measure 'Full Time Jobs' =
 			
 			CALCULATE(
-			    COUNT('gold jobs_fact'[job_id]),
+			    COUNT('gold fact_jobs'[job_id]),
 			    'gold dim_contract_type'[contract_type_id] = 3
 			)
 		formatString: 0
@@ -87,7 +87,7 @@ table Calculations
 	measure 'Part Time Jobs' =
 			
 			CALCULATE(
-			    COUNT('gold jobs_fact'[job_id]),
+			    COUNT('gold fact_jobs'[job_id]),
 			    'gold dim_contract_type'[contract_type_id] = 1
 			)
 		formatString: 0
@@ -96,14 +96,14 @@ table Calculations
 	measure 'Active Jobs' =
 			
 			CALCULATE(
-			    COUNT('gold jobs_fact'[job_id]),
+			    COUNT('gold fact_jobs'[job_id]),
 			    FILTER(
-			        'gold jobs_fact',
+			        'gold fact_jobs',
 			        VAR ExpDate =
 			            CALCULATE(
 			                MAX('gold dim_date'[date]),
 			                USERELATIONSHIP(
-			                    'gold jobs_fact'[expires_date_id],
+			                    'gold fact_jobs'[expires_date_id],
 			                    'gold dim_date'[date_id]
 			                )
 			            )
@@ -117,14 +117,14 @@ table Calculations
 	measure 'Expired Jobs' =
 			
 			CALCULATE(
-			    COUNT('gold jobs_fact'[job_id]),
+			    COUNT('gold fact_jobs'[job_id]),
 			    FILTER(
-			        'gold jobs_fact',
+			        'gold fact_jobs',
 			        VAR ExpDate =
 			            CALCULATE(
 			                MAX('gold dim_date'[date]),
 			                USERELATIONSHIP(
-			                    'gold jobs_fact'[expires_date_id],
+			                    'gold fact_jobs'[expires_date_id],
 			                    'gold dim_date'[date_id]
 			                )
 			            )
@@ -146,7 +146,7 @@ table Calculations
 			
 			CALCULATE(
 			    [Total Jobs],
-			    NOT ISBLANK('gold jobs_fact'[expires_date_id])
+			    NOT ISBLANK('gold fact_jobs'[expires_date_id])
 			)
 		formatString: 0
 		lineageTag: e238ea85-e952-4b08-9fb5-6f2ed5a5eddd
@@ -156,7 +156,7 @@ table Calculations
 			CALCULATE(
 			    [Total Jobs],
 			    'gold dim_date'[date] = TODAY(),
-			    USERELATIONSHIP('gold jobs_fact'[posted_date_id], 'gold dim_date'[date_id])
+			    USERELATIONSHIP('gold fact_jobs'[posted_date_id], 'gold dim_date'[date_id])
 			)
 		formatString: 0
 		lineageTag: 287f4312-c37e-4691-b719-855ad4a5d6cf

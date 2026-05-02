@@ -215,7 +215,7 @@
                       },
                       {
                         "Name": "g1",
-                        "Entity": "gold jobs_fact",
+                        "Entity": "gold fact_jobs",
                         "Type": 0
                       }
                     ],

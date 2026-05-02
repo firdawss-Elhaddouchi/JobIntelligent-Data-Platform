@@ -8,7 +8,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 1
 
-annotation PBI_QueryOrder = ["gold dim_company","gold dim_contract_type","gold dim_date","gold dim_location","gold jobs_fact"]
+annotation PBI_QueryOrder = ["gold dim_company","gold dim_contract_type","gold dim_date","gold dim_location","gold fact_jobs"]
 
 annotation PBI_ProTooling = ["DevMode"]
 
@@ -16,7 +16,7 @@ ref table 'gold dim_company'
 ref table 'gold dim_contract_type'
 ref table 'gold dim_date'
 ref table 'gold dim_location'
-ref table 'gold jobs_fact'
+ref table 'gold fact_jobs'
 ref table Calculations
 
 ref cultureInfo en-US
