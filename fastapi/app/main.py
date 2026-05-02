@@ -97,29 +97,74 @@ def get_job_listings(search: str = None, remote_only: bool = False, db: Session 
         SELECT 
             f.job_id, f.job_title, c.company_name, 
             l.location, l.city, l.country, d.date AS posted_date, 
-            f.salary_avg, f.is_remote
+            f.salary_avg, f.is_remote,
+            f.job_url, f.source, f.salary_min, f.salary_max, f.currency,
+            ct.contract_type
         FROM gold.fact_jobs f
         LEFT JOIN gold.dim_company c ON f.company_id = c.company_id
         LEFT JOIN gold.dim_location l ON f.location_id = l.location_id
         LEFT JOIN gold.dim_date d ON f.posted_date_id = d.date_id
+        LEFT JOIN gold.dim_contract_type ct ON f.contract_type_id = ct.contract_type_id
         WHERE 1=1
     """
     
     if remote_only:
         base_query += " AND f.is_remote = 1"
-    if search:
-        base_query += f" AND (f.job_title ILIKE '%{search}%' OR c.company_name ILIKE '%{search}%')"
         
-    base_query += " LIMIT 50"
+    # If using NLP search, we fetch a larger pool to score in Python
+    if search:
+        base_query += " LIMIT 2000"
+    else:
+        base_query += " LIMIT 50"
     
     result = db.execute(text(base_query)).fetchall()
+    
     jobs = []
     for row in result:
         jobs.append({
             "job_id": row[0], "job_title": row[1], "company_name": row[2],
             "location": row[3], "city": row[4], "country": row[5],
-            "posted_date": str(row[6]) if row[6] else None, "salary_avg": row[7], "is_remote": row[8]
+            "posted_date": str(row[6]) if row[6] else None, 
+            "salary_avg": row[7], "is_remote": row[8],
+            "job_url": row[9], "source": row[10],
+            "salary_min": row[11], "salary_max": row[12],
+            "currency": row[13], "contract_type": row[14]
         })
+        
+    # --- NLP FUZZY MATCHING (TYPO TOLERANCE) ---
+    if search:
+        import difflib
+        search_lower = search.lower()
+        scored_jobs = []
+        
+        for j in jobs:
+            title = (j["job_title"] or "").lower()
+            company = (j["company_name"] or "").lower()
+            
+            # 1. Exact substring match (Highest score)
+            if search_lower in title or search_lower in company:
+                scored_jobs.append((j, 1.0))
+                continue
+                
+            # 2. NLP Typo Detection (Gestalt Pattern Matching)
+            # Checks if the whole word is very similar (e.g. 'Enginer' vs 'Engineer')
+            title_score = difflib.SequenceMatcher(None, search_lower, title).ratio()
+            
+            # Check individual words for typos
+            words = title.split() + company.split()
+            word_scores = [difflib.SequenceMatcher(None, search_lower, w).ratio() for w in words]
+            max_word_score = max(word_scores) if word_scores else 0
+            
+            best_score = max(title_score, max_word_score)
+            
+            # Threshold: 60% similarity means it's probably a typo of the target word
+            if best_score >= 0.6:
+                scored_jobs.append((j, best_score))
+                
+        # Sort jobs by NLP score descending (most relevant/similar first)
+        scored_jobs.sort(key=lambda x: x[1], reverse=True)
+        jobs = [item[0] for item in scored_jobs][:50]
+        
     return {"jobs": jobs}
 
 @app.get("/api/recommendations")
@@ -144,9 +189,17 @@ def get_recommendations(user_id: int, db: Session = Depends(get_db)):
     where_clause = " OR ".join(conditions)
     
     query = text(f"""
-        SELECT j.job_id, f.job_title, f.salary_avg, j.python, j.sql, j.aws
+        SELECT 
+            j.job_id, f.job_title, f.salary_avg, j.python, j.sql, j.aws,
+            c.company_name, l.location, l.city, l.country, d.date AS posted_date,
+            f.is_remote, f.job_url, f.source, f.salary_min, f.salary_max, f.currency,
+            ct.contract_type
         FROM gold.job_features j
         JOIN gold.fact_jobs f ON j.job_id = f.job_id
+        LEFT JOIN gold.dim_company c ON f.company_id = c.company_id
+        LEFT JOIN gold.dim_location l ON f.location_id = l.location_id
+        LEFT JOIN gold.dim_date d ON f.posted_date_id = d.date_id
+        LEFT JOIN gold.dim_contract_type ct ON f.contract_type_id = ct.contract_type_id
         WHERE {where_clause}
         LIMIT 5
     """)
@@ -156,7 +209,11 @@ def get_recommendations(user_id: int, db: Session = Depends(get_db)):
     for row in result:
         recs.append({
             "job_id": row[0], "job_title": row[1], "salary_avg": row[2],
-            "skills": [skill for skill, val in zip(['Python', 'SQL', 'AWS'], [row[3], row[4], row[5]]) if val == 1]
+            "skills": [skill for skill, val in zip(['Python', 'SQL', 'AWS'], [row[3], row[4], row[5]]) if val == 1],
+            "company_name": row[6], "location": row[7], "city": row[8], "country": row[9],
+            "posted_date": str(row[10]) if row[10] else None, "is_remote": row[11],
+            "job_url": row[12], "source": row[13], "salary_min": row[14], "salary_max": row[15],
+            "currency": row[16], "contract_type": row[17]
         })
     return {"recommendations": recs}
 

@@ -201,6 +201,11 @@ class App {
         if(this.currentUser) {
             this.fetchUserData();
         }
+        
+        // Pre-fetch jobs so the Search Jobs tab is instantly populated
+        if (this.allJobs.length === 0) {
+            this.searchJobs();
+        }
     }
 
     async fetchUserData() {
@@ -234,6 +239,22 @@ class App {
         }
         document.getElementById('dash-favs').innerText = this.favorites.size;
     }
+    
+    handleSearchInput(e) {
+        const clearBtn = document.getElementById('clearSearchBtn');
+        if(e.target.value.trim().length > 0) {
+            clearBtn.style.display = 'block';
+        } else {
+            clearBtn.style.display = 'none';
+        }
+    }
+    
+    clearSearch() {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.value = '';
+        document.getElementById('clearSearchBtn').style.display = 'none';
+        this.searchJobs(); // Re-trigger search to get all jobs
+    }
 
     async searchJobs() {
         const query = document.getElementById('searchInput').value;
@@ -252,15 +273,19 @@ class App {
             if (this.isRemoteOnly) url.searchParams.append('remote_only', true);
 
             const response = await fetch(url);
-            if (!response.ok) throw new Error();
+            if (!response.ok) throw new Error("HTTP " + response.status);
             const data = await response.json();
             
-            data.jobs.forEach(j => {
-                if(!this.allJobs.find(x => x.job_id === j.job_id)) this.allJobs.push(j);
-            });
-            
-            this.renderJobGrid(data.jobs, grid);
+            if (data && data.jobs) {
+                data.jobs.forEach(j => {
+                    if(!this.allJobs.find(x => x.job_id === j.job_id)) this.allJobs.push(j);
+                });
+                this.renderJobGrid(data.jobs, grid);
+            } else {
+                throw new Error("Invalid response format");
+            }
         } catch (error) {
+            console.error("Search failed, falling back to dummy data:", error);
             setTimeout(() => {
                 const dummy = [
                     {job_id: '1', job_title: "Senior Data Engineer", company_name: "Tech Pulse", location: "Remote", city: "", is_remote: 1, salary_avg: 145000},
@@ -287,6 +312,12 @@ class App {
             const response = await fetch(`${API_BASE_URL}/recommendations?user_id=${this.currentUser.user_id}`);
             if (!response.ok) throw new Error();
             const data = await response.json();
+            
+            // Add recommendations to allJobs so the modal can find them!
+            data.recommendations.forEach(j => {
+                if(!this.allJobs.find(x => x.job_id === j.job_id)) this.allJobs.push(j);
+            });
+            
             this.renderJobGrid(data.recommendations, grid, true);
         } catch (error) {
             console.error(error);
@@ -306,39 +337,50 @@ class App {
         }
 
         jobs.forEach(job => {
-            const card = document.createElement('div');
-            card.className = "data-card";
-            
-            const locationText = job.is_remote ? "Remote" : (job.location || job.city || "Unknown");
-            const salaryText = job.salary_avg ? `$${job.salary_avg.toLocaleString()}` : "Not Specified";
-            const remoteClass = job.is_remote ? "remote" : "";
-            const remoteText = job.is_remote ? "Remote" : "On-site";
-            
-            let tagsHtml = "";
-            if(isRec && job.skills) {
-                tagsHtml = job.skills.map(s => `<div class="data-tag" style="background: var(--primary-light); color: var(--primary-dark); border-color: var(--primary);"><i class="fa-solid fa-check-double"></i> ${s}</div>`).join("");
-            } else {
-                tagsHtml = `<div class="data-tag"><i class="fa-solid fa-location-dot"></i> ${locationText}</div>`;
-            }
-
-            card.innerHTML = `
-                <div class="card-head">
-                    <div class="company-logo"><i class="fa-solid fa-building"></i></div>
-                    <div class="job-type-badge ${remoteClass}">${remoteText}</div>
-                </div>
-                <h3>${job.job_title}</h3>
-                <div class="company-name">${job.company_name}</div>
+            try {
+                const card = document.createElement('div');
+                card.className = "data-card";
                 
-                <div class="tags-wrap">
-                    ${tagsHtml}
-                </div>
+                const locationText = job.is_remote ? "Remote" : (job.location || job.city || "Unknown");
+                const salaryText = job.salary_avg ? `$${Number(job.salary_avg).toLocaleString()}` : "Not Specified";
+                const remoteClass = job.is_remote ? "remote" : "";
+                const remoteText = job.is_remote ? "Remote" : "On-site";
+                const sourceName = (job.source && typeof job.source === 'string') ? job.source.toUpperCase() : "";
+                
+                let tagsHtml = "";
+                if(isRec && job.skills && Array.isArray(job.skills)) {
+                    tagsHtml = job.skills.map(s => `<div class="data-tag" style="background: var(--primary-light); color: var(--primary-dark); border-color: var(--primary);"><i class="fa-solid fa-check-double"></i> ${s}</div>`).join("");
+                } else {
+                    tagsHtml = `<div class="data-tag"><i class="fa-solid fa-location-dot"></i> ${locationText}</div>`;
+                }
+                
+                let sourceHtml = sourceName ? `<div class="job-type-badge" style="background: var(--bg-secondary); color: var(--text-secondary); margin-left: 8px;">${sourceName}</div>` : "";
+                let titleHtml = job.job_url ? `<a href="${job.job_url}" target="_blank" style="color: inherit; text-decoration: none;" onclick="event.stopPropagation();">${job.job_title || 'Unknown Job'}</a>` : (job.job_title || 'Unknown Job');
 
-                <div class="card-foot">
-                    <div class="salary-val">${salaryText}</div>
-                    <button class="icon-btn" onclick="app.openModal('${job.job_id}')" title="View Details"><i class="fa-solid fa-arrow-right"></i></button>
-                </div>
-            `;
-            container.appendChild(card);
+                card.innerHTML = `
+                    <div class="card-head">
+                        <div class="company-logo"><i class="fa-solid fa-building"></i></div>
+                        <div style="display: flex; flex: 1; justify-content: flex-end;">
+                            <div class="job-type-badge ${remoteClass}">${remoteText}</div>
+                            ${sourceHtml}
+                        </div>
+                    </div>
+                    <h3>${titleHtml}</h3>
+                    <div class="company-name">${job.company_name || 'Unknown Company'}</div>
+                    
+                    <div class="tags-wrap">
+                        ${tagsHtml}
+                    </div>
+
+                    <div class="card-foot">
+                        <div class="salary-val">${salaryText}</div>
+                        <button class="icon-btn" onclick="app.openModal('${job.job_id}')" title="View Details"><i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                `;
+                container.appendChild(card);
+            } catch (err) {
+                console.error("Error rendering job card", err, job);
+            }
         });
     }
 
@@ -377,7 +419,31 @@ class App {
         document.getElementById('modal-title').innerText = job.job_title;
         document.getElementById('modal-company').innerText = job.company_name;
         document.getElementById('modal-location').innerText = job.is_remote ? "Remote" : (job.location || job.city || "Unknown");
-        document.getElementById('modal-salary').innerText = job.salary_avg ? `$${job.salary_avg.toLocaleString()}` : "Not Specified";
+        
+        // Format Salary
+        let salaryText = "Not Specified";
+        if(job.salary_min && job.salary_max) {
+            salaryText = `${job.currency || '$'}${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}`;
+        } else if(job.salary_avg) {
+            salaryText = `${job.currency || '$'}${job.salary_avg.toLocaleString()}`;
+        }
+        document.getElementById('modal-salary').innerText = salaryText;
+        
+        // Fill new fields
+        document.getElementById('modal-contract').innerText = job.contract_type || "Unknown";
+        document.getElementById('modal-source').innerText = job.source ? job.source.toUpperCase() : "Platform";
+        document.getElementById('modal-date').innerText = job.posted_date || "Unknown Date";
+        
+        // Handle URL
+        const urlEl = document.getElementById('modal-url');
+        const sourceNameEl = document.getElementById('modal-url-source');
+        if(job.job_url) {
+            urlEl.href = job.job_url;
+            urlEl.style.display = "inline";
+            sourceNameEl.innerText = job.source ? job.source.charAt(0).toUpperCase() + job.source.slice(1) : "Source";
+        } else {
+            urlEl.style.display = "none";
+        }
         
         const saveBtn = document.getElementById('modal-save-btn');
         if(this.favorites.has(jobId)) {
@@ -439,7 +505,14 @@ class App {
             });
             
             this.applied.add(this.currentJob.job_id);
-            alert(`Application successfully submitted for ${this.currentJob.job_title} at ${this.currentJob.company_name}! Data synced to PostgreSQL.`);
+            
+            // Redirect to the real source job posting
+            if (this.currentJob.job_url) {
+                window.open(this.currentJob.job_url, '_blank');
+            } else {
+                alert(`Application successfully submitted for ${this.currentJob.job_title} at ${this.currentJob.company_name}!`);
+            }
+            
             this.closeModal();
             
             if(document.getElementById('applied-view').classList.contains('active')) this.renderApplied();
