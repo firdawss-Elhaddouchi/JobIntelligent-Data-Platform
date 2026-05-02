@@ -94,14 +94,13 @@ table 'gold fact_jobs'
 
 	column salary_avg
 		dataType: double
+		formatString: 0.00
 		sourceProviderType: double
 		lineageTag: c7094a12-9b9e-4351-9c4f-e95d5dbf551f
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: salary_avg
 
-		annotation SummarizationSetBy = Automatic
-
-		annotation PBI_FormatHint = {"isGeneralNumber":true}
+		annotation SummarizationSetBy = User
 
 	column currency
 		dataType: string

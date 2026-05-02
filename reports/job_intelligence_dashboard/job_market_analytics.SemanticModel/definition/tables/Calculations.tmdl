@@ -1,0 +1,51 @@
+table Calculations
+	lineageTag: 3e44464f-aefe-4167-9650-9c9abcea5d5a
+
+	measure 'Min Salary' = MIN('gold fact_jobs'[salary_min])
+		lineageTag: 2dd3c3ba-d0c0-4d75-9a2f-6412ccdacda2
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Max Salary' = MAX('gold fact_jobs'[salary_max])
+		lineageTag: 42265933-2cae-4958-b855-3d03fcd5b373
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Top Contract' =
+			
+			VAR T =
+			    TOPN(
+			        1,
+			        VALUES('gold dim_contract_type'[contract_type]),
+			        CALCULATE(COUNT('gold fact_jobs'[job_id])),
+			        DESC
+			    )
+			RETURN
+			    SELECTEDVALUE('gold dim_contract_type'[contract_type])
+		lineageTag: e1c0c1a9-fc1f-4bda-a72a-0e122106045f
+
+	measure 'Avg Salary' = AVERAGE('gold fact_jobs'[salary_avg])
+		lineageTag: d1c0fe61-6906-4834-86c2-bc363bd7e288
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Main Currency' =
+			
+			SELECTEDVALUE('gold fact_jobs'[currency])
+		lineageTag: 751668aa-dc8e-40b6-817e-94e202a4363e
+
+	column Column
+		formatString: 0
+		lineageTag: ebb6521e-8ce6-4c10-a30c-7f3a3c8aa571
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Column]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Calculations = calculated
+		mode: import
+		source = Row("Column", BLANK())
+
+	annotation PBI_Id = 188452668b2847ecaf2d895e2b1f060f
+

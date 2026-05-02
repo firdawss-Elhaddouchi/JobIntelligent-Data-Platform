@@ -169,7 +169,8 @@ def run_gold_pipeline():
     dim_date = build_dim_date(df_all)
     dim_company = build_dim_company(df_all)
     dim_contract = build_dim_contract_type(df_all)
-
+    print(df_all['contract_type_std'].unique())
+    print(dim_contract['contract_type'].unique())
     # -------------------------
     # AGGREGATIONS
     # -------------------------
@@ -198,11 +199,13 @@ def run_gold_pipeline():
 
     df = compute_salary_avg(df_all)
     print("#########################")
-    print(df['is_remote'])
+    # print(df_all['contract_type'].unique())
+    print(df['contract_type'].unique())
+    print(dim_contract['contract_type'].unique())
     print("#########################")
     df_staging = df[[
-        "job_id", "job_title", "company_name", "location",
-        "posted_date","expires_date", "contract_type",
+        "job_id", "job_title", "company_name","job_description","tags", "location",
+        "posted_date","expires_date", "contract_type_std",
         "salary_min", "salary_max", "salary_avg","is_remote",
         "currency", "job_url", "source"
     ]].copy()
@@ -227,6 +230,7 @@ def run_gold_pipeline():
     sql = """
     INSERT INTO gold.fact_jobs (
         job_id, job_title,
+        job_description,tags,
         company_id, location_id, posted_date_id,expires_date_id, contract_type_id,
         salary_min, salary_max, salary_avg,
         currency,is_remote, job_url, source
@@ -234,6 +238,8 @@ def run_gold_pipeline():
     SELECT
         s.job_id,
         s.job_title,
+        s.job_description,
+        s.tags,
         c.company_id,
         l.location_id,
         d1.date_id,
@@ -251,7 +257,7 @@ def run_gold_pipeline():
     LEFT JOIN gold.dim_location l ON s.location = l.location
     LEFT JOIN gold.dim_date d1 ON s.posted_date::DATE = d1.date::DATE
     LEFT JOIN gold.dim_date d2 ON TO_TIMESTAMP(s.expires_date::DOUBLE PRECISION)::DATE = d2.date::DATE
-    LEFT JOIN gold.dim_contract_type ct ON s.contract_type = ct.contract_type
+    LEFT JOIN gold.dim_contract_type ct ON s.contract_type_std = ct.contract_type
     WHERE s.job_id IS NOT NULL
     ON CONFLICT (job_id) DO NOTHING;
     """

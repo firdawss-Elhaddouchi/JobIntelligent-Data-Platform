@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "f4c08eab1b088410d153",
   "position": {
-    "x": 661.0625,
-    "y": 80.5,
+    "x": 660.632911392405,
+    "y": 79.620253164556956,
     "z": 37000,
-    "height": 85.25,
-    "width": 178.75,
-    "tabOrder": 33000
+    "height": 129.1139240506329,
+    "width": 225.9493670886076,
+    "tabOrder": 26000
   },
   "visual": {
     "visualType": "cardVisual",
@@ -17,23 +17,17 @@
           "projections": [
             {
               "field": {
-                "Aggregation": {
+                "Measure": {
                   "Expression": {
-                    "Column": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "FactSales"
-                        }
-                      },
-                      "Property": "Quantity"
+                    "SourceRef": {
+                      "Entity": "Calculations"
                     }
                   },
-                  "Function": 0
+                  "Property": "Avg Salary"
                 }
               },
-              "queryRef": "Sum(FactSales.Quantity)",
-              "nativeQueryRef": "Q U A N T I T Y",
-              "displayName": "Q U A N T I T Y"
+              "queryRef": "Calculations.Avg Salary",
+              "nativeQueryRef": "Avg Salary"
             }
           ]
         }
@@ -42,18 +36,13 @@
         "sort": [
           {
             "field": {
-              "Aggregation": {
+              "Measure": {
                 "Expression": {
-                  "Column": {
-                    "Expression": {
-                      "SourceRef": {
-                        "Entity": "FactSales"
-                      }
-                    },
-                    "Property": "Quantity"
+                  "SourceRef": {
+                    "Entity": "Calculations"
                   }
                 },
-                "Function": 0
+                "Property": "Avg Salary"
               }
             },
             "direction": "Descending"
@@ -109,7 +98,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "22D"
+                  "Value": "35D"
                 }
               }
             }
@@ -142,20 +131,6 @@
           "selector": {
             "metadata": "_Measures.Revenue"
           }
-        },
-        {
-          "properties": {
-            "labelDisplayUnits": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "Sum(FactSales.Quantity)"
-          }
         }
       ],
       "spacing": [
@@ -180,7 +155,14 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
+                  "Value": "16D"
+                }
+              }
+            },
+            "heading": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Heading3'"
                 }
               }
             }

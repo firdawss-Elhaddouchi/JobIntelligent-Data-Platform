@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.2.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.8.0/schema.json",
   "name": "eb9c61fb27016b7e7dc0",
   "position": {
-    "x": 213.63636363636363,
-    "y": 85.454545454545453,
+    "x": 213.03797468354429,
+    "y": 83.924050632911388,
     "z": 30000,
-    "height": 86.36363636363636,
-    "width": 236.36363636363635,
-    "tabOrder": 27000
+    "height": 124.81012658227847,
+    "width": 221.64556962025316,
+    "tabOrder": 23000
   },
   "visual": {
     "visualType": "cardVisual",
@@ -20,15 +20,14 @@
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "DimCustomer"
+                      "Entity": "Calculations"
                     }
                   },
-                  "Property": "Count Sales"
+                  "Property": "Min Salary"
                 }
               },
-              "queryRef": "DimCustomer.Count Sales",
-              "nativeQueryRef": "T R A N S A C T I O N S",
-              "displayName": "T R A N S A C T I O N S"
+              "queryRef": "Calculations.Min Salary",
+              "nativeQueryRef": "Min Salary"
             }
           ]
         }
@@ -40,10 +39,10 @@
               "Measure": {
                 "Expression": {
                   "SourceRef": {
-                    "Entity": "DimCustomer"
+                    "Entity": "Calculations"
                   }
                 },
-                "Property": "Count Sales"
+                "Property": "Min Salary"
               }
             },
             "direction": "Descending"
@@ -85,27 +84,6 @@
       "value": [
         {
           "properties": {
-            "labelDisplayUnits": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            },
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "25D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "DimCustomer.Count Sales"
-          }
-        },
-        {
-          "properties": {
             "fontColor": {
               "solid": {
                 "color": {
@@ -114,6 +92,13 @@
                       "Value": "'#F3737D'"
                     }
                   }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "40D"
                 }
               }
             }
@@ -129,7 +114,7 @@
             "verticalSpacing": {
               "expr": {
                 "Literal": {
-                  "Value": "3D"
+                  "Value": "0L"
                 }
               }
             }
@@ -145,7 +130,21 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
+                  "Value": "16D"
+                }
+              }
+            },
+            "heading": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Heading3'"
+                }
+              }
+            },
+            "matchValueAlignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
               }
             }

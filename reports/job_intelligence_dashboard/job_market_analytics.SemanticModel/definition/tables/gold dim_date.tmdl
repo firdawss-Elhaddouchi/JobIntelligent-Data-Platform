@@ -14,7 +14,7 @@ table 'gold dim_date'
 
 	column date
 		dataType: dateTime
-		formatString: Long Date
+		formatString: Short Date
 		sourceProviderType: date
 		lineageTag: e72a088e-f219-4a08-982d-d532a086d732
 		summarizeBy: none
