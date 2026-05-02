@@ -5,3 +5,5 @@ sqlalchemy
 boto3
 pandas
 requests
+python-multipart
+PyPDF2

@@ -153,6 +153,7 @@ body {
     transform: translateY(-50%);
     color: var(--text-tertiary);
     transition: var(--transition);
+    pointer-events: none;
 }
 
 .input-group input {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pulse | Intelligent Job Data Platform</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -19,11 +19,11 @@
             
             <div class="input-group">
                 <i class="fa-regular fa-envelope"></i>
-                <input type="email" placeholder="Work Email Address" value="amina@pulse.ai">
+                <input type="email" placeholder="Work Email Address" autocomplete="off">
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" placeholder="Password" value="••••••••">
+                <input type="password" placeholder="Password" autocomplete="new-password">
             </div>
             
             <button class="btn-auth" onclick="app.login()">Sign In to Dashboard</button>
@@ -44,15 +44,15 @@
             
             <div class="input-group">
                 <i class="fa-regular fa-user"></i>
-                <input type="text" placeholder="Full Name" id="reg-name">
+                <input type="text" placeholder="Full Name" id="reg-name" autocomplete="off">
             </div>
             <div class="input-group">
                 <i class="fa-regular fa-envelope"></i>
-                <input type="email" placeholder="Work Email Address" id="reg-email">
+                <input type="email" placeholder="Work Email Address" id="reg-email" autocomplete="off">
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" placeholder="Password" id="reg-pass">
+                <input type="password" placeholder="Password" id="reg-pass" autocomplete="new-password">
             </div>
             
             <button class="btn-auth" onclick="app.register()">Create Account</button>
@@ -234,21 +234,21 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
                                 <div class="form-group">
                                     <label>Full Name</label>
-                                    <input type="text" class="form-control" value="Amina">
+                                    <input type="text" class="form-control" id="profile-name">
                                 </div>
                                 <div class="form-group">
                                     <label>Current Role</label>
-                                    <input type="text" class="form-control" value="Data Engineer">
+                                    <input type="text" class="form-control" id="profile-role" placeholder="e.g. Data Engineer">
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label>Core Competencies (Used for ML Recommendations)</label>
-                                <input type="text" class="form-control" value="Python, SQL, PostgreSQL, Apache Airflow, Power BI, MinIO">
+                                <input type="text" class="form-control" id="profile-skills" placeholder="e.g. Python, SQL, AWS">
                             </div>
                             
                             <div style="display: flex; justify-content: space-between; margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border);">
                                 <button class="btn btn-danger" onclick="app.deleteAccount()"><i class="fa-regular fa-trash-can"></i> Delete Account</button>
-                                <button class="btn btn-primary" onclick="alert('Profile Updated Successfully in Database')"><i class="fa-solid fa-check"></i> Save Changes</button>
+                                <button class="btn btn-primary" onclick="app.saveProfile()"><i class="fa-solid fa-check"></i> Save Changes</button>
                             </div>
                         </div>
                         
