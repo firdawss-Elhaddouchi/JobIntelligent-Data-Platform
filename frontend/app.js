@@ -268,6 +268,12 @@ class App {
         `;
 
         try {
+            // ==========================================
+            // --- NLP SEARCH INTEGRATION ---
+            // ==========================================
+            // This constructs the query payload to our FastAPI backend.
+            // If the user types a query (even with typos), the backend's Gestalt Pattern Matching
+            // algorithm (difflib) will fuzzy match the input against the Gold Layer job titles.
             const url = new URL(`${API_BASE_URL}/jobs`);
             if (query) url.searchParams.append('search', query);
             if (this.isRemoteOnly) url.searchParams.append('remote_only', true);
@@ -595,6 +601,36 @@ class App {
         const backdrop = document.getElementById('settings-modal');
         backdrop.classList.remove('show');
         setTimeout(() => backdrop.style.display = 'none', 300);
+    }
+
+    async saveSettings() {
+        // Retrieve the selected value from the dropdown inside the modal
+        const select = document.querySelector('#settings-modal select');
+        const selectedValue = select ? select.value : "Real-time (DirectQuery)";
+        
+        try {
+            const btn = document.querySelector('#settings-modal .btn-primary');
+            const originalText = btn.innerText;
+            btn.innerText = "Saving to Database...";
+            
+            // Send the setting to our FastAPI backend which saves it to PostgreSQL
+            const response = await fetch(`${API_BASE_URL}/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh_rate: selectedValue })
+            });
+            
+            if (!response.ok) throw new Error("Failed to save settings");
+            
+            const data = await response.json();
+            
+            btn.innerText = originalText;
+            alert(`Platform Settings Saved Successfully!\n\n${data.message}`);
+            this.closeSettings();
+        } catch (error) {
+            console.error(error);
+            alert("Error saving settings. Make sure FastAPI is running.");
+        }
     }
 
     async handleFileUpload(event) {

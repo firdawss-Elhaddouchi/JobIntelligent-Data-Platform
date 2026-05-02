@@ -75,7 +75,7 @@ body {
 #login-view {
     position: fixed;
     inset: 0;
-    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    background: linear-gradient(135deg, var(--background) 0%, var(--surface) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -404,9 +404,25 @@ body {
     transition: var(--transition);
 }
 
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--primary);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+}
+
 .metric-card:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     transform: translateY(-4px);
+    border-color: var(--primary-light);
+}
+
+.metric-card:hover::before {
+    transform: scaleX(1);
 }
 
 .metric-icon-wrap {
