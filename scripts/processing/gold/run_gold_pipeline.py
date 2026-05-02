@@ -67,6 +67,7 @@ POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@
 def get_today_silver_key(s3, source_name):
     """
     Retrieve today's Silver layer file key for a given source.
+    If today's data does not exist, fallback to the most recent available data.
 
     Args:
         s3 (boto3.client): MinIO S3 client
@@ -76,19 +77,36 @@ def get_today_silver_key(s3, source_name):
         str | None: S3 key if exists, otherwise None
     """
     today_str = datetime.today().strftime("%Y-%m-%d")
-    key = f"{source_name}/cleaning_date={today_str}/data.parquet"
+    today_key = f"{source_name}/cleaning_date={today_str}/data.parquet"
 
     try:
-        response = s3.list_objects_v2(
+        # First try to find today's data specifically
+        response_today = s3.list_objects_v2(
             Bucket=SILVER_BUCKET,
-            Prefix=key
+            Prefix=today_key
         )
 
-        if 'Contents' in response and len(response['Contents']) > 0:
-            logger.info(f"Found Silver data for {source_name}: {key}")
-            return key
+        if 'Contents' in response_today and len(response_today['Contents']) > 0:
+            logger.info(f"Found today's Silver data for {source_name}: {today_key}")
+            return today_key
 
-        logger.warning(f"No Silver data found for {source_name} today")
+        logger.warning(f"No Silver data found for {source_name} today. Looking for the most recent data...")
+
+        # Fallback to the most recent data if today is missing
+        response_all = s3.list_objects_v2(
+            Bucket=SILVER_BUCKET,
+            Prefix=f"{source_name}/cleaning_date="
+        )
+
+        if 'Contents' in response_all and len(response_all['Contents']) > 0:
+            # Sort by key to get the most recent date folder
+            keys = [obj['Key'] for obj in response_all['Contents'] if obj['Key'].endswith('.parquet')]
+            if keys:
+                latest_key = sorted(keys)[-1]
+                logger.info(f"Found fallback latest Silver data for {source_name}: {latest_key}")
+                return latest_key
+
+        logger.warning(f"No Silver data found at all for {source_name}")
         return None
 
     except Exception as e:

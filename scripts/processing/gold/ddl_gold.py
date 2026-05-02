@@ -195,6 +195,43 @@ def create_gold_schema():
         );
         """))
 
+        # =========================
+        # APP PLATFORM TABLES (OLTP)
+        # =========================
+        conn.execute(text("DROP SCHEMA IF EXISTS app CASCADE;"))
+        conn.execute(text("CREATE SCHEMA IF NOT EXISTS app"))
+
+        conn.execute(text("DROP TABLE IF EXISTS app.users CASCADE"))
+        conn.execute(text("""
+        CREATE TABLE app.users (
+            user_id SERIAL PRIMARY KEY,
+            full_name TEXT,
+            email TEXT UNIQUE,
+            password_hash TEXT,
+            skills TEXT
+        );
+        """))
+
+        conn.execute(text("DROP TABLE IF EXISTS app.user_favorites CASCADE"))
+        conn.execute(text("""
+        CREATE TABLE app.user_favorites (
+            user_id INT REFERENCES app.users(user_id) ON DELETE CASCADE,
+            job_id TEXT REFERENCES gold.fact_jobs(job_id) ON DELETE CASCADE,
+            saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, job_id)
+        );
+        """))
+
+        conn.execute(text("DROP TABLE IF EXISTS app.user_applications CASCADE"))
+        conn.execute(text("""
+        CREATE TABLE app.user_applications (
+            user_id INT REFERENCES app.users(user_id) ON DELETE CASCADE,
+            job_id TEXT REFERENCES gold.fact_jobs(job_id) ON DELETE CASCADE,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, job_id)
+        );
+        """))
+
     print("✅ Extended Gold schema created successfully")
 
 

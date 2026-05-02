@@ -4,6 +4,7 @@ class App {
     constructor() {
         this.isRemoteOnly = false;
         this.currentJob = null;
+        this.currentUser = null; // {user_id, full_name, email, skills}
         this.favorites = new Set();
         this.applied = new Set();
         this.allJobs = [];
@@ -95,7 +96,7 @@ class App {
         document.getElementById('login-view').style.display = 'flex';
     }
 
-    register() {
+    async register() {
         const name = document.getElementById('reg-name').value;
         const email = document.getElementById('reg-email').value;
         const pass = document.getElementById('reg-pass').value;
@@ -105,29 +106,83 @@ class App {
             return;
         }
 
-        alert(`Account successfully created for ${name}! Welcome to Pulse.`);
-        
-        // Hide register, show main app
-        document.getElementById('register-view').style.display = 'none';
-        document.getElementById('app-main').style.display = 'flex';
-        
-        // Update profile fields
-        document.querySelector('.topbar-user span').innerText = `Welcome, ${name.split(' ')[0]}`;
-        document.querySelector('.user-info h4').innerText = name;
-        
-        this.loadDashboardData();
+        try {
+            const res = await fetch(`${API_BASE_URL}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ full_name: name, email: email, password: pass })
+            });
+            if (!res.ok) throw new Error("Email may already be registered.");
+            
+            const data = await res.json();
+            this.handleLoginSuccess(data);
+            alert(`Account successfully created for ${name}! Welcome to Pulse.`);
+        } catch(e) {
+            alert(e.message);
+        }
     }
 
-    login() {
+    async login() {
+        const email = document.querySelector('#login-view input[type="email"]').value;
+        const pass = document.querySelector('#login-view input[type="password"]').value;
+        
+        if (!email || !pass) {
+            alert("Please enter both email and password.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: pass })
+            });
+            if (!res.ok) throw new Error("Invalid email or password.");
+            
+            const data = await res.json();
+            this.handleLoginSuccess(data);
+        } catch(e) {
+            alert(e.message);
+        }
+    }
+
+    handleLoginSuccess(userData) {
+        this.currentUser = userData;
         document.getElementById('login-view').style.display = 'none';
         document.getElementById('register-view').style.display = 'none';
         document.getElementById('app-main').style.display = 'flex';
+        
+        // Force redirect to Overview page
+        const dashboardBtn = document.querySelector('.nav-item[data-target="dashboard-view"]');
+        if(dashboardBtn) dashboardBtn.click();
+        
+        // Update user card in sidebar
+        const avatarLetter = userData.full_name ? userData.full_name.charAt(0).toUpperCase() : 'U';
+        document.querySelector('.user-avatar').innerText = avatarLetter;
+        document.querySelector('.user-info h4').innerText = userData.full_name;
+        
+        // Populate profile page
+        document.getElementById('profile-name').value = userData.full_name;
+        document.getElementById('profile-skills').value = userData.full_name ? (userData.skills || "") : "";
+        
         this.loadDashboardData();
     }
 
     logout() {
+        const confirmLogout = confirm("Are you sure you want to log out?");
+        if (!confirmLogout) return;
+
+        this.currentUser = null;
         document.getElementById('app-main').style.display = 'none';
         document.getElementById('login-view').style.display = 'flex';
+        
+        // Clear forms to prevent data remaining
+        document.querySelector('#login-view input[type="email"]').value = '';
+        document.querySelector('#login-view input[type="password"]').value = '';
+        document.getElementById('reg-name').value = '';
+        document.getElementById('reg-email').value = '';
+        document.getElementById('reg-pass').value = '';
+        
         this.favorites.clear();
         this.applied.clear();
     }
@@ -143,6 +198,24 @@ class App {
     async loadDashboardData() {
         this.fetchStats();
         this.fetchRecommendations();
+        if(this.currentUser) {
+            this.fetchUserData();
+        }
+    }
+
+    async fetchUserData() {
+        try {
+            const favRes = await fetch(`${API_BASE_URL}/user/${this.currentUser.user_id}/favorites`);
+            const favData = await favRes.json();
+            this.favorites = new Set(favData.favorites);
+            document.getElementById('dash-favs').innerText = this.favorites.size;
+
+            const appRes = await fetch(`${API_BASE_URL}/user/${this.currentUser.user_id}/applications`);
+            const appData = await appRes.json();
+            this.applied = new Set(appData.applications);
+        } catch(e) {
+            console.error("Error loading user state", e);
+        }
     }
 
     async fetchStats() {
@@ -207,21 +280,16 @@ class App {
     }
 
     async fetchRecommendations() {
+        if (!this.currentUser) return;
+        
         const grid = document.getElementById('recs-grid');
         try {
-            const response = await fetch(`${API_BASE_URL}/recommendations`);
+            const response = await fetch(`${API_BASE_URL}/recommendations?user_id=${this.currentUser.user_id}`);
             if (!response.ok) throw new Error();
             const data = await response.json();
             this.renderJobGrid(data.recommendations, grid, true);
         } catch (error) {
-            setTimeout(() => {
-                const dummy = [
-                    {job_id: '4', job_title: "Python Backend Developer", company_name: "Startup Inc", location: "Remote", is_remote: 1, salary_avg: 110000, skills: ["Python", "SQL"]},
-                    {job_id: '5', job_title: "Data Warehouse Architect", company_name: "Enterprise LLC", location: "Remote", is_remote: 1, salary_avg: 150000, skills: ["SQL", "PostgreSQL", "Airflow"]}
-                ];
-                dummy.forEach(j => { if(!this.allJobs.find(x => x.job_id === j.job_id)) this.allJobs.push(j); });
-                this.renderJobGrid(dummy, grid, true);
-            }, 500);
+            console.error(error);
         }
     }
 
@@ -333,33 +401,104 @@ class App {
         this.currentJob = null;
     }
 
-    toggleFavorite() {
-        if(!this.currentJob) return;
+    async toggleFavorite() {
+        if(!this.currentJob || !this.currentUser) return;
         const jId = this.currentJob.job_id;
         
-        if(this.favorites.has(jId)) {
-            this.favorites.delete(jId);
-            document.getElementById('modal-save-btn').innerHTML = '<i class="fa-regular fa-bookmark"></i> Save for later';
-        } else {
-            this.favorites.add(jId);
-            document.getElementById('modal-save-btn').innerHTML = '<i class="fa-solid fa-bookmark" style="color:var(--primary);"></i> Saved';
-        }
-        
-        document.getElementById('dash-favs').innerText = this.favorites.size;
-        
-        if(document.getElementById('favorites-view').classList.contains('active')) {
-            this.renderFavorites();
+        try {
+            const res = await fetch(`${API_BASE_URL}/user/favorite`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: this.currentUser.user_id, job_id: jId })
+            });
+            const data = await res.json();
+            
+            if(data.status === 'added') {
+                this.favorites.add(jId);
+                document.getElementById('modal-save-btn').innerHTML = '<i class="fa-solid fa-bookmark" style="color:var(--primary);"></i> Saved';
+            } else {
+                this.favorites.delete(jId);
+                document.getElementById('modal-save-btn').innerHTML = '<i class="fa-regular fa-bookmark"></i> Save for later';
+            }
+            
+            document.getElementById('dash-favs').innerText = this.favorites.size;
+            if(document.getElementById('favorites-view').classList.contains('active')) this.renderFavorites();
+        } catch (e) {
+            console.error(e);
         }
     }
 
-    applyJob() {
-        if(!this.currentJob) return;
-        this.applied.add(this.currentJob.job_id);
-        alert(`Application successfully submitted for ${this.currentJob.job_title} at ${this.currentJob.company_name}! Data synced.`);
-        this.closeModal();
+    async applyJob() {
+        if(!this.currentJob || !this.currentUser) return;
         
-        if(document.getElementById('applied-view').classList.contains('active')) {
-            this.renderApplied();
+        try {
+            await fetch(`${API_BASE_URL}/user/apply`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: this.currentUser.user_id, job_id: this.currentJob.job_id })
+            });
+            
+            this.applied.add(this.currentJob.job_id);
+            alert(`Application successfully submitted for ${this.currentJob.job_title} at ${this.currentJob.company_name}! Data synced to PostgreSQL.`);
+            this.closeModal();
+            
+            if(document.getElementById('applied-view').classList.contains('active')) this.renderApplied();
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async saveProfile() {
+        if (!this.currentUser) return;
+        
+        const name = document.getElementById('profile-name').value;
+        const skills = document.getElementById('profile-skills').value;
+        
+        try {
+            const res = await fetch(`${API_BASE_URL}/user/${this.currentUser.user_id}/profile`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ full_name: name, skills: skills })
+            });
+            if (!res.ok) throw new Error("Failed to update profile.");
+            
+            const data = await res.json();
+            
+            // Update local state
+            this.currentUser.full_name = data.full_name;
+            this.currentUser.skills = data.skills;
+            
+            // Update UI
+            document.querySelector('.user-info h4').innerText = data.full_name;
+            document.querySelector('.user-avatar').innerText = data.full_name.charAt(0).toUpperCase();
+            
+            alert('Profile Successfully Saved to PostgreSQL!');
+            
+            // Refresh recommendations based on new skills
+            this.fetchRecommendations();
+            
+        } catch(e) {
+            alert(e.message);
+        }
+    }
+
+    async deleteAccount() {
+        if (!this.currentUser) return;
+        
+        const confirmDelete = confirm("Are you sure you want to permanently delete your account? This action cannot be undone.");
+        if (!confirmDelete) return;
+        
+        try {
+            const res = await fetch(`${API_BASE_URL}/user/${this.currentUser.user_id}`, {
+                method: 'DELETE'
+            });
+            
+            if (!res.ok) throw new Error("Failed to delete account.");
+            
+            alert("Account successfully deleted from PostgreSQL.");
+            this.logout();
+        } catch(e) {
+            alert(e.message);
         }
     }
 
@@ -385,19 +524,61 @@ class App {
         setTimeout(() => backdrop.style.display = 'none', 300);
     }
 
-    handleFileUpload(event) {
+    async handleFileUpload(event) {
+        if(!this.currentUser) {
+            alert("Please login first!");
+            return;
+        }
+        
         const file = event.target.files[0];
-        if (file) {
-            // Simulate upload process
-            document.getElementById('upload-icon').className = "fa-solid fa-spinner fa-spin";
-            document.getElementById('upload-text').innerText = "Uploading to Silver Layer...";
+        if(!file) return;
+
+        const icon = document.getElementById('upload-icon');
+        const text = document.getElementById('upload-text');
+        
+        icon.className = 'fa-solid fa-spinner fa-spin';
+        text.innerText = 'Analysing CV with AI / NLP...';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/user/${this.currentUser.user_id}/upload_cv`, {
+                method: 'POST',
+                body: formData
+            });
             
-            setTimeout(() => {
-                document.getElementById('upload-icon').className = "fa-solid fa-file-pdf";
-                document.getElementById('upload-text').innerText = file.name;
-                document.getElementById('upload-zone').style.borderColor = "var(--primary)";
-                document.getElementById('upload-success').style.display = "block";
-            }, 1500);
+            if(!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || "Upload failed");
+            }
+            
+            const data = await res.json();
+            
+            document.getElementById('upload-success').style.display = 'block';
+            document.getElementById('upload-success').innerHTML = `<i class="fa-solid fa-check-circle"></i> ${data.message}`;
+            
+            icon.className = 'fa-solid fa-file-pdf';
+            text.innerText = file.name;
+            
+            // Auto-fill extracted data
+            if(data.extracted_skills) {
+                document.getElementById('profile-skills').value = data.extracted_skills;
+                this.currentUser.skills = data.extracted_skills;
+            }
+            if(data.extracted_role) {
+                document.getElementById('profile-role').value = data.extracted_role;
+            }
+            
+            alert(`✅ NLP Extraction Complete!\n\nFound Skills: ${data.extracted_skills || 'None'}\nFound Role: ${data.extracted_role || 'None'}\n\nYour profile has been automatically updated in PostgreSQL!`);
+            
+            // Refresh ML recommendations
+            this.fetchRecommendations();
+            
+        } catch(e) {
+            icon.className = 'fa-solid fa-cloud-arrow-up';
+            text.innerText = 'Drag & Drop your CV here or Click to Browse';
+            alert("Error parsing CV: " + e.message);
         }
     }
 }
