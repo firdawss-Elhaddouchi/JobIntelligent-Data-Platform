@@ -1,0 +1,778 @@
+\documentclass[12pt,a4paper,twoside]{report}
+
+% ====== PACKAGES ======
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage[margin=2.5cm, headheight=15pt]{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{setspace}
+\usepackage{tocbibind}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\usepackage{amsmath}
+
+% ====== GRAPHICS PATH ======
+\graphicspath{{test images/}}
+
+% ====== CONFIGURATION ======
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    filecolor=magenta,      
+    urlcolor=blue!80!black,
+    pdftitle={Rapport PFE - JobIntelligent Data Platform},
+    pdfauthor={Amina Dourdi, Firdawss El Haddouchi, Oumaima Et Ghalbouni}
+}
+
+% Personnalisation des titres
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\color{blue!80!black}\Huge}
+  {\filleft\Large\chaptertitlename~\thechapter}
+  {20pt}
+  {\titlerule\vspace{2ex}\filcenter}
+  [\vspace{2ex}\titlerule]
+
+\titleformat{\section}{\color{blue!70!black}\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\color{blue!50!black}\normalfont\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\color{blue!40!black}\normalfont\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% Configuration pour les blocs de code
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.96,0.96,0.94}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{magenta}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{lightgray}
+}
+\lstset{style=mystyle}
+
+% En-tête et pied de page
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[RE]{\nouppercase{\leftmark}}
+\fancyhead[LO]{\nouppercase{\rightmark}}
+\setstretch{1.25} % Interligne augmenté pour atteindre les standards PFE
+
+\begin{document}
+
+% ================= PAGE DE GARDE =================
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    
+    {\Large \textbf{RÉPUBLIQUE FRANÇAISE / MINISTÈRE DE L'ENSEIGNEMENT SUPÉRIEUR}\\}
+    \vspace{0.5cm}
+    {\Large \textbf{Rapport de Projet de Fin d'Études}\\}
+    \vspace{0.5cm}
+    {\large \textit{Filière : Ingénierie des Données et Intelligence Artificielle}\\}
+    
+    \vspace{2.5cm}
+    
+    {\Huge \textbf{\color{blue!80!black} JOBINTELLIGENT DATA PLATFORM}\\}
+    \vspace{1.5cm}
+    {\LARGE \textbf{Conception, Ingénierie et Réalisation d'une Plateforme Intelligente d'Analyse et de Recommandation d'Emplois basée sur une Architecture Medallion}\\}
+    \vspace{3cm}
+    
+    \textbf{Projet réalisé et soutenu par :}\\
+    \vspace{0.8cm}
+    {\Large \textbf{Amina DOURDI} \\ \textbf{Firdawss EL HADDOUCHI} \\ \textbf{Oumaima ET GHALBOUNI} \\}
+    \vspace{3cm}
+    
+    \vfill
+    
+    {\large Année Universitaire : 2025 - 2026}
+\end{titlepage}
+
+
+
+% ================= RESUME =================
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+Dans une économie mondiale de plus en plus numérisée, le marché de l'emploi technologique est marqué par une fragmentation massive des données. Les offres d'emploi sont dispersées sur une multitude de plateformes, rendant la recherche exhaustive et la veille concurrentielle salariale extrêmement complexes pour les candidats et les recruteurs. 
+
+Le présent projet, intitulé \textbf{JobIntelligent Data Platform}, propose une solution holistique (End-to-End) à cette problématique. Il s'agit d'une plateforme unifiée combinant les dernières avancées en Data Engineering, en Business Intelligence et en Intelligence Artificielle (NLP). 
+
+Au cœur du système réside un pipeline de données robuste basé sur l'\textbf{Architecture Medallion}. Ce pipeline orchestre, via \textbf{Apache Airflow}, l'extraction asynchrone de données depuis plusieurs API internationales (Adzuna, Reed, Arbeitnow). Les données brutes sont stockées dans un Data Lake \textbf{MinIO} (couche Bronze), avant d'être nettoyées, enrichies et standardisées au format Parquet (couche Silver). Enfin, elles sont modélisées en schéma en étoile au sein d'un Data Warehouse \textbf{PostgreSQL} (couche Gold) pour garantir des performances analytiques optimales.
+
+La valorisation de ces données s'effectue sur deux fronts :
+Premièrement, une couche décisionnelle via \textbf{Power BI} offre des tableaux de bord interactifs permettant d'analyser les tendances géographiques, les compétences techniques les plus demandées et la répartition salariale du marché.
+Deuxièmement, une application web \textbf{Single Page Application (SPA)} avec un backend \textbf{FastAPI} offre aux candidats une interface moderne de type \textit{Glassmorphism}. Cette plateforme intègre un système d'authentification sécurisé, la gestion de favoris et de candidatures, ainsi qu'un moteur de \textbf{Natural Language Processing (NLP)} capable de lire le CV (PDF) de l'utilisateur pour en extraire les compétences techniques. Un algorithme de \textit{Fuzzy Matching} génère alors des recommandations d'emploi ultra-personnalisées.
+
+Ce rapport détaille la méthodologie, les choix architecturaux, l'implémentation algorithmique et les résultats obtenus, prouvant la scalabilité et la pertinence de la solution JobIntelligent.
+
+\textbf{Mots-clés :} Data Engineering, Architecture Medallion, Data Lakehouse, Apache Airflow, MinIO, PostgreSQL, FastAPI, Power BI, NLP, Regex, Recommandation, ETL, SPA.
+
+
+
+% ================= TOC & LISTS =================
+\tableofcontents
+\newpage
+\listoffigures
+\vspace{1cm}
+\listoftables
+\newpage
+
+% ================= INTRODUCTION GENERALE =================
+\chapter{Introduction Générale}
+
+\section{Contexte du Projet}
+À l'ère du Big Data, la donnée est considérée comme le nouvel or noir. Chaque jour, des pétaoctets de données sont générés à travers le monde. Dans le domaine des ressources humaines et de la recherche d'emploi, cette explosion de l'information a profondément modifié les comportements. Les candidats ne consultent plus un seul site, mais des dizaines d'agrégateurs (LinkedIn, Indeed, Adzuna, Monster, etc.). 
+
+Cependant, cette multitude de sources crée un bruit informationnel massif. Une offre d'emploi pour un poste de "Data Engineer" peut être rédigée de mille manières différentes, avec des devises monétaires variées (USD, GBP, EUR, MAD), des structures de texte asymétriques, et des exigences de compétences cachées au sein de paragraphes denses. Pour le chercheur d'emploi, filtrer ces données manuellement relève du défi. Pour les analystes du marché, il est impossible de dégager des tendances macro-économiques sans une centralisation des données.
+
+\section{Problématique}
+Au vu du contexte présenté, la problématique centrale de notre projet de fin d'études s'énonce comme suit :
+\textit{"Comment concevoir et implémenter une plateforme Big Data de bout en bout capable d'ingérer de vastes volumes d'offres d'emploi hétérogènes, de les standardiser intelligemment, et d'offrir une expérience utilisateur personnalisée grâce à l'intelligence artificielle, tout en fournissant une vue analytique macroscopique du marché ?"}
+
+Pour répondre à cette problématique, plusieurs sous-défis techniques se posent :
+\begin{itemize}
+    \item \textbf{Défi de l'Ingestion :} Comment récupérer des milliers d'offres par jour de manière fiable malgré les limitations d'API et les pannes réseaux ?
+    \item \textbf{Défi de la Qualité (Data Quality) :} Comment nettoyer des données textuelles non structurées (HTML, descriptions libres) pour en extraire des entités précises (compétences, salaires, villes) ?
+    \item \textbf{Défi du Stockage :} Quelle architecture adopter pour permettre à la fois le Machine Learning sur des données brutes et l'analytique rapide (BI) ?
+    \item \textbf{Défi de l'Intelligence Artificielle :} Comment lier automatiquement le profil d'un candidat à la bonne offre d'emploi sans nécessiter d'intervention manuelle ?
+\end{itemize}
+
+\section{Objectifs du Projet}
+Pour surmonter ces défis, nous avons défini des objectifs clairs et mesurables répartis selon les trois piliers du projet :
+
+\textbf{Pilier 1 : Data Engineering (Ingénierie des Données)}
+\begin{itemize}
+    \item Déployer un Data Lake (MinIO) et un Data Warehouse (PostgreSQL) conteneurisés sous Docker.
+    \item Implémenter l'Architecture Medallion (Bronze, Silver, Gold).
+    \item Développer des extracteurs d'API (Python) asynchrones.
+    \item Orchestrer le flux ETL/ELT avec Apache Airflow pour automatiser la collecte quotidienne.
+\end{itemize}
+
+\textbf{Pilier 2 : Business Intelligence (Analytique)}
+\begin{itemize}
+    \item Modéliser les données en schéma en étoile (Star Schema) pour la performance OLAP.
+    \item Créer des tableaux de bord Power BI interactifs (KPIs salariaux, géographie, compétences les plus demandées).
+\end{itemize}
+
+\textbf{Pilier 3 : Web et Intelligence Artificielle}
+\begin{itemize}
+    \item Développer une API Backend haute performance avec FastAPI.
+    \item Développer une interface Frontend Single Page Application (SPA) ergonomique.
+    \item Implémenter un système de parsing de CV (PDF) via le Traitement du Langage Naturel (NLP) pour l'extraction de compétences.
+    \item Créer un moteur de recommandation basé sur les bases de données relationnelles avancées (Fuzzy Matching Regex).
+\end{itemize}
+
+\section{Périmètre du Document}
+Ce mémoire est divisé en six grands chapitres. Le \textbf{Chapitre 1} dresse un état de l'art exhaustif des architectures de la donnée et justifie nos choix technologiques fondamentaux. Le \textbf{Chapitre 2} expose l'analyse métier, y compris la modélisation UML (Cas d'utilisation). Le \textbf{Chapitre 3} plonge au cœur du code avec l'ingénierie des pipelines de données (Couches Bronze et Silver, et Orchestration Airflow). Le \textbf{Chapitre 4} traite de la modélisation dimensionnelle (Couche Gold) et de la Business Intelligence avec Power BI. Enfin, le \textbf{Chapitre 5} détaille le développement de la plateforme web, de l'API backend, et du moteur d'intelligence artificielle (NLP). Le rapport s'achèvera par une conclusion générale et l'énumération de nos perspectives futures.
+
+
+% ================= CHAPITRE 1 =================
+\chapter{État de l'Art et Fondations Technologiques}
+
+\section{Évolution des Architectures de la Donnée}
+
+Pour comprendre la structure de la \textbf{JobIntelligent Data Platform}, il est impératif d'étudier l'évolution des architectures de gestion de données au cours des vingt dernières années.
+
+\subsection{Le Data Warehouse (Entrepôt de données)}
+Historiquement, les entreprises utilisaient des Data Warehouses traditionnels. Le paradigme dominant était l'\textbf{ETL (Extract, Transform, Load)}. Les données étaient extraites des systèmes sources, lourdement transformées sur un serveur intermédiaire, puis chargées dans une base de données relationnelle fortement structurée (Schéma en étoile ou en flocon). 
+\textit{Avantage :} Données extrêmement propres et requêtes SQL analytiques très rapides.
+\textit{Inconvénient :} Rigidité totale. Impossible de stocker des images, des documents texte bruts (comme des CV en PDF), ou des JSON mal formés.
+
+\subsection{Le Data Lake (Lac de données)}
+Avec l'avènement du Big Data, la philosophie a basculé vers le \textbf{Data Lake} couplé au paradigme \textbf{ELT (Extract, Load, Transform)}. L'idée est de déverser toutes les données brutes dans un système de stockage distribué bon marché (Hadoop HDFS, Amazon S3) de manière immédiate, sans transformation préalable.
+\textit{Avantage :} Flexibilité infinie. Idéal pour les Data Scientists qui souhaitent entraîner des modèles de Machine Learning sur la donnée originale.
+\textit{Inconvénient :} Le risque de transformation du Data Lake en "Data Swamp" (Marécage de données) si aucune gouvernance n'est appliquée, rendant la donnée inexploitable pour la Business Intelligence classique.
+
+\subsection{L'Architecture Medallion et le Data Lakehouse}
+Aujourd'hui, l'état de l'art préconise le \textbf{Data Lakehouse}, un hybride combinant la flexibilité du Data Lake et les performances du Data Warehouse. L'Architecture \textbf{Medallion}, popularisée par l'entreprise Databricks, est la méthodologie de structuration logique de ce Lakehouse.
+
+La figure ci-dessous illustre l'architecture complète de notre projet, allant de l'ingestion asynchrone des données jusqu'à leur consommation par les utilisateurs finaux.
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=\textwidth]{Job Intelligent- Medallion Data Pipeline.png}
+    \caption{Architecture Globale : Pipeline de Données Medallion JobIntelligent}
+\end{figure}
+
+Comme schématisé dans le diagramme, notre flux de données est divisé en trois grandes zones de qualité croissante, orchestrées de bout en bout par \textbf{Apache Airflow} :
+
+\begin{enumerate}
+    \item \textbf{Couche Bronze (Raw) - La Zone d'Atterrissage :} Le processus débute par l'extraction des données brutes depuis plusieurs API de recherche d'emploi internationales (Adzuna, Reed, Arbeitnow). Ces données, souvent au format JSON non structuré, sont directement ingérées de manière asynchrone dans notre Data Lake \textbf{MinIO}. À ce stade, la donnée est "Immutable" (inaltérable). L'objectif de la couche Bronze est d'offrir un filet de sécurité : si les algorithmes de nettoyage futurs échouent, nous pouvons toujours remonter à la source brute sans avoir à interroger de nouveau les API externes (ce qui économise notre quota de requêtes).
+    
+    \item \textbf{Couche Silver (Cleaned \& Conformed) - La Zone de Nettoyage :} Une fois les données stockées dans la couche Bronze, un nouveau processus Airflow est déclenché. Le code Python utilise la librairie \texttt{Pandas} pour lire les JSON bruts, les aplatir (flattening), éliminer les doublons critiques, imputer les valeurs manquantes et extraire les tags de compétences (\texttt{NLP Skills}). Surtout, la donnée est convertie au format \textbf{Parquet}. Le diagramme montre que la couche Silver réside toujours dans le Data Lake MinIO, mais les données y sont désormais structurées, compressées et typées, prêtes pour le requêtage analytique massif.
+    
+    \item \textbf{Couche Gold (Business-Level) - La Zone de Consommation :} Les données quittent l'environnement MinIO pour être chargées dans l'entrepôt de données relationnel \textbf{PostgreSQL}. Comme l'illustre la partie droite du diagramme, la donnée est ici divisée en deux schémas distincts :
+    \begin{itemize}
+        \item \textit{Le Schéma OLAP (Analytique) :} Modélisé en "Star Schema", il alimente directement nos tableaux de bord \textbf{Power BI} pour la veille décisionnelle.
+        \item \textit{Le Schéma OLTP (Transactionnel) :} Conçu pour la vitesse d'écriture, il sert de backend à notre plateforme web \textbf{FastAPI}, permettant aux candidats de s'authentifier, de rechercher des offres et de recevoir des recommandations générées par l'intelligence artificielle.
+    \end{itemize}
+\end{enumerate}
+
+Cette architecture distribuée assure à notre plateforme \textbf{JobIntelligent} une scalabilité théoriquement infinie, séparant physiquement la charge de l'extraction de celle de la consommation web.
+
+\section{Justification des Choix Technologiques}
+
+La conception de la JobIntelligent Data Platform a nécessité une sélection rigoureuse d'outils open-source, de frameworks et de langages, guidée par des critères de performance, de scalabilité et de communauté.
+
+\subsection{Langages de Programmation : Python et JavaScript}
+\textbf{Python (Version 3.10+)} s'est imposé comme une évidence. Il est le langage roi de la Data. Nous l'utilisons à tous les niveaux : pour les scripts d'ingestion (librairie \texttt{requests}), pour le traitement de la donnée (librairie \texttt{Pandas}), et pour le développement de notre API (framework \texttt{FastAPI}).
+\textbf{JavaScript (Vanilla JS)} a été choisi pour le Frontend afin d'assurer un contrôle total du Document Object Model (DOM) sans la surcharge d'un framework lourd, garantissant un temps de chargement minimal de notre SPA.
+
+\subsection{Stockage des Données : MinIO et PostgreSQL}
+\begin{itemize}
+    \item \textbf{MinIO (Object Storage) :} Pour implémenter nos couches Bronze et Silver, il nous fallait un stockage objet. MinIO est une solution open-source de stockage cloud-native, totalement compatible avec l'API Amazon S3. Elle nous permet d'émuler un cloud d'entreprise en local sur Docker, offrant des performances d'écriture/lecture de fichiers JSON et Parquet imbattables.
+    \item \textbf{PostgreSQL (SGBDR) :} Pour la couche Gold, PostgreSQL a été sélectionné pour sa robustesse transactionnelle, sa conformité ACID, et sa capacité impressionnante à gérer des requêtes analytiques complexes. De plus, ses fonctions avancées de recherche textuelle (\textit{Pattern Matching}) sont au cœur de notre algorithme de recommandation NLP.
+\end{itemize}
+
+\subsection{Orchestration : Apache Airflow}
+Dans un pipeline de données, un simple script "cron" ne suffit pas. \textbf{Apache Airflow} est une plateforme de gestion de flux de travail créée par Airbnb. Elle permet de définir des tâches sous forme de graphes dirigés acycliques (DAG). Nous l'avons choisi pour sa capacité à gérer les dépendances de tâches complexes, son interface utilisateur de monitoring, et surtout ses mécanismes intégrés de tentatives automatiques (retries) en cas de défaillance des API externes.
+
+\subsection{Backend API : FastAPI}
+Au lieu de Flask ou Django, nous avons choisi \textbf{FastAPI}. Il s'agit de l'un des frameworks web Python les plus rapides actuellement disponibles (performances proches de NodeJS ou Go). Il repose sur Starlette pour la gestion de l'asynchronisme (\texttt{async/await}), ce qui est vital pour une application Big Data effectuant de multiples requêtes I/O simultanées. De plus, l'utilisation de \textbf{Pydantic} assure une validation stricte des données entrantes.
+
+\subsection{Business Intelligence : Power BI}
+Microsoft Power BI a été retenu pour la couche analytique grâce à sa fluidité de connexion avec PostgreSQL (via ODBC), sa richesse visuelle pour les cartographies et les treemaps, et sa capacité à gérer des millions de lignes de faits via son moteur en mémoire VertiPaq.
+
+\subsection{Infrastructure : Docker}
+Toute l'architecture a été "conteneurisée". \textbf{Docker et Docker Compose} garantissent que notre système (comprenant MinIO, PostgreSQL, Airflow, FastAPI et Jupyter) peut être déployé sur n'importe quel système d'exploitation Windows, Mac ou Linux, en une seule commande (\texttt{docker-compose up}), éliminant ainsi le fameux problème du \textit{"Ça marche sur ma machine"}.
+
+% ================= CHAPITRE 2 =================
+\chapter{Analyse Métier et Modélisation Fonctionnelle}
+
+La réussite d'un projet Big Data ne réside pas seulement dans le code, mais dans la compréhension parfaite des besoins des utilisateurs finaux. Dans ce chapitre, nous définissons fonctionnellement le système JobIntelligent.
+
+\section{Spécifications Fonctionnelles}
+La plateforme doit remplir deux missions fondamentales :
+\begin{enumerate}
+    \item \textbf{Mission B2B (Business Analytique) :} Fournir un entrepôt de données centralisé permettant l'analyse du marché (salaires moyens, compétences phares, zones géographiques porteuses).
+    \item \textbf{Mission B2C (Candidat) :} Fournir un outil web permettant à un utilisateur de uploader son CV, de se voir extraire ses compétences automatiquement, et de recevoir un fil d'actualité d'offres d'emploi correspondant à 100\% à son profil technique.
+\end{enumerate}
+
+\section{Diagramme des Cas d'Utilisation UML}
+Pour matérialiser ces spécifications, nous avons recours au diagramme des cas d'utilisation (Use Case Diagram), outil fondamental du langage de modélisation unifié (UML).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Use Case Diagram.png}
+    \caption{Diagramme des Cas d'Utilisation global de la plateforme JobIntelligent}
+    \label{fig:use_case_detail}
+\end{figure}
+
+Le diagramme illustré par la Figure \ref{fig:use_case_detail} révèle deux acteurs principaux interagissant avec la frontière du système (System Boundary).
+
+\subsection{Acteur 1 : Le Système Data (Automatisé)}
+Cet acteur représente notre pipeline backend. Il ne dort jamais et s'exécute selon une planification (Scheduling).
+\begin{itemize}
+    \item \textbf{Extract Job Data :} Le système se connecte via HTTP aux API de Reed, Adzuna et Arbeitnow pour récupérer de nouveaux JSON.
+    \item \textbf{Clean \& Standardize :} Les données sont apurées de leurs anomalies (valeurs nulles, doublons).
+    \item \textbf{Load to Data Warehouse :} Les données modélisées sont insérées dans PostgreSQL.
+\end{itemize}
+
+\subsection{Acteur 2 : Le Candidat (Utilisateur Final)}
+Cet acteur interagit avec le Frontend (SPA). Ses actions sont variées :
+\begin{itemize}
+    \item \textbf{Create Account / Login :} Le point d'entrée sécurisé. Sans authentification, l'accès au profil est impossible.
+    \item \textbf{Upload Resume (CV) :} L'action déclencheuse de l'IA. Le candidat soumet un PDF. L'action `<<includes>>` montre que cela déclenche obligatoirement le cas \textbf{Extract Skills (NLP)}.
+    \item \textbf{Search Jobs :} Le candidat peut outrepasser l'IA et rechercher manuellement dans toute la base.
+    \item \textbf{View Recommendations (For You) :} L'utilisateur consomme le flux généré par l'algorithme de Fuzzy Matching basé sur les compétences préalablement extraites.
+    \item \textbf{Save Job / Apply :} Pour la gestion de sa carrière, l'utilisateur gère ses favoris et son historique de candidatures.
+\end{itemize}
+
+
+% ================= CHAPITRE 3 =================
+\chapter{Ingénierie du Data Pipeline : Bronze, Silver \& Orchestration}
+
+Ce chapitre est le cœur technique du processus d'ingénierie des données. Nous y détaillons l'extraction, la transformation, et la sécurisation du flux de la donnée, depuis l'API externe jusqu'au format Parquet.
+
+\section{La Phase d'Extraction : Ingestion vers la Couche Bronze}
+L'objectif de la couche Bronze est d'assurer l'immuabilité de la donnée source. Si notre algorithme de nettoyage commet une erreur, nous pouvons toujours revenir à la couche Bronze pour rejouer les données.
+
+\subsection{Mécanisme d'interrogation des API}
+Nous ciblons trois agrégateurs mondiaux d'emplois : \textbf{Adzuna}, \textbf{Reed}, et \textbf{Arbeitnow}. Chacun possède ses propres règles d'authentification (Tokens en Header, ou Query Parameters) et sa propre structure de pagination.
+
+Prenons l'exemple de l'API Adzuna. Le script Python (\texttt{adzuna\_client.py}) construit dynamiquement l'URL, gère les clés secrètes stockées en sécurité dans un fichier \texttt{.env}, et boucle sur un nombre défini de pages.
+
+\begin{lstlisting}[language=Python, caption=Extrait du client d'ingestion Adzuna]
+def collect_adzuna(max_pages=10):
+    all_jobs = []
+    base_url = "https://api.adzuna.com/v1/api/jobs/fr/search/"
+    
+    for page in range(1, max_pages + 1):
+        url = f"{base_url}{page}"
+        params = {
+            "app_id": ADZUNA_APP_ID,
+            "app_key": ADZUNA_APP_KEY,
+            "results_per_page": 50,
+            "what": "Data OR Developer OR Engineer"
+        }
+        response = requests.get(url, params=params)
+        
+        if response.status_code == 200:
+            data = response.json()
+            all_jobs.extend(data.get("results", []))
+            time.sleep(1) # Respect du Rate Limiting
+        else:
+            logger.error(f"Erreur API Adzuna : {response.status_code}")
+            
+    return all_jobs
+\end{lstlisting}
+
+\subsection{Stockage dans MinIO (S3 Compatible)}
+Une fois la liste de dictionnaires \texttt{all\_jobs} récupérée, le système la sérialise en objet JSON et l'envoie vers le bucket \texttt{bronze} de notre serveur MinIO local. Pour assurer une organisation temporelle optimale (Partitioning), le chemin du fichier intègre la date du jour : \texttt{bronze/adzuna/raw\_date=2026-05-03/data.json}.
+
+\section{La Phase de Nettoyage et Standardisation : Couche Silver}
+Les données extraites sont sales. Les titres contiennent des caractères spéciaux, les salaires manquent, les localisations sont formatées de 100 façons différentes ("London, UK", "Londres", "London (Hybrid)"), et les descriptions contiennent des balises HTML. 
+Le rôle de la couche \textbf{Silver} est de créer un schéma canonique (uniforme) pour toutes les sources.
+
+\subsection{Aplatissement (Flattening) et Renommage}
+La première étape utilise \texttt{pandas.json\_normalize()} pour transformer le JSON hiérarchique en tableau plat en deux dimensions. Ensuite, un dictionnaire de mapping est appliqué.
+
+\begin{lstlisting}[language=Python, caption=Standardisation des colonnes dans le cleaner Silver]
+column_mapping = {
+    'id': 'job_id',
+    'title': 'job_title',
+    'company.display_name': 'company_name',
+    'description': 'job_description',
+    'location.display_name': 'location',
+    'redirect_url': 'job_url'
+}
+df = df.rename(columns=column_mapping)
+\end{lstlisting}
+
+\subsection{Débogage Critique : La Gestion des URLs Adzuna}
+Durant la phase de test du projet, nous avons identifié un bogue majeur "Silencieux". Lors du nettoyage initial, pour éviter de stocker des URLs trop longues et empêcher les doublons de tracking, la fonction \texttt{clean\_url} coupait l'URL au niveau du caractère \texttt{?} via un split.
+
+Cependant, il s'est avéré que les serveurs de redirection d'Adzuna \textbf{exigent} le jeton de tracking présent après le \texttt{?}. Sans ce jeton, Adzuna renvoie une erreur HTTP 404 (Page Introuvable) lorsque l'utilisateur clique sur l'offre.
+Nous avons dû appliquer un correctif d'urgence à l'ingénierie Silver, illustrant parfaitement la complexité du traitement de données en production :
+
+\begin{lstlisting}[language=Python, caption=Fonction critique de nettoyage d'URL modifiée]
+def clean_url(url):
+    """
+    Clean URL without stripping query parameters.
+    Adzuna servers require the token keys to avoid 404 Not Found errors.
+    """
+    if not url or pd.isna(url):
+        return np.nan
+    return str(url).strip()
+\end{lstlisting}
+
+\subsection{Extraction NLP des Compétences}
+C'est dans la couche Silver qu'opère la première phase de notre intelligence artificielle. Une fonction parcourt la colonne texte \texttt{job\_description} (après retrait des balises HTML). À l'aide de bibliothèques d'expressions régulières (\texttt{re}), le script cherche la présence de compétences précises (Python, Java, PowerBI, Docker, Kubernetes) à partir d'un dictionnaire maître, et peuple une nouvelle colonne \texttt{tags}.
+
+\subsection{Stockage Parquet}
+Le DataFrame résultant est ensuite converti au format binaire \textbf{Parquet}. Ce format compresse la donnée, inclut le typage (Schema), et est hautement optimisé pour les opérations analytiques. Il est sauvegardé dans le bucket \texttt{silver} de MinIO.
+
+\section{Orchestration avec Apache Airflow}
+Le lancement séquentiel des scripts Bronze puis Silver ne peut être manuel. Nous avons modélisé notre processus d'affaires sous forme de DAG (Directed Acyclic Graph) dans Apache Airflow.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{airflow.png}
+    \caption{Monitoring Airflow : Illustration de la résilience du système aux pannes}
+    \label{fig:airflow_detailed}
+\end{figure}
+
+L'image (Figure \ref{fig:airflow_detailed}) de l'interface graphique d'Airflow (Grid View) est riche d'enseignements. Elle montre l'historique des exécutions (DAG Runs) de notre pipeline de données. 
+La présence notable de \textbf{blocs rouges (Failed)} parmi les blocs verts (Success) n'est pas un défaut du système, mais la démonstration de sa résilience. 
+
+Dans le Big Data interactif, l'erreur réseau est la norme (Lois de l'informatique distribuée). Le serveur de Reed ou d'Adzuna peut rejeter notre connexion de manière aléatoire (Erreur 503 Service Unavailable). Airflow capte cette erreur, marque la tâche en "Up for Retry", attend un délai paramétré de 5 minutes, et relance l'extraction de manière autonome. Ce n'est qu'après 3 échecs consécutifs que la tâche passe définitivement au rouge et qu'une alerte administrateur est déclenchée. Cette automatisation garantit la pureté et la continuité de la chaîne de données sans intervention humaine.
+
+% ================= CHAPITRE 4 =================
+\chapter{Data Warehouse, Modélisation Gold et Business Intelligence}
+
+Ce chapitre présente l'aboutissement de la donnée dans PostgreSQL. C'est ici que la donnée quitte le monde des Data Engineers pour entrer dans le monde des Data Analysts et des Développeurs Backend.
+
+\section{Architecture de Stockage de la Couche Gold}
+Nous utilisons PostgreSQL. Afin d'isoler les responsabilités, la base de données est scindée en deux schémas logiques totalement hermétiques :
+\begin{enumerate}
+    \item \textbf{Le schéma \texttt{gold}} : Entièrement dédié à l'analytique (OLAP). Il contient les données issues de notre pipeline Airflow, modélisées en étoile.
+    \item \textbf{Le schéma \texttt{app}} : Entièrement dédié au transactionnel (OLTP). Il gère les actions en direct des utilisateurs sur la plateforme web.
+\end{enumerate}
+
+\section{Le Schéma Analytique (Star Schema)}
+La modélisation dimensionnelle de Ralph Kimball (Le Schéma en Étoile) est la référence absolue pour le requêtage de masse.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Star Schema.png}
+    \caption{Modèle Conceptuel de Données - Schéma en Étoile (Gold Layer)}
+    \label{fig:star_schema_bis}
+\end{figure}
+
+\subsection{Dictionnaire des Données : Tables de Dimensions (\texttt{dim\_*})}
+Les tables de dimensions stockent les informations descriptives permettant d'analyser les faits.
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Colonne} & \textbf{Type SQL} & \textbf{Description} \\
+        \hline
+        \texttt{location\_id} & SERIAL PK & Identifiant unique de la localisation. \\
+        \texttt{location} & TEXT & Nom original fourni par l'API (ex: "Paris, France"). \\
+        \texttt{city} & TEXT & Ville extraite par notre algorithme de standardisation. \\
+        \texttt{country} & TEXT & Pays déduit à partir du contexte de la localisation. \\
+        \hline
+    \end{tabularx}
+    \caption{Structure de la table \texttt{gold.dim\_location}}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Colonne} & \textbf{Type SQL} & \textbf{Description} \\
+        \hline
+        \texttt{company\_id} & SERIAL PK & Identifiant unique de l'entreprise. \\
+        \texttt{company\_name}& TEXT & Nom de la société recrutant le candidat. \\
+        \hline
+    \end{tabularx}
+    \caption{Structure de la table \texttt{gold.dim\_company}}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Colonne} & \textbf{Type SQL} & \textbf{Description} \\
+        \hline
+        \texttt{date\_id} & SERIAL PK & Identifiant temporel unique. \\
+        \texttt{date} & DATE & Date complète sous format YYYY-MM-DD. \\
+        \texttt{day} & INT & Jour du mois (1-31). \\
+        \texttt{month} & INT & Mois de l'année (1-12). \\
+        \texttt{year} & INT & Année de publication de l'offre. \\
+        \texttt{quarter} & INT & Trimestre (1-4). \\
+        \texttt{day\_of\_week}& TEXT & Nom du jour (Lundi, Mardi...). \\
+        \hline
+    \end{tabularx}
+    \caption{Structure de la table \texttt{gold.dim\_date}}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Colonne} & \textbf{Type SQL} & \textbf{Description} \\
+        \hline
+        \texttt{contract\_type\_id} & SERIAL PK & Identifiant unique du type de contrat. \\
+        \texttt{contract\_type} & TEXT & Nature du contrat (CDI, CDD, Freelance). \\
+        \hline
+    \end{tabularx}
+    \caption{Structure de la table \texttt{gold.dim\_contract\_type}}
+\end{table}
+
+\subsection{Dictionnaire des Données : Table des Faits (\texttt{fact\_jobs})}
+Cette table géante se trouve au centre de l'étoile. Elle rassemble les clés étrangères vers toutes les dimensions précédentes et stocke les métriques numériques (salaires). Le fait de séparer les dimensions évite la redondance des textes longs. Par exemple, le nom "Microsoft" n'est stocké qu'une seule fois dans la dimension \texttt{dim\_company}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Colonne} & \textbf{Type SQL} & \textbf{Description} \\
+        \hline
+        \texttt{job\_id} & TEXT PK & Identifiant unique natif de l'offre (issu de l'API). \\
+        \texttt{title} & TEXT & Titre du poste recherché. \\
+        \texttt{company\_id} & INT FK & Lien vers la table \texttt{dim\_company}. \\
+        \texttt{location\_id}& INT FK & Lien vers la table \texttt{dim\_location}. \\
+        \texttt{date\_id} & INT FK & Lien vers la table \texttt{dim\_date}. \\
+        \texttt{contract\_type\_id}& INT FK & Lien vers la table \texttt{dim\_contract\_type}. \\
+        \texttt{salary\_min} & FLOAT & Salaire minimum proposé (converti en MAD). \\
+        \texttt{salary\_max} & FLOAT & Salaire maximum proposé (converti en MAD). \\
+        \texttt{salary\_avg} & FLOAT & Moyenne calculée des salaires. \\
+        \texttt{currency} & TEXT & Devise de référence (ex: 'MAD'). \\
+        \texttt{is\_remote} & BOOLEAN & Indicateur de travail à distance (True/False). \\
+        \texttt{source} & TEXT & Source de l'offre (adzuna, reed, arbeitnow). \\
+        \texttt{job\_url} & TEXT & Lien de redirection vers l'annonce officielle. \\
+        \hline
+    \end{tabularx}
+    \caption{Structure de la table \texttt{gold.fact\_jobs}}
+\end{table}
+
+\subsection{Surmonter le conflit technologique (SQLAlchemy vs Pandas)}
+Lors de l'implémentation du chargement de la couche Silver vers PostgreSQL (Gold), nous avons rencontré un conflit d'intégration critique entre les dernières versions de la librairie Pandas (2.0+) et de l'ORM SQLAlchemy (2.0+). 
+L'erreur \texttt{AttributeError: 'Engine' object has no attribute 'cursor'} s'est manifestée lors de l'exécution de la méthode \texttt{to\_sql}. Après analyse, il s'avère qu'utiliser l'objet `Engine` natif provoque une mauvaise interprétation du DBAPI par Pandas. Nous avons contourné le bug avec succès en passant directement l'\textbf{URI String de connexion} brute :
+
+\begin{lstlisting}[language=Python, caption=Contournement du bug de compatibilité Pandas/SQLAlchemy]
+from scripts.common.utilies import POSTGRES_URI
+
+def safe_replace(df, table_name, schema="gold"):
+    if df.empty:
+        return
+    # Utilisation directe de POSTGRES_URI (String) plutot que l'objet engine
+    df.to_sql(table_name, POSTGRES_URI, schema=schema, if_exists="replace", index=False)
+\end{lstlisting}
+
+\section{Le Schéma Transactionnel Plateforme (\texttt{app})}
+En marge de l'entrepôt de données, notre application a besoin de tables pour mémoriser l'état des utilisateurs. Ces tables doivent supporter un très grand nombre d'insertions et de lectures courtes et rapides (OLTP).
+
+\subsection{La Table des Utilisateurs (\texttt{app.users})}
+Cette table est le socle de l'authentification et de la personnalisation. Elle stocke les données d'identification et le résultat de l'analyse d'Intelligence Artificielle (NLP) effectuée sur le CV de l'utilisateur.
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Colonne} & \textbf{Type SQL} & \textbf{Description} \\
+        \hline
+        \texttt{user\_id} & SERIAL PK & Identifiant unique du candidat. \\
+        \texttt{full\_name} & TEXT & Nom et prénom saisis lors de l'inscription. \\
+        \texttt{email} & TEXT UNIQUE & Adresse e-mail (utilisée comme Login). \\
+        \texttt{password\_hash}& TEXT & Mot de passe crypté via Bcrypt pour une sécurité optimale. \\
+        \texttt{skills} & TEXT & Chaîne de texte (JSON) contenant les compétences techniques détectées dynamiquement par notre algorithme NLP dans le CV PDF. \\
+        \hline
+    \end{tabularx}
+    \caption{Structure de la table \texttt{app.users}}
+\end{table}
+
+\subsection{Les Tables de Gestion de Carrière (\texttt{app.user\_favorites} et \texttt{app.user\_applications})}
+Pour permettre aux utilisateurs de sauvegarder des offres et de suivre l'état de leurs candidatures, nous avons créé des tables de liaison transactionnelles. Ces tables établissent une relation de type "Many-to-Many" (Plusieurs-à-Plusieurs) entre la table \texttt{app.users} et la table analytique \texttt{gold.fact\_jobs}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Colonne} & \textbf{Type SQL} & \textbf{Description} \\
+        \hline
+        \texttt{user\_id} & INT (PK, FK) & Clé étrangère pointant vers \texttt{app.users}. Une suppression en cascade (\texttt{ON DELETE CASCADE}) est appliquée pour respecter le droit à l'oubli. \\
+        \texttt{job\_id} & TEXT (PK, FK) & Clé étrangère pointant vers \texttt{gold.fact\_jobs}. \\
+        \texttt{saved\_at} & TIMESTAMP & Date et heure exactes de l'ajout aux favoris. \\
+        \hline
+    \end{tabularx}
+    \caption{Structure de la table \texttt{app.user\_favorites}}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{|l|l|X|}
+        \hline
+        \textbf{Colonne} & \textbf{Type SQL} & \textbf{Description} \\
+        \hline
+        \texttt{user\_id} & INT (PK, FK) & Clé étrangère vers \texttt{app.users} (\texttt{ON DELETE CASCADE}). \\
+        \texttt{job\_id} & TEXT (PK, FK) & Clé étrangère vers \texttt{gold.fact\_jobs}. \\
+        \texttt{applied\_at} & TIMESTAMP & Date et heure exactes de la soumission de candidature. \\
+        \hline
+    \end{tabularx}
+    \caption{Structure de la table \texttt{app.user\_applications}}
+\end{table}
+La contrainte \texttt{ON DELETE CASCADE} est primordiale ici : si un utilisateur supprime son compte, toutes ses données de candidatures sont effacées automatiquement de la base, respectant ainsi les normes du RGPD (Droit à l'oubli).
+
+
+\section{Business Intelligence avec Microsoft Power BI}
+Le couronnement du Data Engineering est la datavisualisation. Nous avons branché Microsoft Power BI sur notre serveur PostgreSQL via DirectQuery / Import pour produire un rapport analytique haut de gamme.
+
+\subsection{Vue d'Ensemble - Executive Summary (Page 1)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{page1.png}
+    \caption{PowerBI - Indicateurs Macro-économiques globaux}
+\end{figure}
+La première page s'adresse aux directeurs des ressources humaines. Elle concentre l'essentiel de l'information :
+\begin{itemize}
+    \item \textbf{Cards de KPI :} L'affichage en gros caractères du volume total d'offres récupérées (Taille du marché adressable), le salaire moyen consolidé, et le taux exact de postes en télétravail.
+    \item \textbf{Courbes de Tendance (Time Series) :} Graphique affichant le volume d'offres par mois ou par trimestre, permettant d'identifier la vélocité des embauches.
+\end{itemize}
+
+\subsection{Analyse Cartographique et Géographique (Page 2)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{page2.png}
+    \caption{PowerBI - Répartition Spatiale des Offres}
+\end{figure}
+La dimension \texttt{dim\_location} prend tout son sens ici :
+\begin{itemize}
+    \item \textbf{Carte de Chaleur (Map) :} Une carte du monde affichant des bulles dont la taille est proportionnelle à la concentration des offres. On y perçoit visuellement les énormes pôles technologiques occidentaux (Silicon Valley, Londres, Paris).
+    \item \textbf{Top Villes :} Graphiques en barres listant le Top 10 des villes les plus recruteuses. Un filtre segment (Slicer) permet à l'utilisateur de se concentrer sur un pays spécifique pour voir l'effet de concentration régionale.
+\end{itemize}
+
+\subsection{Analyse Sectorielle et Compétences Tech (Page 3)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{page3.png}
+    \caption{PowerBI - Démocratisation des Hard Skills}
+\end{figure}
+L'exploitation de la colonne NLP des compétences (générée en couche Silver) produit des insights extrêmement pointus :
+\begin{itemize}
+    \item \textbf{Treemap des Langages :} La surface des rectangles illustre la domination de Python, SQL, et JavaScript sur le marché actuel. 
+    \item \textbf{Nuage de mots (Word Cloud) :} Affichage visuel rapide des termes les plus répétitifs dans la base de données. Idéal pour un étudiant cherchant quelle technologie apprendre pour maximiser son employabilité.
+\end{itemize}
+
+\subsection{Étude Statistique Salariale (Page 4)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{page4.png}
+    \caption{PowerBI - Analyse Financière et Formes de Contrats}
+\end{figure}
+La composante financière est passée au crible :
+\begin{itemize}
+    \item \textbf{Histogramme de Répartition :} Permet de voir la distribution statistique (Gaussienne) des salaires. La majorité des offres se situe dans le "ventre" de la courbe, avec de rares offres à la marge (Outliers).
+    \item \textbf{Matrice Remote vs On-site :} Visualisation directe permettant de comparer le salaire médian proposé pour un poste en télétravail complet contre le même poste dans les locaux de l'entreprise.
+    \item \textbf{Répartition par Contrat :} Graphique en secteurs (Pie Chart) montrant la domination écrasante du CDI (Permanent) face aux missions de Freelance ou aux CDD.
+\end{itemize}
+
+
+% ================= CHAPITRE 5 =================
+\chapter{Développement Web et IA : La Plateforme JobIntelligent}
+
+Si PowerBI s'adresse aux managers, l'application web JobIntelligent s'adresse aux candidats. Elle concrétise le volet "Data Application" de notre architecture.
+
+\section{Architecture Globale de la Plateforme}
+L'application adopte une conception découplée moderne :
+\begin{itemize}
+    \item \textbf{Le Backend (Serveur) :} Une API RESTful asynchrone développée avec le framework \textbf{FastAPI} (Python). FastAPI est branché directement sur le PostgreSQL via l'ORM SQLAlchemy.
+    \item \textbf{Le Frontend (Client) :} Une application web Single Page Application (SPA). Pour optimiser la légèreté du système, nous avons opté pour du HTML5, CSS3, et JavaScript (Vanilla) pur sans utiliser React ou Angular. La communication avec FastAPI se fait via l'API \texttt{fetch()} en JavaScript.
+    \item \textbf{L'Esthétique (UI/UX) :} L'interface entière repose sur le design système "Glassmorphism" (Utilisation massive de la propriété CSS \texttt{backdrop-filter: blur(10px)}, de transparences, d'ombres portées fluides et de dégradés profonds).
+\end{itemize}
+
+\section{1. Authentification : Connexion (Login)}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{login.png}
+    \caption{Interface de Connexion (Login)}
+\end{figure}
+La première étape du parcours candidat est la connexion à la plateforme. L'interface de \textbf{Login} arbore un design minimaliste et élégant, s'appuyant sur les principes du \textit{Glassmorphism}. Ce choix esthétique n'est pas anodin : il offre une sensation de légèreté et de fluidité, plongeant l'utilisateur dans un environnement moderne et professionnel dès les premières secondes. L'interface a été conçue pour être "Responsive", s'adaptant parfaitement aux écrans d'ordinateurs comme aux smartphones.
+
+Côté architecture Backend, la sécurité a été notre priorité absolue, atteignant les standards exigés en production industrielle. L'e-mail et le mot de passe saisis par le candidat sont transmis via une requête sécurisée. FastAPI intercepte cette requête et, plutôt que de comparer des chaînes de caractères en clair, vérifie le hachage cryptographique du mot de passe via l'algorithme robuste \texttt{Bcrypt}. Ce mécanisme protège les utilisateurs contre les cyberattaques de type "Rainbow Tables". En cas de succès de l'authentification, le serveur génère un \textbf{Token JWT (JSON Web Token)}. Ce jeton est renvoyé au navigateur client qui le stocke localement, permettant de maintenir la session de l'utilisateur active de manière \textit{Stateless} (sans état serveur), ce qui garantit une scalabilité maximale de l'application sans surcharger la base de données à chaque changement de page.
+
+\section{2. Authentification : Création de Compte (Create Account)}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{create-account.png}
+    \caption{Interface de Création de compte (Register)}
+\end{figure}
+Si le candidat explore la plateforme pour la première fois et ne possède pas encore de compte, il est invité à utiliser l'interface de \textbf{Création de Compte} (Register). Le formulaire a été pensé pour minimiser la friction à l'entrée : il ne collecte que les informations strictement nécessaires, à savoir le nom complet, une adresse e-mail valide, et un mot de passe de sécurité.
+
+Avant même que la requête ne soit envoyée au serveur, une première couche de validation est opérée du côté Frontend via JavaScript. Ce script s'assure en temps réel que l'adresse e-mail respecte le format standard et que le mot de passe est suffisamment complexe (longueur minimale). Dès que le formulaire est soumis et validé par FastAPI, l'API interagit avec notre couche Gold dans PostgreSQL via l'ORM SQLAlchemy. Une nouvelle ligne est alors insérée proprement dans la table transactionnelle \texttt{app.users}. Cette opération crée l'espace personnel du candidat, lui attribuant un \texttt{user\_id} unique qui servira de clé étrangère pour l'ensemble de ses actions futures sur le portail (favoris, candidatures, extraction de compétences).
+
+\section{3. Tableau de Bord Principal (Overview)}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{overview.png}
+    \caption{Vue d'ensemble et tableau de bord de l'utilisateur (Overview)}
+\end{figure}
+Une fois le processus d'authentification franchi, l'utilisateur atterrit sur la page \textbf{Overview}. Cette page agit comme le véritable "hub" central de son activité et a été construite pour offrir une synthèse immédiate du marché. Le Backend FastAPI compile des statistiques personnalisées en temps réel, exécutant des requêtes d'agrégation complexes en quelques millisecondes.
+
+L'utilisateur peut y voir, dans la section "Analytics", des métriques clés (KPIs) présentées sous forme de cartes élégantes. Il visualise d'un coup d'œil le volume global d'offres scannées le jour même par notre système. Cela met en lumière le travail colossal réalisé en arrière-plan par nos pipelines de données Apache Airflow. De plus, un compteur affiche le nombre total de candidatures que l'utilisateur a déjà soumises, calculé via une requête \texttt{COUNT} dynamique sur la table \texttt{app.user\_applications}. Enfin, un carrousel présente un accès ultra-rapide aux annonces les plus récentes ou les mieux rémunérées du marché. C'est l'écran d'accueil parfait pour qu'un candidat puisse planifier sa journée de recherche de manière stratégique.
+
+\section{4. Recherche Exploratoire Manuelle (Search Jobs)}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{search-jobs.png}
+    \caption{Module de recherche globale d'emploi (Search Jobs)}
+\end{figure}
+Le panneau \textbf{Search Jobs} laisse libre cours à la curiosité de l'utilisateur et constitue la vitrine de l'immense volume de données de notre plateforme. Cette page interroge directement la colossale table des faits \texttt{gold.fact\_jobs}. Malgré la présence de dizaines de milliers d'offres en base, l'architecture Frontend a été optimisée pour garantir un rendu instantané. 
+
+Les emplois sont affichés sous forme de "Cards" (Cartes) particulièrement soignées. Chaque carte est un condensé d'informations utiles : on y retrouve le nom de l'entreprise, la localisation, le salaire proposé (lorsqu'il est renseigné par l'API source), et un badge coloré très visible indiquant si le poste s'effectue en présentiel (On-site) ou en télétravail (Remote). Une puissante barre de recherche textuelle trône en haut de la page, permettant à l'utilisateur de filtrer dynamiquement les résultats par mots-clés, par titre de poste ou par nom d'entreprise. La fluidité du DOM (Document Object Model) manipulé en JavaScript natif garantit une navigation sans latence, prouvant que notre architecture peut supporter une forte volumétrie de type Big Data sans dégrader l'expérience utilisateur.
+
+\section{5. Recommandations Intelligentes et IA (For You)}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{for-you.png}
+    \caption{Flux de recommandations sur-mesure "For You"}
+\end{figure}
+Le composant \textbf{For You} représente l'innovation majeure et la plus-value principale de la plateforme JobIntelligent. Il inverse totalement le paradigme classique des sites d'emploi (Job Boards) : ce n'est plus l'utilisateur qui doit passer des heures à chercher l'offre idéale, c'est l'offre qui vient directement à lui, triée sur le volet par notre système intelligent.
+
+En arrière-plan, l'algorithme est redoutable d'efficacité. FastAPI lit d'abord le tableau de compétences techniques (Skills) stocké dans le profil de l'utilisateur (préalablement extrait de son CV). Ensuite, le backend génère une méga-requête SQL de \textbf{Fuzzy-Matching}. Au lieu d'utiliser des outils tiers lourds, nous exploitons l'opérateur d'expression régulière natif de PostgreSQL, insensible à la casse (\texttt{$\sim*$}). 
+
+\begin{lstlisting}[language=Python, caption=Logique de recommandation Fuzzy Matching avec FastAPI]
+@app.get("/api/jobs/recommend")
+def get_recommendations(user_id: int):
+    skills = get_user_skills(user_id) # Liste extraite par le NLP
+    # Le delimiteur \m et \M verifie que c'est un mot entier pour eviter les faux positifs
+    conditions = [f"(j.title ~* '\\m{s}\\M' OR j.description ~* '\\m{s}\\M')" for s in skills]
+    
+    where_clause = " OR ".join(conditions)
+    query = f"SELECT * FROM gold.fact_jobs j WHERE {where_clause} ORDER BY date DESC"
+    return execute_query(query)
+\end{lstlisting}
+Le résultat est une page sur-mesure qui n'affiche que les emplois nécessitant les savoir-faire exacts maîtrisés par le candidat. Cette approche élimine le bruit (offres non pertinentes) et augmente drastiquement les chances de conversion et de recrutement.
+
+\section{6. Sauvegarde des Offres (Saved Favorites)}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{saved-favorites.png}
+    \caption{Interface de gestion des offres sauvegardées (Bookmark)}
+\end{figure}
+Lorsqu'un candidat navigue dans les modules "Search Jobs" ou "For You", il est souvent dans une phase de prospection rapide et ne souhaite pas postuler immédiatement. C'est ici qu'intervient la fonctionnalité de sauvegarde. En cliquant simplement sur l'icône "Marque-Page" présente sur n'importe quelle offre d'emploi, l'utilisateur déclenche une mécanique transactionnelle.
+
+Techniquement, cette action envoie un appel API asynchrone (\texttt{fetch POST}) en arrière-plan. FastAPI intercepte la requête et enregistre le \texttt{job\_id} associé au \texttt{user\_id} dans la table de liaison \texttt{app.user\_favorites}. L'interface \textbf{Saved Favorites} permet ensuite de retrouver l'intégralité de cette sélection avec un horodatage précis. C'est un outil indispensable d'organisation personnelle, permettant au candidat de se constituer un panier d'offres hautement intéressantes qu'il pourra traiter plus tard, à tête reposée, lors de la rédaction de ses lettres de motivation.
+
+\section{7. Suivi des Candidatures (Applications)}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{applications.png}
+    \caption{Suivi des candidatures validées (Applicant Tracking)}
+\end{figure}
+L'acte final du candidat est la postulation. Une fois prêt, l'utilisateur clique sur le bouton d'action principal "Apply" situé sur la carte de l'annonce. JobIntelligent effectue alors deux actions simultanées : d'une part, il ouvre un nouvel onglet pour rediriger l'utilisateur vers la page officielle de l'employeur (Adzuna, Reed, etc.) ; d'autre part, il enregistre de façon transparente cet événement dans la table \texttt{app.user\_applications}.
+
+La page \textbf{Applications} matérialise ces enregistrements et agit comme un véritable \textbf{Applicant Tracking System (ATS)} personnel pour l'utilisateur. Le candidat y trouve l'historique exhaustif de ses démarches, avec la date et l'heure exactes (\texttt{applied\_at}) de la soumission. Cette fonctionnalité résout l'un des problèmes majeurs des chercheurs d'emploi : la perte de suivi. Grâce à cet écran, il est impossible de postuler deux fois par erreur à la même entreprise ou d'oublier à quelles annonces on a répondu le mois précédent.
+
+\section{8. Parseur NLP de CV (My Profile)}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{my-profile.png}
+    \caption{Espace personnel et NLP Parser du CV utilisateur}
+\end{figure}
+Le point d'orgue de l'intelligence de notre plateforme réside dans cet écran. L'onglet \textbf{My Profile} est bien plus qu'une simple page de paramètres : c'est le point de départ de la boucle de l'Intelligence Artificielle. Le candidat y téléverse son curriculum vitae sous format PDF, documentant tout son parcours académique et professionnel.
+
+Dès la réception du document, un processus technique sophistiqué, entièrement automatisé, se met en marche :
+\begin{enumerate}
+    \item \textbf{Ingestion Binaire :} Le Backend FastAPI réceptionne le fichier PDF via un flux de données asynchrone multipart.
+    \item \textbf{Extraction Textuelle :} La librairie spécialisée \texttt{PyPDF2} charge le document en mémoire, parcourt chaque page et en extrait l'intégralité du texte brut, éliminant la mise en forme complexe du CV.
+    \item \textbf{Analyse Sémantique (NLP Regex) :} Notre moteur d'analyse entre en jeu. Il scanne le texte massif à l'aide d'un grand dictionnaire pré-compilé d'expressions régulières (Regex). Ce dictionnaire contient des centaines de concepts technologiques allant des langages de programmation (Python, Java, Go) aux outils DevOps (Docker, Kubernetes, Jenkins), en passant par les bases de données (PostgreSQL, MongoDB).
+    \item \textbf{Nettoyage et Stockage :} Les compétences détectées sont isolées, converties en majuscules pour la standardisation, puis dédoublonnées. La liste finale est sérialisée au format JSON et stockée directement dans la colonne \texttt{skills} de la table \texttt{app.users}.
+    \item \textbf{Feedback Visuel :} L'interface Frontend réagit quasi instantanément. Elle se met à jour pour afficher fièrement ces compétences sous la forme de petites étiquettes visuelles (Pills). Cette transparence permet à l'utilisateur de comprendre exactement comment l'algorithme a interprété son profil.
+\end{enumerate}
+C'est cette liste de compétences, mise à jour à chaque nouveau CV téléversé, qui nourrira par la suite le moteur de recommandations "For You".
+
+
+% ================= CONCLUSION GENERALE =================
+\chapter{Conclusion Générale et Perspectives}
+
+\section{Bilan du Projet}
+La conception, le développement et le déploiement de la plateforme \textbf{JobIntelligent Data Platform} ont constitué une véritable épreuve technique de niveau industriel, combinant les trois grands domaines de la technologie moderne : l'Ingénierie des Données, le Développement Web Full-Stack et l'Intelligence Artificielle.
+
+Nous avons prouvé, par l'implémentation pratique, la puissance de l'\textbf{Architecture Medallion}. De la récupération capricieuse des données asynchrones sur Internet via des API REST, jusqu'au stockage sécurisé dans un Data Lake (MinIO), nous avons maîtrisé le cycle de vie brut de l'information (Couche Bronze).
+Ensuite, grâce à une orchestration automatisée pilotée par \textbf{Apache Airflow}, nous avons standardisé, nettoyé et extrait l'essence des données via des algorithmes NLP (Couche Silver).
+Enfin, le chargement dimensionnel de la donnée dans \textbf{PostgreSQL} (Couche Gold) nous a permis d'alimenter des tableaux de bord \textbf{Power BI} professionnels d'une part, et de motoriser une interface utilisateur web \textbf{FastAPI / JS} d'autre part.
+
+Ce projet PFE est un succès complet : il répond intégralement à la problématique initiale en offrant un produit robuste, conteneurisé sous Docker, et prêt à absorber des millions d'offres d'emploi.
+
+\section{Perspectives d'Évolution (Travaux Futurs)}
+Bien que la solution actuelle soit pleinement opérationnelle, l'évolution technologique fulgurante nous incite à proposer des pistes d'amélioration majeures pour les futures itérations du projet :
+
+\begin{itemize}
+    \item \textbf{Intégration du Temps Réel (Streaming) :} Le système actuel repose sur un modèle "Batch" programmé quotidiennement par Airflow. Le remplacement partiel de l'ingestion par un bus de messages comme \textbf{Apache Kafka} permettrait une diffusion (Streaming) des offres d'emploi en temps réel directement sur le téléphone du candidat.
+    \item \textbf{Traitement de l'Intelligence Artificielle (Large Language Models) :} Notre moteur NLP actuel repose sur du dictionnaire regex. Bien qu'extrêmement rapide et économe en ressources de calcul, il ne comprend pas la "sémantique". Le remplacement de ce module par l'API de modèles comme OpenAI GPT-4 ou un modèle LLM open-source (Llama 3) permettrait d'analyser les *Soft Skills* (leadership, communication) de manière contextuelle.
+    \item \textbf{Modèles de Deep Learning (Recommandation) :} Faire évoluer le matching PostgreSQL actuel vers un véritable moteur de Filtrage Collaboratif (Collaborative Filtering) entraîné avec \textbf{TensorFlow} ou \textbf{PyTorch}. Le système pourrait apprendre des comportements des autres utilisateurs ("Les candidats qui ont cliqué sur cette offre ont aussi aimé celle-ci").
+    \item \textbf{Déploiement Cloud (CI/CD) :} Migrer notre architecture locale Docker-Compose vers un environnement de production Cloud hébergé sur AWS ou Azure, géré par l'orchestrateur \textbf{Kubernetes (K8s)} avec une pipeline de déploiement continu via GitHub Actions.
+\end{itemize}
+
+Ce projet marque pour nous la transition entre le monde académique et les standards exigeants de l'ingénierie Big Data professionnelle, concluant ainsi notre cursus avec la réalisation d'une plateforme dont l'impact potentiel sur le marché de l'emploi est immense.
+
+\end{document}
