@@ -151,42 +151,36 @@
                         </div>
                     </div>
 
-                    <div style="background: var(--surface); border-radius: var(--radius-lg); padding: 32px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-                        <div style="position: absolute; top: 0; right: 0; padding: 12px 20px; background: var(--primary-light); color: var(--primary-dark); font-size: 0.8rem; font-weight: 700; border-bottom-left-radius: var(--radius-md);">
-                            <i class="fa-solid fa-circle-check" style="margin-right: 4px;"></i> PIPELINE ACTIVE
-                        </div>
-                        <h3 style="margin-bottom: 24px; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-server" style="color: var(--primary);"></i> Data Engineering Architecture</h3>
+                    <!-- ONBOARDING SECTION -->
+                    <div style="margin-top: 32px; background: var(--surface); border-radius: var(--radius-lg); padding: 32px; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+                        <h3 style="margin-bottom: 24px; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
+                            <i class="fa-solid fa-rocket" style="color: var(--primary);"></i> Getting Started with JobIntelligent
+                        </h3>
                         
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; position: relative;">
-                            <div style="position: absolute; top: 50%; left: 0; right: 0; height: 3px; background: var(--border); z-index: 1;"></div>
-                            <div style="position: absolute; top: 50%; left: 0; width: 100%; height: 3px; background: var(--primary); z-index: 2;"></div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px;">
                             
-                            <!-- Bronze -->
-                            <div style="position: relative; z-index: 3; background: var(--surface); padding: 0 10px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                <div style="width: 44px; height: 44px; border-radius: 50%; background: #cd7f32; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px var(--surface);"><i class="fa-solid fa-cloud-arrow-down"></i></div>
-                                <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);">Bronze (Raw)</span>
+                            <!-- Step 1 -->
+                            <div style="background: var(--background); padding: 24px; border-radius: var(--radius-md); border: 1px solid var(--border); position: relative;">
+                                <div style="position: absolute; top: -12px; left: 24px; background: var(--primary); color: white; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">1</div>
+                                <h4 style="margin-bottom: 8px; color: var(--text-primary);"><i class="fa-solid fa-file-pdf" style="color: var(--text-tertiary); margin-right: 8px;"></i> Upload your Resume</h4>
+                                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">Navigate to the <strong>My Profile</strong> section and upload your PDF resume. Our advanced NLP engine will automatically extract your technical skills.</p>
                             </div>
 
-                            <!-- Silver -->
-                            <div style="position: relative; z-index: 3; background: var(--surface); padding: 0 10px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                <div style="width: 44px; height: 44px; border-radius: 50%; background: #c0c0c0; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px var(--surface);"><i class="fa-solid fa-broom"></i></div>
-                                <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);">Silver (MinIO)</span>
+                            <!-- Step 2 -->
+                            <div style="background: var(--background); padding: 24px; border-radius: var(--radius-md); border: 1px solid var(--border); position: relative;">
+                                <div style="position: absolute; top: -12px; left: 24px; background: var(--primary); color: white; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">2</div>
+                                <h4 style="margin-bottom: 8px; color: var(--text-primary);"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--text-tertiary); margin-right: 8px;"></i> AI Recommendations</h4>
+                                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">Check out the <strong>For You</strong> tab. Our algorithms will find jobs that perfectly match the skills extracted from your resume.</p>
                             </div>
 
-                            <!-- Gold -->
-                            <div style="position: relative; z-index: 3; background: var(--surface); padding: 0 10px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                <div style="width: 44px; height: 44px; border-radius: 50%; background: #ffd700; color: #111827; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px var(--surface);"><i class="fa-solid fa-database"></i></div>
-                                <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);">Gold (PostgreSQL)</span>
+                            <!-- Step 3 -->
+                            <div style="background: var(--background); padding: 24px; border-radius: var(--radius-md); border: 1px solid var(--border); position: relative;">
+                                <div style="position: absolute; top: -12px; left: 24px; background: var(--primary); color: white; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">3</div>
+                                <h4 style="margin-bottom: 8px; color: var(--text-primary);"><i class="fa-solid fa-briefcase" style="color: var(--text-tertiary); margin-right: 8px;"></i> Track Applications</h4>
+                                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">Save interesting jobs to your <strong>Workspace</strong> and track all your active applications in one unified dashboard.</p>
                             </div>
 
-                            <!-- Serving -->
-                            <div style="position: relative; z-index: 3; background: var(--surface); padding: 0 10px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px var(--surface);"><i class="fa-solid fa-chart-line"></i></div>
-                                <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);">Serving (FastAPI)</span>
-                            </div>
                         </div>
-
-                        <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; text-align: center;">Your data pipelines are <strong>100% synchronized</strong>. The Gold Layer (PostgreSQL) is serving transformed `fact_jobs` and dimensions in real-time to the analytical backend.</p>
                     </div>
 
                     <!-- Power BI CTA (Informational only) -->
@@ -195,7 +189,7 @@
                             <h3 style="font-size: 1.5rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; color: var(--text-primary);">
                                 <i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Advanced Business Intelligence
                             </h3>
-                            <p style="color: var(--text-secondary); max-width: 800px; font-size: 1rem; line-height: 1.6;">Explore deep analytics, dynamic filtering, and interactive visualizations built directly on top of our Gold Layer data using Microsoft Power BI.</p>
+                            <p style="color: var(--text-secondary); max-width: 800px; font-size: 1rem; line-height: 1.6;">Explore deep analytics, dynamic filtering, and interactive visualizations built directly on top of our data using Microsoft Power BI.</p>
                         </div>
                         <i class="fa-solid fa-chart-column" style="font-size: 3rem; color: var(--primary-light); opacity: 0.8;"></i>
                     </div>
@@ -228,7 +222,7 @@
                     <div class="rec-banner">
                         <div>
                             <h2>AI-Powered Matches</h2>
-                            <p>We analyzed your profile against our Machine Learning `job_features` table.</p>
+                            <p>We analyzed your profile against our Machine Learning.</p>
                         </div>
                         <i class="fa-solid fa-microchip rec-icon"></i>
                     </div>
