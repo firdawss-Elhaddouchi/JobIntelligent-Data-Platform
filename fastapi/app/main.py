@@ -43,6 +43,10 @@ class SettingsUpdate(BaseModel):
 def root():
     return {"message": "Job Intelligent Platform API is running"}
 
+@app.get("/api/ping")
+def ping():
+    return {"status": "ok", "message": "Server is perfectly alive!"}
+
 # --- PLATFORM SETTINGS (AIRFLOW INTEGRATION) ---
 @app.post("/api/settings")
 def update_settings(settings: SettingsUpdate, db: Session = Depends(get_db)):
@@ -217,42 +221,139 @@ def get_job_listings(search: str = None, remote_only: bool = False, db: Session 
 
 @app.get("/api/recommendations")
 def get_recommendations(user_id: int, db: Session = Depends(get_db)):
-    """Personalized Recommendations based on the User's actual skills vs Job Titles & Features"""
-    import re
+    """
+    ML-Powered Job Recommendation Engine (Content-Based Filtering)
+    ==============================================================
+    This endpoint implements a real Machine Learning recommendation model trained
+    on our actual data corpus using:
+    - TF-IDF Vectorization (Term Frequency-Inverse Document Frequency)
+    - Cosine Similarity
+    """
+    try:
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.metrics.pairwise import cosine_similarity
+    
+        # 1. Fetch user skills
+        user = db.execute(text("SELECT skills FROM app.users WHERE user_id = :uid"), {"uid": user_id}).fetchone()
+        if not user or not user[0]:
+            return {"recommendations": []}
+
+        user_skills = user[0].lower()
+        user_skill_list = [s.strip() for s in user_skills.split(",") if s.strip()]
+        user_document = " ".join(user_skill_list)
+    
+        # 2. Fetch the full job corpus (Training Data)
+        query = text("""
+            SELECT 
+                j.job_id, f.job_title, f.salary_avg, j.extracted_skills,
+                c.company_name, l.location, l.city, l.country, d.date AS posted_date,
+                f.is_remote, f.job_url, f.source, f.salary_min, f.salary_max, f.currency,
+                ct.contract_type
+            FROM gold.job_features j
+            JOIN gold.fact_jobs f ON j.job_id = f.job_id
+            LEFT JOIN gold.dim_company c ON f.company_id = c.company_id
+            LEFT JOIN gold.dim_location l ON f.location_id = l.location_id
+            LEFT JOIN gold.dim_date d ON f.posted_date_id = d.date_id
+            LEFT JOIN gold.dim_contract_type ct ON f.contract_type_id = ct.contract_type_id
+        """)
+        result = db.execute(query).fetchall()
+    
+        if not result:
+            return {"recommendations": []}
+    
+        # 3. Feature Engineering: Build "Documents" for TF-IDF
+        job_documents = []
+        job_rows = []
+    
+        for row in result:
+            doc_parts = []
+            if row[1]: doc_parts.append(row[1].lower()) # Title
+            if row[3]: doc_parts.append(row[3].lower().replace(",", " ")) # Extracted NLP skills
+            if row[4]: doc_parts.append(row[4].lower()) # Company
+            
+            job_document = " ".join(doc_parts)
+            job_documents.append(job_document)
+            job_rows.append(row)
+    
+        # 4. TF-IDF Vectorization
+        corpus = [user_document] + job_documents  # Index 0 is the User
+        vectorizer = TfidfVectorizer(stop_words='english', max_features=5000, ngram_range=(1, 2))
+        tfidf_matrix = vectorizer.fit_transform(corpus)
+    
+        # 5. Cosine Similarity Scoring
+        user_vector = tfidf_matrix[0:1]
+        job_vectors = tfidf_matrix[1:]
+        similarity_scores = cosine_similarity(user_vector, job_vectors).flatten()
+    
+        # 6. Rank Results
+        scored_jobs = []
+        for idx, score in enumerate(similarity_scores):
+            if score > 0.01: # lowered threshold for testing
+                scored_jobs.append((job_rows[idx], score))
+    
+        scored_jobs.sort(key=lambda x: x[1], reverse=True)
+    
+        # 7. Build Response
+        recs = []
+        for row, ml_score in scored_jobs[:30]: # Return top 30
+            job_title_lower = (row[1] or "").lower()
+            extracted_skills_raw = (row[3] or "").lower()
+            
+            # UI Tags: Intersect user skills with job extracted skills
+            matched_tags = []
+            for s in user_skill_list:
+                if s in extracted_skills_raw or s in job_title_lower:
+                    matched_tags.append(s.title() if len(s) > 3 else s.upper())
+                    
+            if not matched_tags:
+                matched_tags.append("ML Match")
+                
+            recs.append({
+                "job_id": row[0], "job_title": row[1], "salary_avg": row[2],
+                "skills": list(set(matched_tags)), # Deduplicate tags
+                "ml_score": round(float(ml_score), 4),
+                "company_name": row[4], "location": row[5], "city": row[6], "country": row[7],
+                "posted_date": str(row[8]) if row[8] else None, "is_remote": row[9],
+                "job_url": row[10], "source": row[11], "salary_min": row[12], "salary_max": row[13],
+                "currency": row[14], "contract_type": row[15]
+            })
+        
+        return {"recommendations": recs}
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"[ERROR TF-IDF Full] {error_trace}")
+        return {"error": str(e), "traceback": error_trace}
+
+@app.get("/api/recommendations/semantic")
+def get_semantic_recommendations(user_id: int, db: Session = Depends(get_db)):
+    """
+    ADVANCED BERT MODEL (Semantic Meaning)
+    ======================================
+    This endpoint uses a pre-trained Deep Learning Transformer model (Sentence-BERT)
+    to generate dense vector embeddings of the user's CV and the Job Descriptions.
+    It understands semantic meaning rather than just matching words.
+    Example: "Software Engineer" will match "Python Programmer" based on context.
+    """
+    try:
+        from sentence_transformers import SentenceTransformer
+        from sklearn.metrics.pairwise import cosine_similarity
+        import numpy as np
+    except Exception as e:
+        print(f"[ERROR Semantic] {e}")
+        return {"error": "sentence-transformers library is not installed or failed to load."}
+
     # 1. Fetch user skills
     user = db.execute(text("SELECT skills FROM app.users WHERE user_id = :uid"), {"uid": user_id}).fetchone()
     if not user or not user[0]:
-        return {"recommendations": []} # No skills = no recs
-        
+        return {"recommendations": []}
+
     user_skills = user[0].lower()
-    skill_list = [s.strip() for s in user_skills.split(",") if s.strip()]
     
-    # 2. Build dynamic ML & Title matching query
-    conditions = []
-    params = {}
-    
-    # Check ML features if they exist in user skills
-    if "python" in user_skills: conditions.append("j.python = 1")
-    if "sql" in user_skills: conditions.append("j.sql = 1")
-    if "aws" in user_skills: conditions.append("j.aws = 1")
-    
-    # Check all other skills against the job title using PostgreSQL Regex (~*)
-    for i, skill in enumerate(skill_list):
-        if skill not in ["python", "sql", "aws"]:
-            conditions.append(f"f.job_title ~* :skill_{i}")
-            # Regex to ensure we match whole words (e.g., 'C' and not the 'c' in 'Scientist')
-            # (^|[^a-zA-Z0-9_]) means start of string or a non-alphanumeric character
-            escaped_skill = re.escape(skill)
-            params[f"skill_{i}"] = f"(^|[^a-zA-Z0-9_]){escaped_skill}($|[^a-zA-Z0-9_])"
-    
-    if not conditions:
-        return {"recommendations": []} # No matching skills to query
-        
-    where_clause = " OR ".join(conditions)
-    
-    query = text(f"""
+    # 2. Fetch full job corpus
+    query = text("""
         SELECT 
-            j.job_id, f.job_title, f.salary_avg, j.python, j.sql, j.aws,
+            j.job_id, f.job_title, f.salary_avg, j.extracted_skills, j.semantic_entities,
             c.company_name, l.location, l.city, l.country, d.date AS posted_date,
             f.is_remote, f.job_url, f.source, f.salary_min, f.salary_max, f.currency,
             ct.contract_type
@@ -262,35 +363,63 @@ def get_recommendations(user_id: int, db: Session = Depends(get_db)):
         LEFT JOIN gold.dim_location l ON f.location_id = l.location_id
         LEFT JOIN gold.dim_date d ON f.posted_date_id = d.date_id
         LEFT JOIN gold.dim_contract_type ct ON f.contract_type_id = ct.contract_type_id
-        WHERE {where_clause}
     """)
-    result = db.execute(query, params).fetchall()
+    result = db.execute(query).fetchall()
+
+    if not result:
+        return {"recommendations": []}
+
+    # 3. Load the Sentence-Transformer Model (Lightweight BERT)
+    # Caching in memory is recommended for production, but loaded here for demonstration
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+
+    # 4. Prepare texts for embedding
+    job_texts = []
+    job_rows = []
     
-    recs = []
     for row in result:
-        # Determine which skills matched for UI display
-        matched_tags = [skill for skill, val in zip(['Python', 'SQL', 'AWS'], [row[3], row[4], row[5]]) if val == 1]
-        job_title_lower = (row[1] or "").lower()
-        for s in skill_list:
-            if s not in ["python", "sql", "aws"]:
-                # Use regex to check if the exact word is in the title
-                escaped_s = re.escape(s)
-                pattern = r'(?<![a-zA-Z0-9_])' + escaped_s + r'(?![a-zA-Z0-9_])'
-                if re.search(pattern, job_title_lower):
-                    matched_tags.append(s.title() if len(s) > 3 else s.upper())
-                
-        # If no tags matched but the job is returned, default to "Skill Match"
-        if not matched_tags:
-            matched_tags.append("Skill Match")
-            
+        # Build a semantic paragraph for the job
+        title = str(row[1]) if row[1] else ""
+        skills = str(row[3]).replace(",", " ") if row[3] else ""
+        entities = str(row[4]).replace(",", " ") if row[4] else ""
+        
+        # Combine into a meaningful sentence context for BERT
+        text_context = f"Job Title: {title}. Required skills and entities: {skills} {entities}."
+        job_texts.append(text_context)
+        job_rows.append(row)
+
+    # 5. Generate Dense Vectors (Embeddings)
+    # This encodes the semantic meaning into a 384-dimensional vector space
+    corpus_embeddings = model.encode([user_skills] + job_texts)
+    
+    user_vector = corpus_embeddings[0:1]
+    job_vectors = corpus_embeddings[1:]
+
+    # 6. Compute Cosine Similarity on dense vectors
+    similarity_scores = cosine_similarity(user_vector, job_vectors).flatten()
+
+    # 7. Rank and Filter Results
+    scored_jobs = []
+    print(f"[DEBUG Semantic] Max similarity: {max(similarity_scores) if len(similarity_scores) > 0 else 0}")
+    for idx, score in enumerate(similarity_scores):
+        if score > 0.01: # Lowered threshold to ensure we capture semantic matches
+            scored_jobs.append((job_rows[idx], score))
+
+    scored_jobs.sort(key=lambda x: x[1], reverse=True)
+
+    # 8. Build Response
+    recs = []
+    for row, semantic_score in scored_jobs[:30]:
         recs.append({
             "job_id": row[0], "job_title": row[1], "salary_avg": row[2],
-            "skills": matched_tags,
-            "company_name": row[6], "location": row[7], "city": row[8], "country": row[9],
-            "posted_date": str(row[10]) if row[10] else None, "is_remote": row[11],
-            "job_url": row[12], "source": row[13], "salary_min": row[14], "salary_max": row[15],
-            "currency": row[16], "contract_type": row[17]
+            "skills": ["BERT Match", "Semantic AI"], # Semantic match tag
+            "ml_score": round(float(semantic_score), 4),
+            "company_name": row[5], "location": row[6], "city": row[7], "country": row[8],
+            "posted_date": str(row[9]) if row[9] else None, "is_remote": row[10],
+            "job_url": row[11], "source": row[12], "salary_min": row[13], "salary_max": row[14],
+            "currency": row[15], "contract_type": row[16]
         })
+        
     return {"recommendations": recs}
 
 # --- FAVORITES & APPLICATIONS ---

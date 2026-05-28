@@ -158,15 +158,14 @@ def create_gold_schema():
         # """))
 
         # =========================
-        # FEATURE TABLE (ML)
+        # FEATURE TABLE (ML & NLP)
         # =========================
         conn.execute(text("DROP TABLE IF EXISTS gold.job_features"))
         conn.execute(text("""
         CREATE TABLE gold.job_features (
             job_id TEXT PRIMARY KEY,
-            python INT,
-            sql INT,
-            aws INT,
+            extracted_skills TEXT,
+            semantic_entities TEXT,
             remote INT,
             salary_avg FLOAT
         );
