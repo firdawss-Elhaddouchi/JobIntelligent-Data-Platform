@@ -11,7 +11,11 @@ Fact + Aggregations + ML features
 """
 
 import pandas as pd
+import numpy as np
+import re
+import ast
 from sqlalchemy import text
+import os
 from scripts.processing.silver.standardizer import normalize_location_pro
 
 
@@ -43,13 +47,36 @@ def clean_datetime(col):
     return pd.to_datetime(col, errors="coerce", utc=True).dt.tz_convert(None)
 
 
+POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow")
+
+def map_dtype(dt):
+    if pd.api.types.is_integer_dtype(dt): return "INT"
+    if pd.api.types.is_float_dtype(dt): return "FLOAT"
+    if pd.api.types.is_bool_dtype(dt): return "BOOLEAN"
+    return "TEXT"
+
 def safe_replace(df, table_name, engine, schema="gold"):
     if df.empty:
         print(f"[SKIP] {table_name} empty")
         return
 
+    df = df.where(pd.notnull(df), None)
+    
+    cols_def = ", ".join([f"{c} {map_dtype(df[c].dtype)}" for c in df.columns])
+    
     with engine.begin() as conn:
-        df.to_sql(table_name, conn, schema=schema, if_exists="replace", index=False)
+        conn.execute(text(f"CREATE TABLE IF NOT EXISTS {schema}.{table_name} ({cols_def})"))
+        conn.execute(text(f"TRUNCATE TABLE {schema}.{table_name} CASCADE;"))
+        data = df.to_dict(orient="records")
+        if data:
+            for row in data:
+                for k, v in row.items():
+                    if pd.isna(v): row[k] = None
+            cols_str = ", ".join(df.columns)
+            vals_str = ", ".join([f":{c}" for c in df.columns])
+            query = f"INSERT INTO {schema}.{table_name} ({cols_str}) VALUES ({vals_str})"
+            conn.execute(text(query), data)
+            
     print(f"[REPLACE] {table_name} refreshed ({len(df)} rows)")
 
 
@@ -58,17 +85,32 @@ def safe_append(df, table_name, engine, schema="gold", unique_cols=None):
         print(f"[SKIP] {table_name} empty")
         return
 
-    # 1. Upload new data to a temporary staging table
+    df = df.where(pd.notnull(df), None)
+    cols_def = ", ".join([f"{c} {map_dtype(df[c].dtype)}" for c in df.columns])
+
+    if not unique_cols:
+        with engine.begin() as conn:
+            conn.execute(text(f"CREATE TABLE IF NOT EXISTS {schema}.{table_name} ({cols_def})"))
+            data = df.to_dict(orient="records")
+            if data:
+                for row in data:
+                    for k, v in row.items():
+                        if pd.isna(v): row[k] = None
+            cols_str = ", ".join(df.columns)
+            vals_str = ", ".join([f":{c}" for c in df.columns])
+            query = f"INSERT INTO {schema}.{table_name} ({cols_str}) VALUES ({vals_str})"
+            conn.execute(text(query), data)
+        print(f"[APPEND] {table_name} appended ({len(df)} rows)")
+        return
+
     staging_table = f"temp_stg_{table_name}"
-    # Remove 'date_id' or 'location_id' if they exist in the DF so they don't interfere
     cols_to_drop = [c for c in df.columns if c.endswith('_id')]
     df_for_stg = df.drop(columns=cols_to_drop)
-    
-    # 2. Get list of columns (excluding the auto-increment ID)
+    df_for_stg = ensure_columns(df_for_stg, unique_cols)
+
     columns_list = ", ".join(df_for_stg.columns)
-    unique_condition = " AND ".join([f"target.{col} = staging.{col}" for col in unique_cols])
+    unique_condition = " AND ".join([f"target.{c} = staging.{c}" for c in unique_cols])
     
-    # 3. Build the SQL with explicit columns
     upsert_query = f"""
     INSERT INTO {schema}.{table_name} ({columns_list})
     SELECT staging.{columns_list.replace(', ', ', staging.')} 
@@ -80,7 +122,20 @@ def safe_append(df, table_name, engine, schema="gold", unique_cols=None):
     """
 
     with engine.begin() as conn:
-        df_for_stg.to_sql(staging_table, conn, schema=schema, if_exists="replace", index=False)
+        conn.execute(text(f"CREATE TABLE IF NOT EXISTS {schema}.{table_name} ({cols_def})"))
+        conn.execute(text(f"DROP TABLE IF EXISTS {schema}.{staging_table}"))
+        conn.execute(text(f"CREATE TABLE {schema}.{staging_table} AS SELECT * FROM {schema}.{table_name} LIMIT 0"))
+        
+        data = df_for_stg.to_dict(orient="records")
+        if data:
+            for row in data:
+                for k, v in row.items():
+                    if pd.isna(v): row[k] = None
+            cols_str = ", ".join(df_for_stg.columns)
+            vals_str = ", ".join([f":{c}" for c in df_for_stg.columns])
+            query = f"INSERT INTO {schema}.{staging_table} ({cols_str}) VALUES ({vals_str})"
+            conn.execute(text(query), data)
+            
         conn.execute(text(upsert_query))
         conn.execute(text(f"DROP TABLE {schema}.{staging_table}"))
         print(f"[LOAD] {table_name} processed via SQL Engine (Auto-ID maintained).")
@@ -210,28 +265,87 @@ def salary_trends(df):
 
 
 # ============================================================
-# 7. SKILLS + ML FEATURES (UNCHANGED)
+# 7. SKILLS + ML FEATURES (NLP EXTRACTION)
 # ============================================================
 
 def job_features(df):
     df = df.copy()
+    import re
 
     df["job_description"] = df["job_description"].fillna("")
     df["location"] = df["location"].fillna("")
 
-    df["python"] = df["job_description"].str.contains("python", case=False).astype(int)
-    df["sql"] = df["job_description"].str.contains("sql", case=False).astype(int)
-    df["aws"] = df["job_description"].str.contains("aws", case=False).astype(int)
+    # Comprehensive IT ontology for real-world NLP extraction
+    TECH_SKILLS = [
+        "python", "sql", "r", "sas", "excel", "power bi", "tableau", "looker", "qlik", "alteryx", "matlab",
+        "aws", "azure", "gcp", "hadoop", "spark", "pyspark", "kafka", "snowflake", "bigquery", "redshift", "databricks",
+        "docker", "kubernetes", "airflow", "dbt", "terraform", "jenkins", "gitlab", "ansible", "linux", "git",
+        "java", "scala", "c\+\+", "c#", "go", "rust", "javascript", "typescript", "react", "angular", "vue", "node.js", "django", "flask", "fastapi", "spring", "php", "html", "css",
+        "pandas", "numpy", "scikit-learn", "tensorflow", "keras", "pytorch", "huggingface", "nlp", "computer vision",
+        "postgresql", "mysql", "mongodb", "cassandra", "redis", "elasticsearch", "neo4j", "oracle"
+    ]
+
+    def extract_skills(text):
+        if not text:
+            return ""
+        text_lower = str(text).lower()
+        found_skills = []
+        for skill in TECH_SKILLS:
+            # Word boundary matching to avoid partial matches (e.g., 'go' inside 'good')
+            # Using custom boundary for tech names with special chars like C++
+            escaped_skill = skill # already escaped c\+\+ in the list but others are safe
+            pattern = r'(?<![a-zA-Z0-9_])' + escaped_skill + r'(?![a-zA-Z0-9_])'
+            if re.search(pattern, text_lower):
+                clean_skill = skill.replace('\+', '+').title() if len(skill) > 3 else skill.replace('\+', '+').upper()
+                found_skills.append(clean_skill)
+        return ", ".join(found_skills)
+
+    # Apply the Regex NLP extraction to the job descriptions
+    df["extracted_skills"] = df["job_description"].apply(extract_skills)
+
+    # ============================================================
+    # ADVANCED BERT SEMANTIC EXTRACTION (NER)
+    # Extracting meaning from context, not just word-by-word
+    # ============================================================
+    def extract_semantic_entities(text_series):
+        try:
+            from transformers import pipeline
+            import os
+            
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
+            ner_pipeline = pipeline("ner", model="dslim/bert-base-NER", aggregation_strategy="simple")
+            
+            total = len(text_series)
+            processed = 0
+            
+            def extract(text):
+                nonlocal processed
+                processed += 1
+                if processed % 50 == 0:
+                    print(f"  [BERT] Traitement en cours... {processed}/{total} offres analysées.")
+                    
+                if not text: return ""
+                text = str(text)[:1500] 
+                entities = ner_pipeline(text)
+                extracted = [ent['word'] for ent in entities if ent['entity_group'] in ['ORG', 'MISC']]
+                cleaned = list(set([str(w).strip().replace("##", "") for w in extracted if len(str(w)) > 2]))
+                return ", ".join(cleaned)
+                
+            return text_series.apply(extract)
+        except Exception as e:
+            print(f"[WARNING] Advanced BERT extraction failed: {e}")
+            return text_series.apply(lambda x: "")
+
+    print("[INFO] Running Advanced BERT Semantic Extraction... This may take a moment.")
+    df["semantic_entities"] = extract_semantic_entities(df["job_description"])
 
     df["remote"] = df["location"].str.contains("remote", case=False).astype(int)
-
     df = compute_salary_avg(df)
 
     return df[[
         "job_id",
-        "python",
-        "sql",
-        "aws",
+        "extracted_skills",
+        "semantic_entities",
         "remote",
         "salary_avg"
     ]]

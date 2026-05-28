@@ -7,3 +7,7 @@ pandas
 requests
 python-multipart
 PyPDF2
+scikit-learn
+transformers
+torch
+sentence-transformers

@@ -221,8 +221,14 @@
                 <div id="recommendations-view" class="view-section">
                     <div class="rec-banner">
                         <div>
-                            <h2>AI-Powered Matches</h2>
-                            <p>We analyzed your profile against our Machine Learning.</p>
+                            <h2 style="display:flex; align-items:center; gap: 12px; flex-wrap:wrap;">
+                                AI-Powered Matches
+                                <select id="modelSelect" onchange="app.fetchRecommendations()" style="padding: 6px 12px; font-size: 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); cursor: pointer; margin-left: 8px;">
+                                    <option value="tfidf">Standard ML (Word-based)</option>
+                                    <option value="bert">Semantic BERT (Deep AI)</option>
+                                </select>
+                            </h2>
+                            <p>Select a model to analyze your profile against our job corpus.</p>
                         </div>
                         <i class="fa-solid fa-microchip rec-icon"></i>
                     </div>

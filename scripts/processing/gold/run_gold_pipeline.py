@@ -24,7 +24,9 @@ import boto3
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 from datetime import datetime
+import sys
 import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
 from scripts.common.logging_config import setup_logger
 from scripts.common.utilies import get_minio_client,get_postgres_engine
@@ -56,7 +58,7 @@ ACCESS_KEY = os.getenv("MINIO_ROOT_USER", "minioadmin")
 SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
 
 SILVER_BUCKET = "silver"
-POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@postgres:5432/airflow")
+POSTGRES_URI = os.getenv("DATABASE_URL", "postgresql+psycopg2://airflow:airflow@localhost:5432/airflow")
 
 
 
@@ -250,8 +252,18 @@ def run_gold_pipeline():
     # Clear old staging data to prevent join duplication in the Fact table
     with engine.begin() as conn:
         conn.execute(text("TRUNCATE TABLE gold.jobs_staging;"))
-
-    df_staging.to_sql("jobs_staging", engine, schema="gold", if_exists="append", index=False)
+        data = df_staging.to_dict(orient="records")
+        if data:
+            # Clean NaT and NaN
+            for row in data:
+                for k, v in row.items():
+                    if pd.isna(v):
+                        row[k] = None
+                        
+            cols_str = ", ".join(df_staging.columns)
+            vals_str = ", ".join([f":{c}" for c in df_staging.columns])
+            query = f"INSERT INTO gold.jobs_staging ({cols_str}) VALUES ({vals_str})"
+            conn.execute(text(query), data)
 
     logger.info(f"Staging table populated with {len(df_staging)} rows.")
 
@@ -292,8 +304,20 @@ def run_gold_pipeline():
         """
     # LEFT JOIN gold.dim_date d2 ON TO_TIMESTAMP(s.expires_date::DOUBLE PRECISION)::DATE = d2.date::DATE
 
-    with engine.begin() as conn:
-        conn.execute(text(sql))
+    try:
+        with engine.begin() as conn:
+            conn.execute(text(sql))
+            
+        # Debug check
+        with engine.connect() as conn:
+            count = conn.execute(text("SELECT COUNT(*) FROM gold.fact_jobs")).scalar()
+            logger.info(f"DEBUG: fact_jobs now has {count} rows in the database.")
+            if count == 0:
+                logger.error("DEBUG: The insert query succeeded but 0 rows were inserted. Checking staging table...")
+                stg_count = conn.execute(text("SELECT COUNT(*) FROM gold.jobs_staging")).scalar()
+                logger.error(f"DEBUG: jobs_staging has {stg_count} rows.")
+    except Exception as e:
+        logger.error(f"SQL INSERT ERROR: {e}")
 
     # -------------------------
     # SAVE AGGREGATIONS

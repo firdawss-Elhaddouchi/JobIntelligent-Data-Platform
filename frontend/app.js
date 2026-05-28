@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = "http://127.0.0.1:8000/api";
 
 class App {
     constructor() {
@@ -320,10 +320,32 @@ class App {
         if (!this.currentUser) return;
 
         const grid = document.getElementById('recs-grid');
+        grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1;">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                <h3>Generating AI Models... This may take a few seconds for Deep Learning.</h3>
+            </div>
+        `;
+
         try {
-            const response = await fetch(`${API_BASE_URL}/recommendations?user_id=${this.currentUser.user_id}`);
+            const modelSelect = document.getElementById('modelSelect');
+            const modelType = modelSelect ? modelSelect.value : 'tfidf';
+            const endpoint = modelType === 'bert' ? '/recommendations/semantic' : '/recommendations';
+
+            const response = await fetch(`${API_BASE_URL}${endpoint}?user_id=${this.currentUser.user_id}`);
             if (!response.ok) throw new Error();
             const data = await response.json();
+            
+            if (data.error) {
+                alert("Model Error: " + data.error);
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <h3>Error generating semantic recommendations. Check Backend.</h3>
+                    </div>
+                `;
+                return;
+            }
 
             // Add recommendations to allJobs so the modal can find them!
             data.recommendations.forEach(j => {
@@ -333,6 +355,12 @@ class App {
             this.renderJobGrid(data.recommendations, grid, true);
         } catch (error) {
             console.error(error);
+            grid.innerHTML = `
+                <div class="empty-state" style="grid-column: 1/-1;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <h3>Error connecting to recommendation engine.</h3>
+                </div>
+            `;
         }
     }
 
